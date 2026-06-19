@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BeQuant · Local Study Build</title>
+  <link rel="stylesheet" href="app.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
+</head>
+<body>
+  <header id="topbar">
+    <a class="brand" href="#/">
+      <span class="brand-mark">⚡</span>
+      <span class="brand-name">be<b>quant</b></span>
+      <span class="brand-tag">local</span>
+    </a>
+    <nav class="top-nav">
+      <a href="#/" data-nav="learn">Learn</a>
+      <a href="#/dashboard" data-nav="dashboard">Dashboard</a>
+    </nav>
+    <div class="top-actions">
+      <button id="search-btn" class="icon-btn" title="Search (press /)">
+        <span class="kbd-hint">Search</span> <kbd>/</kbd>
+      </button>
+      <button id="theme-btn" class="icon-btn" title="Toggle theme">◐</button>
+    </div>
+  </header>
+
+  <main id="app"><div class="loading">Loading…</div></main>
+
+  <div id="search-overlay" class="overlay" hidden>
+    <div class="search-box" role="dialog" aria-label="Search lessons">
+      <input id="search-input" type="text" placeholder="Search 142 lessons…" autocomplete="off" />
+      <ul id="search-results"></ul>
+      <div class="search-foot"><kbd>↑</kbd><kbd>↓</kbd> navigate · <kbd>↵</kbd> open · <kbd>esc</kbd> close</div>
+    </div>
+  </div>
+
+  <footer id="footer">
+    Reconstructed locally from study notes · content authored for personal exam prep · not affiliated with bequant.dev
+  </footer>
+
+  <script src="vendor/marked.min.js"></script>
+  <script src="vendor/highlight.min.js"></script>
+  <script src="vendor/lang-x86asm.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

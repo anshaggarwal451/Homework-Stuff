@@ -1,0 +1,1485 @@
+{
+  "rid": "csfundamentals",
+  "title": "CS for Quants",
+  "modules": {
+    "cpu-architecture-basics": {
+      "mcqs": [
+        {
+          "topic": "Byte Order and Endianness",
+          "q": "On a little-endian x86-64 machine, `uint32_t x = 0x0A0B0C0D;` is stored in memory. What is the value of the **first byte** at `&x` (lowest address)?",
+          "options": [
+            "`0x0D`",
+            "`0x0B`",
+            "It is unspecified",
+            "`0x0A`"
+          ],
+          "answer": 0,
+          "explanation": "Little-endian stores the least-significant byte at the lowest address, so `*(uint8_t*)&x == 0x0D`. Big-endian would put `0x0A` first."
+        },
+        {
+          "topic": "Bitwise Operations",
+          "q": "Which expression correctly tests whether `uint32_t x` is a power of two **for all inputs including 0**?",
+          "options": [
+            "`(x & (x - 1)) == 0`",
+            "`x && !(x & (x - 1))`",
+            "`x % 2 == 0`",
+            "`__builtin_popcount(x) >= 1`"
+          ],
+          "answer": 1,
+          "explanation": "`x & (x-1)` clears the lowest set bit; it is 0 for both powers of two **and** for 0. The leading `x &&` excludes 0. `std::has_single_bit`/`popcount(x)==1` also work."
+        },
+        {
+          "topic": "Bitwise Operations",
+          "q": "For a 64-bit value, which of these is **undefined behaviour**?",
+          "options": [
+            "`x >> 1` for `uint64_t x`",
+            "`uint64_t{1} << 40`",
+            "`1u << 40`",
+            "`std::rotl(x, 40)` on a `uint64_t`"
+          ],
+          "answer": 2,
+          "explanation": "`1u` is a 32-bit `unsigned int`; shifting it by 40 (>= its width) is UB. You need `uint64_t{1} << 40` or `1ull << 40`. `std::rotl` is defined at any count (unlike shift), and `>> 1` is fine."
+        },
+        {
+          "topic": "CPU Registers and Assembly Instructions",
+          "q": "Under the System V AMD64 calling convention, where does the **third integer argument** arrive and where is a `double` return value placed?",
+          "options": [
+            "`rsi`; returned in `xmm0`",
+            "`rdx`; returned in `rax`",
+            "`rcx`; returned in `rax`",
+            "`rdx`; returned in `xmm0`"
+          ],
+          "answer": 3,
+          "explanation": "Integer args go `rdi, rsi, rdx, rcx, r8, r9`, so the 3rd is `rdx`. Floating-point return values come back in `xmm0` (integer/pointer returns use `rax`)."
+        },
+        {
+          "topic": "CPU Registers and Assembly Instructions",
+          "q": "Why do compilers emit `xor eax, eax` rather than `mov eax, 0` to zero a register?",
+          "options": [
+            "`xor eax, eax` is a recognized dependency-breaking zeroing idiom that often costs zero execution-port cycles",
+            "`mov eax, 0` is undefined behaviour at the ISA level",
+            "`xor` zeroes the flags register at the same time, which is required",
+            "`xor` is the only instruction that clears the upper 32 bits of `rax`"
+          ],
+          "answer": 0,
+          "explanation": "The renamer recognizes `xor reg, reg` as unconditionally zero, breaks the dependence on the old value, and frees the physical register early. Writing the 32-bit `eax` also zero-extends into `rax` (true for `mov eax, 0` too), so the differentiator is dependency-breaking, not the upper-half clear."
+        },
+        {
+          "topic": "CPU Cache Hierarchy and Prefetching",
+          "q": "The unit of transfer between memory and the CPU cache on modern x86 is:",
+          "options": [
+            "A 4 KB page",
+            "A 64-byte cache line",
+            "A 4096-bit block sized to the L1",
+            "A single byte"
+          ],
+          "answer": 1,
+          "explanation": "Caches move fixed 64-byte cache lines, not individual bytes. Reading one `int` pulls in the whole 64-byte line containing it; this is why spatial locality and 64-byte alignment to avoid false sharing matter."
+        },
+        {
+          "topic": "CPU Cache Hierarchy and Prefetching",
+          "q": "Why does iterating a `std::list<int>` of N elements typically lose badly to a `std::vector<int>` of the same N, even though both are O(N)?",
+          "options": [
+            "`std::vector` stores ints in registers, `std::list` does not",
+            "`std::list` has a worse asymptotic complexity for traversal",
+            "Pointer chasing serializes DRAM misses and defeats the hardware prefetcher, while the contiguous vector is prefetched and uses each cache line fully",
+            "`std::list::size()` is O(N) so the loop bound is expensive"
+          ],
+          "answer": 2,
+          "explanation": "Each `node = node->next` depends on the load that just completed, so misses serialize at ~100 ns each. A vector is sequential: addresses are known ahead, misses overlap (memory-level parallelism) and the prefetcher front-runs the loop."
+        },
+        {
+          "topic": "Pipelined Processors and Instruction-Level Parallelism",
+          "q": "A loop sums a `double` array with a single accumulator and runs ~3x slower than a 4-accumulator version doing the same number of adds. The primary reason is:",
+          "options": [
+            "The compiler refuses to inline the loop",
+            "Branch mispredictions on the loop condition",
+            "More cache misses in the single-accumulator version",
+            "A loop-carried dependency chain limited by FP-add latency, not throughput"
+          ],
+          "answer": 3,
+          "explanation": "Each `s += x[i]` depends on the previous result, one chain paying ~3-4 cycle FP-add latency per step while a second FP-add port sits idle. Independent accumulators expose ILP and approach the throughput limit (~2 adds/cycle)."
+        },
+        {
+          "topic": "Binary Representation of Types",
+          "q": "What is the value of the expression `-1 < 1u` in C++?",
+          "options": [
+            "`false`",
+            "Undefined behaviour",
+            "Implementation-defined",
+            "`true`"
+          ],
+          "answer": 0,
+          "explanation": "In the usual arithmetic conversions, when a signed and an unsigned operand of equal rank meet, the signed operand converts to unsigned. `-1` becomes `UINT_MAX`, so `-1 < 1u` is `false`. This is the classic sign-conversion trap behind `v.size() > -1` always being false."
+        },
+        {
+          "topic": "Odd one out!",
+          "q": "Four x86-64 sequences each leave zero in `eax`: `xor eax, eax`, `mov eax, 0`, `sub eax, eax`, `and eax, 0`. Which is the **odd one out** microarchitecturally?",
+          "options": [
+            "`xor eax, eax`, because it also clobbers flags",
+            "`and eax, 0`, because it keeps a true data dependency on the old `eax` and is not a recognized zeroing idiom",
+            "`mov eax, 0`, because the immediate makes it slowest",
+            "`sub eax, eax`, because subtraction can underflow"
+          ],
+          "answer": 1,
+          "explanation": "`xor`/`sub reg,reg` are dependency-breaking idioms; `mov eax,0` writes a constant independent of the old value. `and eax,0` produces zero but must read the previous `eax` first, chaining onto whatever last wrote it and occupying an ALU port."
+        }
+      ],
+      "coding": [
+        {
+          "topic": "Byte Order and Endianness",
+          "lang": "cpp",
+          "prompt": "Implement `uint32_t load_be32(const uint8_t* p)` that reads a **big-endian** (network-order) unsigned 32-bit integer from a 4-byte buffer. It must be correct on **any** host — no `reinterpret_cast`, no endianness `#ifdef`. Click **▶ Run tests** to check against the test cases.",
+          "hints": [
+            "The most-significant byte is at `p[0]` for big-endian.",
+            "Shift each byte into place and OR them together."
+          ],
+          "starter": "#include <cstdint>\n\n// Read a BIG-ENDIAN unsigned 32-bit integer from a 4-byte buffer.\nuint32_t load_be32(const uint8_t* p) {\n    // TODO: assemble the value from p[0]..p[3]\n    return 0;\n}\n",
+          "harness": "#include <cstdio>\n#include <cstdint>\nstatic void check(const char* n, uint32_t got, uint32_t want){\n    printf(\"__CASE__|%s|%s|got=0x%08X want=0x%08X\\n\", n, got==want?\"PASS\":\"FAIL\", got, want);\n}\nint main(){\n    uint8_t a[4]={0x12,0x34,0x56,0x78}; check(\"0x12345678\", load_be32(a), 0x12345678u);\n    uint8_t z[4]={0,0,0,0};             check(\"all-zero\", load_be32(z), 0u);\n    uint8_t f[4]={0xFF,0xFF,0xFF,0xFF}; check(\"all-ones\", load_be32(f), 0xFFFFFFFFu);\n    uint8_t o[4]={0,0,1,0};             check(\"0x00000100\", load_be32(o), 0x00000100u);\n    uint8_t d[4]={0xDE,0xAD,0xBE,0xEF}; check(\"0xDEADBEEF\", load_be32(d), 0xDEADBEEFu);\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "0x12345678"
+            },
+            {
+              "name": "all-zero"
+            },
+            {
+              "name": "all-ones"
+            },
+            {
+              "name": "0x00000100"
+            },
+            {
+              "name": "0xDEADBEEF"
+            }
+          ],
+          "solution": "```cpp\n#include <cstdint>\n\n// Assemble the value BY VALUE from its bytes — endian-agnostic (\"Byte Order Fallacy\").\nuint32_t load_be32(const uint8_t* p) {\n    // p[0] is the MOST-significant byte for big-endian, so it occupies the top 8 bits.\n    return (uint32_t(p[0]) << 24)   // most-significant byte -> bits 24..31\n         | (uint32_t(p[1]) << 16)   // -> bits 16..23\n         | (uint32_t(p[2]) << 8)    // -> bits 8..15\n         |  uint32_t(p[3]);         // least-significant byte -> bits 0..7\n    // Each cast to uint32_t BEFORE shifting avoids shifting a promoted int by 24\n    // (well-defined here, but the cast makes intent explicit and width-correct).\n    // No reinterpret_cast: that would be an alignment + strict-aliasing bug.\n}\n```",
+          "discussion": "Never do `*(const uint32_t*)p`: the buffer may be unaligned and the lvalue cast violates strict aliasing — both UB, independent of endianness. Assembling by value is portable and the optimizer still folds it into a single load (plus a `BSWAP` on a little-endian host)."
+        },
+        {
+          "topic": "Byte Order and Endianness",
+          "lang": "cpp",
+          "prompt": "Write a portable function `uint32_t load_be32(const uint8_t* p)` that reads a **big-endian** 32-bit unsigned integer from a byte buffer, correct on any host (no `reinterpret_cast`, no endianness `#ifdef`).  Click **▶ Run tests** to check against the test cases.",
+          "hints": [
+            "Assemble the value by shifting and OR-ing the bytes.",
+            "The most-significant byte is at `p[0]` for big-endian.",
+            "Cast each byte to `uint32_t` before shifting so you do not shift an 8-bit value."
+          ],
+          "starter": "#include <cstdint>\n\n// Read a BIG-ENDIAN unsigned 32-bit integer from a 4-byte buffer.\n// Must be correct on ANY host: no reinterpret_cast, no endianness #ifdef.\nuint32_t load_be32(const uint8_t* p) {\n    // TODO: assemble the value from p[0]..p[3] (p[0] is the most-significant byte)\n    return 0;\n}\n",
+          "harness": "#include <cstdio>\n#include <cstdint>\nstatic void check(const char* n, uint32_t got, uint32_t want){\n    printf(\"__CASE__|%s|%s|got=0x%08X want=0x%08X\\n\", n, got==want?\"PASS\":\"FAIL\", got, want);\n}\nint main(){\n    uint8_t a[4]={0x12,0x34,0x56,0x78}; check(\"0x12345678\", load_be32(a), 0x12345678u);\n    uint8_t z[4]={0,0,0,0};             check(\"all-zero\", load_be32(z), 0u);\n    uint8_t f[4]={0xFF,0xFF,0xFF,0xFF}; check(\"all-ones\", load_be32(f), 0xFFFFFFFFu);\n    uint8_t hi[4]={0x80,0,0,0};         check(\"high-bit-set\", load_be32(hi), 0x80000000u);\n    uint8_t o[4]={0,0,1,0};             check(\"0x00000100\", load_be32(o), 0x00000100u);\n    uint8_t d[4]={0xDE,0xAD,0xBE,0xEF}; check(\"0xDEADBEEF\", load_be32(d), 0xDEADBEEFu);\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "0x12345678"
+            },
+            {
+              "name": "all-zero"
+            },
+            {
+              "name": "all-ones"
+            },
+            {
+              "name": "high-bit-set"
+            },
+            {
+              "name": "0x00000100"
+            },
+            {
+              "name": "0xDEADBEEF"
+            }
+          ],
+          "solution": "```cpp\n#include <cstdint>\n\n// Assemble the value BY VALUE from its bytes -- endian-agnostic (\"Byte Order Fallacy\").\n// p[0] is the MOST-significant byte for big-endian, so it occupies the top 8 bits.\nuint32_t load_be32(const uint8_t* p) {\n    return (uint32_t(p[0]) << 24)   // most-significant byte -> bits 24..31\n         | (uint32_t(p[1]) << 16)   // -> bits 16..23\n         | (uint32_t(p[2]) << 8)    // -> bits 8..15\n         |  uint32_t(p[3]);         // least-significant byte -> bits 0..7\n    // Each cast to uint32_t BEFORE the shift keeps the width correct and intent explicit;\n    // no reinterpret_cast, so there is no alignment or strict-aliasing bug and the code is\n    // correct on every host (the compiler still folds it into one load, plus BSWAP on LE).\n}\n```",
+          "discussion": "Avoid `*(const uint32_t*)p` and `std::byteswap(*reinterpret_cast<const uint32_t*>(p))` -- those are alignment + strict-aliasing bugs, independent of endianness. If you start from a copied scalar, `std::memcpy` into a local then `ntohl`/`std::byteswap` is also correct. The assemble-by-value form needs no knowledge of host byte order at all."
+        },
+        {
+          "topic": "Bitwise Operations",
+          "lang": "cpp",
+          "prompt": "Implement `int count_set_bits(uint32_t x)` two ways and explain which the hardware prefers: (a) a portable loop, and (b) the C++20 one-liner that maps to a single instruction.  Click **▶ Run tests** to check against the test cases.",
+          "hints": [
+            "Kernighan's trick `x &= x - 1` removes one set bit per iteration.",
+            "C++20 `<bit>` gives `std::popcount`.",
+            "`std::popcount` lowers to the `POPCNT` instruction."
+          ],
+          "starter": "#include <bit>\n#include <cstdint>\n\n// (a) Portable loop. Hint: Kernighan's trick `x &= x - 1` clears the lowest set bit.\nint count_set_bits_loop(uint32_t x) {\n    // TODO: count set bits with a loop\n    return 0;\n}\n\n// (b) C++20 one-liner that lowers to a single POPCNT instruction.\nint count_set_bits(uint32_t x) {\n    // TODO: use std::popcount\n    return 0;\n}\n",
+          "harness": "#include <cstdio>\nstatic int g_fail = 0;\nstatic void check(const char* n, int got, int want){\n    bool ok = got==want; if(!ok) g_fail=1;\n    printf(\"__CASE__|%s|%s|got=%d want=%d\\n\", n, ok?\"PASS\":\"FAIL\", got, want);\n}\nint main(){\n    struct { const char* name; uint32_t x; int want; } cs[] = {\n        {\"zero\", 0u, 0},\n        {\"one\", 1u, 1},\n        {\"all-ones\", 0xFFFFFFFFu, 32},\n        {\"0xF0F0F0F0\", 0xF0F0F0F0u, 16},\n        {\"high-bit\", 0x80000000u, 1},\n        {\"0xDEADBEEF\", 0xDEADBEEFu, 24},\n    };\n    for (auto& c : cs) {\n        check(c.name, count_set_bits(c.x), c.want);\n        char buf[64]; snprintf(buf, sizeof buf, \"%s-loop\", c.name);\n        check(buf, count_set_bits_loop(c.x), c.want);\n    }\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "zero"
+            },
+            {
+              "name": "zero-loop"
+            },
+            {
+              "name": "one"
+            },
+            {
+              "name": "one-loop"
+            },
+            {
+              "name": "all-ones"
+            },
+            {
+              "name": "all-ones-loop"
+            },
+            {
+              "name": "0xF0F0F0F0"
+            },
+            {
+              "name": "0xF0F0F0F0-loop"
+            },
+            {
+              "name": "high-bit"
+            },
+            {
+              "name": "high-bit-loop"
+            },
+            {
+              "name": "0xDEADBEEF"
+            },
+            {
+              "name": "0xDEADBEEF-loop"
+            }
+          ],
+          "solution": "```cpp\n#include <bit>\n#include <cstdint>\n\n// (a) Portable: loops once per SET bit. Kernighan's trick `x &= x - 1` clears the\n// lowest set bit each iteration, so the loop runs popcount(x) times (not 32 times).\nint count_set_bits_loop(uint32_t x) {\n    int n = 0;\n    while (x) { x &= x - 1; ++n; }   // clear lowest set bit, count it\n    return n;\n}\n\n// (b) Idiomatic C++20: std::popcount is constexpr, portable, and lowers to a single\n// POPCNT instruction (~3-cycle latency, fully pipelined) -- far better than the loop,\n// whose cost grows with the number of set bits.\nint count_set_bits(uint32_t x) {\n    return std::popcount(x);\n}\n```",
+          "discussion": "`std::popcount` is `constexpr`, portable, and lowers to `POPCNT` (~3-cycle latency, fully pipelined) -- far better than the loop, whose cost scales with the number of set bits. Prefer `std::popcount` over `__builtin_popcount`; and note `std::countr_zero(0)` is defined (returns width) while `__builtin_ctz(0)` is UB."
+        },
+        {
+          "topic": "Odd one out!",
+          "lang": "cpp",
+          "prompt": "Spot the odd one out and explain. Each function claims to sum a row-major `N x N` `int` matrix `a[r*N + c]`. Three have good cache behaviour; one is dramatically slower for large `N`. Identify it and write a one-line fix that preserves the result.\n\n```cpp\nlong A(const int* a, int N){ long s=0; for(int r=0;r<N;++r) for(int c=0;c<N;++c) s+=a[r*N+c]; return s; }\nlong B(const int* a, int N){ long s=0; for(long i=0;i<(long)N*N;++i) s+=a[i]; return s; }\nlong C(const int* a, int N){ long s=0; for(int c=0;c<N;++c) for(int r=0;r<N;++r) s+=a[r*N+c]; return s; }\n```  Click **▶ Run tests** to check against the test cases.",
+          "hints": [
+            "A cache line holds 16 ints (64 bytes).",
+            "Which loop strides by `N` ints between consecutive accesses?",
+            "The fix is to swap the loop nesting order."
+          ],
+          "starter": "#include <cstddef>\n\n// `C` sums a row-major NxN matrix column-by-column (a[r*N+c] with c outer, r inner),\n// striding by a whole row each step -> cache-hostile for large N.\n// Implement C_fixed: SAME result (sum of all N*N ints) but a cache-friendly stride-1 walk.\nlong C_fixed(const int* a, int N) {\n    // TODO: iterate so the inner loop is contiguous in memory\n    return 0;\n}\n",
+          "harness": "#include <cstdio>\n#include <vector>\nstatic long ref_sum(const int* a, int N){ long s=0; for(long i=0;i<(long)N*N;++i) s+=a[i]; return s; }\nstatic void check(const char* n, long got, long want){\n    printf(\"__CASE__|%s|%s|got=%ld want=%ld\\n\", n, got==want?\"PASS\":\"FAIL\", got, want);\n}\nint main(){\n    { std::vector<int> m{7}; check(\"1x1\", C_fixed(m.data(),1), ref_sum(m.data(),1)); }\n    { std::vector<int> m{1,2,3,4}; check(\"2x2\", C_fixed(m.data(),2), ref_sum(m.data(),2)); }\n    { std::vector<int> m{-1,2,-3, 4,-5,6, -7,8,-9}; check(\"3x3-neg\", C_fixed(m.data(),3), ref_sum(m.data(),3)); }\n    { std::vector<int> m(256); for(int i=0;i<256;++i) m[i]=i; check(\"16x16-seq\", C_fixed(m.data(),16), 32640L); }\n    { std::vector<int> m(256); for(int i=0;i<256;++i) m[i]=(i*37)%101 - 50; check(\"16x16-ref\", C_fixed(m.data(),16), ref_sum(m.data(),16)); }\n    { std::vector<int> m(64,0); check(\"8x8-zero\", C_fixed(m.data(),8), 0L); }\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "1x1"
+            },
+            {
+              "name": "2x2"
+            },
+            {
+              "name": "3x3-neg"
+            },
+            {
+              "name": "16x16-seq"
+            },
+            {
+              "name": "16x16-ref"
+            },
+            {
+              "name": "8x8-zero"
+            }
+          ],
+          "solution": "```cpp\n#include <cstddef>\n\n// Fix for the slow column-major sweep `C`: iterate ROWS in the outer loop so the inner\n// loop walks contiguous memory (stride 1). Each 64-byte cache line (16 ints) is fully\n// consumed before moving on, and the hardware prefetcher can run ahead. Exactly the same\n// N*N additions and the same result -- only the memory access PATTERN changes.\nlong C_fixed(const int* a, int N) {\n    long s = 0;\n    for (int r = 0; r < N; ++r)        // rows outer\n        for (int c = 0; c < N; ++c)    // columns inner -> a[r*N + c] strides by 1 element\n            s += a[r * N + c];\n    return s;\n}\n```",
+          "discussion": "All three do exactly N^2 additions; complexity counts operations, the hardware counts cache lines. The same O(N^2) work is fast or slow purely by whether you stride along cache lines (and let the prefetcher help) or across them. This motivates cache-friendly layouts, blocking/tiling, and SoA in market-data code."
+        }
+      ]
+    },
+    "cpu-architecture-advanced": {
+      "mcqs": [
+        {
+          "topic": "Branch Prediction",
+          "q": "Processing a *sorted* random array through `if (data[i] >= 128) sum += data[i];` is several times faster than processing the *unsorted* array, even though sorting time is excluded. Why?",
+          "options": [
+            "`std::sort` warms the branch target buffer",
+            "Sorting compacts the data so it fits in cache",
+            "On the sorted array the data-dependent branch is predictable (long runs of one outcome); on the unsorted array it mispredicts ~50% of the time at ~15-20 cycles each",
+            "The compiler vectorizes only sorted arrays"
+          ],
+          "answer": 2,
+          "explanation": "It is about predictability, not presence, of the branch. Sorted data gives long taken/not-taken runs the predictor nails; random data is a coin flip per element. The lesson: make data-dependent branches predictable or remove them."
+        },
+        {
+          "topic": "Branch Prediction",
+          "q": "When is a `cmov`-based branchless version likely to be **slower** than the equivalent branchy code?",
+          "options": [
+            "When the branch is unpredictable",
+            "`cmov` is always faster than a branch",
+            "Only when the data does not fit in L1",
+            "When the branch is highly predictable, because speculation lets the CPU run past it for free while `cmov` serializes on both inputs"
+          ],
+          "answer": 3,
+          "explanation": "A well-predicted branch is essentially free (the CPU speculates straight through). `cmov` never mispredicts but computes both sides and adds a data dependency (~1-2 cycle latency). So predictable branch -> keep it; unpredictable -> go branchless. Answer: it depends; measure."
+        },
+        {
+          "topic": "Branch Prediction",
+          "q": "What does the `[[unlikely]]` attribute actually change in the generated code?",
+          "options": [
+            "It changes code layout so the unlikely path is hoisted out of the hot fall-through stream, improving I-cache density; it does not override hardware prediction",
+            "It inserts an `lfence` to block speculation",
+            "It marks the branch as a `cmov`",
+            "It forces the hardware branch predictor to predict not-taken"
+          ],
+          "answer": 0,
+          "explanation": "Hints like `[[unlikely]]`/`__builtin_expect` guide code layout (and inlining), not the runtime predictor's learning. PGO is the systematic version that lays out branches from measured behaviour."
+        },
+        {
+          "topic": "Instruction Reordering and Out-of-Order Execution",
+          "q": "Under the x86-TSO memory model, which single reordering of memory operations is permitted?",
+          "options": [
+            "StoreStore",
+            "StoreLoad (a later load may complete before an earlier store becomes globally visible)",
+            "LoadStore",
+            "LoadLoad"
+          ],
+          "answer": 1,
+          "explanation": "x86 is Total Store Order: only StoreLoad reordering is allowed, because a store sits in the store buffer before becoming globally visible while a later load can proceed. LoadLoad, StoreStore, and LoadStore stay in program order."
+        },
+        {
+          "topic": "Instruction Reordering and Out-of-Order Execution",
+          "q": "What does register renaming eliminate?",
+          "options": [
+            "Branch mispredictions",
+            "True (read-after-write) data dependencies",
+            "False dependencies (write-after-read and write-after-write hazards), by mapping architectural registers onto a larger physical register pool",
+            "Cache misses"
+          ],
+          "answer": 2,
+          "explanation": "Renaming removes WAR and WAW false dependencies so independent instructions reusing the same architectural register can execute in parallel. Only true RAW dependencies remain to constrain ordering."
+        },
+        {
+          "topic": "Instruction Reordering and Out-of-Order Execution",
+          "q": "On x86-64, which `std::atomic` operation requires a real fence instruction (e.g. a `LOCK`-prefixed op or `MFENCE`), making it noticeably more expensive than the others?",
+          "options": [
+            "A relaxed load",
+            "An acquire load",
+            "A release store",
+            "A `seq_cst` store (and any read-modify-write such as `fetch_add`/CAS)"
+          ],
+          "answer": 3,
+          "explanation": "On x86, acquire loads and release stores are plain `MOV`s (only a compiler barrier). A sequentially-consistent store needs a real barrier, and every RMW uses a `LOCK` prefix -- tens of cycles. This is why SPSC rings (release/acquire) crush CAS-heavy MPMC designs."
+        },
+        {
+          "topic": "Advanced Cache Analysis and Optimization",
+          "q": "Two threads on different cores each write to their own variable, but both variables happen to live in the same 64-byte cache line. The result is a severe slowdown. This is called:",
+          "options": [
+            "False sharing",
+            "A capacity miss",
+            "A TLB miss",
+            "A conflict miss"
+          ],
+          "answer": 0,
+          "explanation": "False sharing: each write invalidates the other core's copy of the shared line, forcing a coherence round-trip per write even though the variables are logically independent. The fix is to pad them onto separate lines (`alignas(std::hardware_destructive_interference_size)`, typically 64 bytes)."
+        },
+        {
+          "topic": "Advanced Cache Analysis and Optimization",
+          "q": "Why do low-latency systems prefer **explicit** huge pages (2 MB/1 GB) over Transparent Huge Pages (THP) for a hot working set?",
+          "options": [
+            "THP pages are smaller than explicit huge pages",
+            "Explicit huge pages give deterministic behaviour, whereas THP's background compaction (khugepaged) introduces unpredictable jitter",
+            "THP does not reduce TLB misses",
+            "Explicit huge pages are always faster to allocate at runtime"
+          ],
+          "answer": 1,
+          "explanation": "Both shrink TLB pressure (one entry covers 512x/262144x more memory). The difference is determinism: THP's asynchronous promotion/compaction perturbs latency, so HFT pre-allocates explicit huge pages instead."
+        },
+        {
+          "topic": "Vectorization, SIMD, and AVX-512",
+          "q": "How many `double`s fit in a single AVX-512 `zmm` register?",
+          "options": [
+            "2",
+            "4",
+            "8",
+            "16"
+          ],
+          "answer": 2,
+          "explanation": "A 512-bit register holds 8 doubles (64-bit each) or 16 floats (32-bit each). AVX2 `ymm` (256-bit) holds 4 doubles/8 floats; SSE `xmm` (128-bit) holds 2 doubles/4 floats."
+        },
+        {
+          "topic": "Vectorization, SIMD, and AVX-512",
+          "q": "Under plain `-O2` (no `-ffast-math`), why won't the compiler auto-vectorize a simple `double` summation reduction into one with multiple SIMD accumulators?",
+          "options": [
+            "`-O2` never vectorizes anything",
+            "The array is too small to vectorize",
+            "SIMD cannot add doubles",
+            "Floating-point addition is not associative, so reassociating the sum could change the bit-exact result"
+          ],
+          "answer": 3,
+          "explanation": "Reordering FP adds changes rounding, so the compiler must preserve your association unless you opt in with `-ffast-math`/`-fassociative-math` or `#pragma omp simd reduction`. That trades bit-exact reproducibility for speed -- a real decision in PnL code."
+        },
+        {
+          "topic": "NUMA Architecture",
+          "q": "On Linux with the default first-touch policy, a thread on node 0 `malloc`s a buffer and `memset`s it, then worker threads pinned to node 1 process the second half. Why is this slow?",
+          "options": [
+            "First-touch binds each physical page to the node of the thread that first *writes* it, so the `memset` placed every page on node 0; node-1 workers then make remote accesses across the interconnect",
+            "`memset` is not vectorized",
+            "The page tables are duplicated per node",
+            "`malloc` always allocates on node 1"
+          ],
+          "answer": 0,
+          "explanation": "first-touch places a page on the node whose core first writes it. Initializing the whole buffer on node 0 co-locates everything there, so node-1 workers pay ~1.5-2x remote DRAM latency plus interconnect contention. Fix: first-touch each region from the pinned thread that will own it."
+        }
+      ],
+      "coding": [
+        {
+          "topic": "Branch Prediction",
+          "lang": "cpp",
+          "prompt": "Rewrite this hot loop to remove the data-dependent branch (the data is essentially random, so it mispredicts ~50% of the time). Keep the same result.\n\n```cpp\nlong sum_above(const int* data, std::size_t n) {\n    long sum = 0;\n    for (std::size_t i = 0; i < n; ++i)\n        if (data[i] >= 128) sum += data[i];\n    return sum;\n}\n```  Click **▶ Run tests** to check against the test cases.",
+          "hints": [
+            "Turn the conditional add into a data dependency, not control flow.",
+            "Build a mask that is all-zeros or all-ones from the comparison.",
+            "`-(long)(cond)` gives `0` or `-1` (all ones)."
+          ],
+          "starter": "#include <cstddef>\n\n// Rewrite this WITHOUT a data-dependent branch (the data is random -> ~50% mispredict).\n// Same result as: long sum=0; for(i) if(data[i]>=128) sum+=data[i]; return sum;\nlong sum_above_branchless(const int* data, std::size_t n) {\n    // TODO: build a 0/all-ones mask from (data[i] >= 128) and add data[i] & mask\n    return 0;\n}\n",
+          "harness": "#include <cstdio>\n#include <vector>\n#include <cstdint>\nstatic long ref(const int* d, std::size_t n){ long s=0; for(std::size_t i=0;i<n;++i) if(d[i]>=128) s+=d[i]; return s; }\nstatic void check(const char* nm, long got, long want){\n    printf(\"__CASE__|%s|%s|got=%ld want=%ld\\n\", nm, got==want?\"PASS\":\"FAIL\", got, want);\n}\nint main(){\n    { std::vector<int> d{}; check(\"empty\", sum_above_branchless(d.data(),d.size()), ref(d.data(),d.size())); }\n    { std::vector<int> d{127,128,129,0,255}; check(\"boundary\", sum_above_branchless(d.data(),d.size()), ref(d.data(),d.size())); }\n    { std::vector<int> d{1,2,3,4,5}; check(\"all-below\", sum_above_branchless(d.data(),d.size()), 0L); }\n    { std::vector<int> d{200,300,400}; check(\"all-above\", sum_above_branchless(d.data(),d.size()), 900L); }\n    { std::vector<int> d; uint32_t s=12345u; for(int i=0;i<1000;++i){ s=s*1664525u+1013904223u; d.push_back((int)(s%256)); }\n      check(\"random-1000\", sum_above_branchless(d.data(),d.size()), ref(d.data(),d.size())); }\n    { std::vector<int> d{128,128,128}; check(\"exactly-128\", sum_above_branchless(d.data(),d.size()), 384L); }\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "empty"
+            },
+            {
+              "name": "boundary"
+            },
+            {
+              "name": "all-below"
+            },
+            {
+              "name": "all-above"
+            },
+            {
+              "name": "random-1000"
+            },
+            {
+              "name": "exactly-128"
+            }
+          ],
+          "solution": "```cpp\n#include <cstddef>\n\n// Branchless rewrite of `if (data[i] >= 128) sum += data[i];`.\n// The comparison becomes a MASK and the conditional add becomes pure arithmetic, so\n// there is no control-flow branch for the CPU to mispredict (a win ONLY because the\n// data is unpredictable; a predictable branch would be free via speculation).\nlong sum_above_branchless(const int* data, std::size_t n) {\n    long sum = 0;\n    for (std::size_t i = 0; i < n; ++i) {\n        int v = data[i];\n        long mask = -(long)(v >= 128);   // (v>=128) is 0 or 1; negating gives 0 or 0xFFFF...FFFF\n        sum += v & mask;                 // mask all-ones keeps v; mask zero contributes 0\n    }\n    return sum;\n    // The compiler may also lower this to a CMOV. Verify the effect with\n    // `perf stat -e branches,branch-misses` on real (random) data.\n}\n```",
+          "discussion": "The comparison result becomes a mask and the conditional add becomes pure arithmetic, so there is no control-flow branch to mispredict. The compiler may also achieve this with `cmov`. Note this is a win only because the branch is unpredictable; a highly predictable branch would beat the branchless form because the CPU speculates through it for free. Always measure with `perf stat -e branches,branch-misses`."
+        },
+        {
+          "topic": "Advanced Cache Analysis and Optimization",
+          "lang": "cpp",
+          "prompt": "Two worker threads each repeatedly increment their own counter, but the counters share a cache line and the program is far slower than expected. Fix the false sharing without changing the logic.\n\n```cpp\nstruct Counters { std::atomic<long> a; std::atomic<long> b; };\n```  Click **▶ Run tests** to check against the test cases.",
+          "hints": [
+            "The two atomics sit within one 64-byte cache line.",
+            "Use the C++17 portable constant for cache-line spacing.",
+            "Pad each counter onto its own line."
+          ],
+          "starter": "#include <atomic>\n#include <cstddef>\n#include <new>\n\n// Use the C++17 constant std::hardware_destructive_interference_size where available,\n// else fall back to 64 so this compiles on every toolchain.\n#if defined(__cpp_lib_hardware_interference_size)\ninline constexpr std::size_t kCacheLine = std::hardware_destructive_interference_size;\n#else\ninline constexpr std::size_t kCacheLine = 64;\n#endif\n\n// TODO: pad each counter onto its OWN cache line to remove false sharing\n// (the two atomics must NOT share a 64-byte line). Do not change the logic/types.\nstruct Counters {\n    std::atomic<long> a;\n    std::atomic<long> b;\n};\n",
+          "harness": "#include <cstdio>\n#include <cstdint>\n#include <thread>\nstatic int g_fail=0;\nstatic void check(const char* n, bool ok, const char* detail){\n    if(!ok) g_fail=1;\n    printf(\"__CASE__|%s|%s|%s\\n\", n, ok?\"PASS\":\"FAIL\", detail);\n}\nint main(){\n    Counters c{};\n    char buf[128];\n    std::uintptr_t pa=reinterpret_cast<std::uintptr_t>(&c.a), pb=reinterpret_cast<std::uintptr_t>(&c.b);\n    bool diff_line = (pa/64) != (pb/64);\n    snprintf(buf,sizeof buf,\"line(a)=%llu line(b)=%llu\",(unsigned long long)(pa/64),(unsigned long long)(pb/64));\n    check(\"separate-cache-lines\", diff_line, buf);\n    std::size_t gap = (pb>pa)?(pb-pa):(pa-pb);\n    snprintf(buf,sizeof buf,\"gap=%zu need>=64\", gap);\n    check(\"gap-at-least-64\", gap>=64, buf);\n    snprintf(buf,sizeof buf,\"a%%%zu=%llu b%%%zu=%llu\",kCacheLine,(unsigned long long)(pa%kCacheLine),kCacheLine,(unsigned long long)(pb%kCacheLine));\n    check(\"members-aligned\", (pa%kCacheLine==0)&&(pb%kCacheLine==0), buf);\n    c.a.store(0); c.b.store(0);\n    const long N=100000;\n    std::thread t1([&]{ for(long i=0;i<N;++i) c.a.fetch_add(1,std::memory_order_relaxed); });\n    std::thread t2([&]{ for(long i=0;i<N;++i) c.b.fetch_add(1,std::memory_order_relaxed); });\n    t1.join(); t2.join();\n    snprintf(buf,sizeof buf,\"a=%ld b=%ld want=%ld each\", c.a.load(), c.b.load(), N);\n    check(\"concurrent-correct\", c.a.load()==N && c.b.load()==N, buf);\n    snprintf(buf,sizeof buf,\"sizeof=%zu\", sizeof(Counters));\n    check(\"size-two-lines\", sizeof(Counters) >= 2*kCacheLine, buf);\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "separate-cache-lines"
+            },
+            {
+              "name": "gap-at-least-64"
+            },
+            {
+              "name": "members-aligned"
+            },
+            {
+              "name": "concurrent-correct"
+            },
+            {
+              "name": "size-two-lines"
+            }
+          ],
+          "solution": "```cpp\n#include <atomic>\n#include <cstddef>\n#include <new>\n\n// Cache-line size: prefer the C++17 constant std::hardware_destructive_interference_size\n// where the standard library provides it; otherwise fall back to 64 (the line size on all\n// current x86-64 and Apple-silicon cores) so this compiles everywhere.\n#if defined(__cpp_lib_hardware_interference_size)\ninline constexpr std::size_t kCacheLine = std::hardware_destructive_interference_size;\n#else\ninline constexpr std::size_t kCacheLine = 64;\n#endif\n\n// alignas forces each counter onto its OWN cache line, so a write to `a` no longer\n// invalidates the line holding `b` (and vice versa). The coherence ping-pong that made\n// the two cores fight over one shared line -- false sharing -- disappears.\nstruct Counters {\n    alignas(kCacheLine) std::atomic<long> a;\n    alignas(kCacheLine) std::atomic<long> b;\n};\n```",
+          "discussion": "`std::hardware_destructive_interference_size` (typically 64, sometimes 128 on Intel due to adjacent-line prefetch) is the minimum spacing that guarantees `a` and `b` land on different cache lines. Now each thread's write no longer invalidates the other core's line, eliminating the coherence ping-pong. This same padding is mandatory between the head and tail indices of an SPSC ring."
+        },
+        {
+          "topic": "Vectorization, SIMD, and AVX-512",
+          "lang": "cpp",
+          "prompt": "This dot-product loop fails to auto-vectorize because the compiler cannot prove the two arrays do not overlap. Annotate it so the compiler can prove non-aliasing and vectorize, without changing the math semantics.\n\n```cpp\nfloat dot(const float* a, const float* b, int n) {\n    float s = 0.0f;\n    for (int i = 0; i < n; ++i) s += a[i] * b[i];\n    return s;\n}\n```  Click **▶ Run tests** to check against the test cases.",
+          "hints": [
+            "Aliasing between `a` and `b` blocks reordering, CSE, and vectorization.",
+            "`__restrict` promises the pointers do not overlap.",
+            "Reductions still need `-ffast-math` or a pragma to reassociate, but non-aliasing is the first blocker."
+          ],
+          "starter": "#include <cstddef>\n\n// Annotate the pointers so the compiler can PROVE a and b do not overlap (non-aliasing),\n// which unblocks vectorization. Keep the math identical. Signature must stay compatible\n// with: float dot(const float* a, const float* b, int n)\nfloat dot(const float* a, const float* b, int n) {\n    // TODO: add the non-aliasing annotation (__restrict) to the parameters\n    float s = 0.0f;\n    for (int i = 0; i < n; ++i) s += a[i] * b[i];\n    return s;\n}\n",
+          "harness": "#include <cstdio>\n#include <vector>\n#include <cmath>\nstatic int g_fail=0;\nstatic void check(const char* nm, float got, float want){\n    bool ok = std::fabs(got-want) < 1e-3f; if(!ok) g_fail=1;\n    printf(\"__CASE__|%s|%s|got=%.4f want=%.4f\\n\", nm, ok?\"PASS\":\"FAIL\", got, want);\n}\nint main(){\n    { std::vector<float> a{}, b{}; check(\"empty\", dot(a.data(),b.data(),0), 0.0f); }\n    { std::vector<float> a{1,2,3,4}, b{4,3,2,1}; check(\"4-elem\", dot(a.data(),b.data(),4), 20.0f); }\n    { std::vector<float> a{1,0,0}, b{0,1,0}; check(\"orthogonal\", dot(a.data(),b.data(),3), 0.0f); }\n    { std::vector<float> a(8,2.0f), b(8,3.0f); check(\"8x(2*3)\", dot(a.data(),b.data(),8), 48.0f); }\n    { std::vector<float> a{-1,-2,-3}, b{1,2,3}; check(\"neg\", dot(a.data(),b.data(),3), -14.0f); }\n    { std::vector<float> a{0.5f,0.25f}, b{2.0f,4.0f}; check(\"fractions\", dot(a.data(),b.data(),2), 2.0f); }\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "empty"
+            },
+            {
+              "name": "4-elem"
+            },
+            {
+              "name": "orthogonal"
+            },
+            {
+              "name": "8x(2*3)"
+            },
+            {
+              "name": "neg"
+            },
+            {
+              "name": "fractions"
+            }
+          ],
+          "solution": "```cpp\n#include <cstddef>\n\n// __restrict promises the compiler that `a` and `b` never alias (point into disjoint\n// memory). Without it, a store through one pointer might change a load through the other,\n// so the compiler must keep the loads/stores in order -- blocking vectorization, CSE, and\n// reordering. With it, those optimizations are unblocked. The math is unchanged.\nfloat dot(const float* __restrict a, const float* __restrict b, int n) {\n    float s = 0.0f;\n    for (int i = 0; i < n; ++i) s += a[i] * b[i];\n    return s;\n    // Non-aliasing is the FIRST blocker. The summation into one float is still a\n    // loop-carried FP dependency that strict IEEE rules forbid reassociating; to get\n    // multiple SIMD accumulators you additionally need -ffast-math / -fassociative-math\n    // or `#pragma omp simd reduction(+:s)` (at the cost of bit-exact reproducibility).\n    // Compile with -O3 -march=native; check with -fopt-info-vec / -fopt-info-vec-missed.\n}\n```",
+          "discussion": "`__restrict` tells the compiler `a` and `b` never alias, unblocking the load/store reordering vectorization needs. Even then, summing into one `float` is a loop-carried FP dependency that strict IEEE rules forbid reassociating; `-ffast-math` or `#pragma omp simd reduction(+:s)` lets the compiler use multiple SIMD accumulators -- at the cost of bit-exact reproducibility. Verify with `-fopt-info-vec`/`-fopt-info-vec-missed`."
+        }
+      ]
+    },
+    "operating-systems": {
+      "mcqs": [
+        {
+          "topic": "Process vs Threads",
+          "q": "Which of the following is **private to each thread** rather than shared across threads of the same process?",
+          "options": [
+            "Open file descriptors",
+            "The stack (and registers / `thread_local` storage)",
+            "Global and static variables",
+            "The heap"
+          ],
+          "answer": 1,
+          "explanation": "Threads share the address space: code, globals/BSS, heap, and the file-descriptor table. Each thread privatizes its own stack, registers/instruction pointer, `thread_local` storage, and `errno`."
+        },
+        {
+          "topic": "Context Switching and System Calls",
+          "q": "A thread calls `getpid()`. Which is true?",
+          "options": [
+            "It causes a context switch but not a mode switch",
+            "It always causes a context switch and a mode switch",
+            "It causes a mode switch (user->kernel->user) but not necessarily a context switch",
+            "It causes neither, because `getpid` runs entirely in user mode"
+          ],
+          "answer": 2,
+          "explanation": "A system call always involves a mode switch (privilege transition, same thread keeps running). A context switch -- the kernel running a *different* thread -- only happens if the call blocks or the thread is preempted. A trivial non-blocking syscall is just a mode switch."
+        },
+        {
+          "topic": "Context Switching and System Calls",
+          "q": "How can `clock_gettime(CLOCK_MONOTONIC)` return a high-resolution timestamp without ever executing a `syscall` instruction?",
+          "options": [
+            "The CPU caches the last syscall result",
+            "It is implemented purely with `rdtsc` and never needs the kernel's value",
+            "It uses an `int 0x80` software interrupt instead",
+            "It is served from the vDSO: the kernel maps a shared timekeeping page into every process and the call reads it entirely in user mode"
+          ],
+          "answer": 3,
+          "explanation": "The vDSO (virtual dynamic shared object) is a kernel-mapped shared library containing user-mode implementations of `clock_gettime`/`gettimeofday`/`getcpu`. It reads a kernel-maintained shared page with no ring transition, turning a ~hundreds-of-ns trap into a ~tens-of-ns call."
+        },
+        {
+          "topic": "Context Switching and System Calls",
+          "q": "Why is switching between two threads of the **same process** cheaper than switching between two **different processes**?",
+          "options": [
+            "A different-process switch reloads `CR3` (the page-table base), which invalidates the TLB (absent PCID) and forces costly page walks afterward",
+            "Same-process switches skip the scheduler entirely",
+            "Different processes always run at a lower priority",
+            "Same-process threads share registers, so fewer registers must be saved"
+          ],
+          "answer": 0,
+          "explanation": "Same-process thread switches keep the address space, so `CR3` and the TLB stay warm. A process switch reloads `CR3`, invalidating the TLB (mitigated but complicated by PCID/KPTI) and leaving the resumed task running on cold caches."
+        },
+        {
+          "topic": "Process Creation and Lifecycle",
+          "q": "After a successful `fork()`, what does the return value tell each process?",
+          "options": [
+            "Both processes receive `0`",
+            "The parent receives the child's PID (>0); the child receives `0`",
+            "The parent receives `0`; the child receives the parent's PID",
+            "Both receive the child PID"
+          ],
+          "answer": 1,
+          "explanation": "`fork()` returns the child's PID to the parent, `0` to the child, and `-1` on failure. This is how a single code path distinguishes which process it is running in."
+        },
+        {
+          "topic": "Process Creation and Lifecycle",
+          "q": "A child process has terminated but its parent has not yet called `wait`/`waitpid`. What is the child's state?",
+          "options": [
+            "It has been fully removed from the process table",
+            "Orphan, reparented to PID 1",
+            "Zombie: dead-but-unreaped, holding only a process-table slot with its exit status",
+            "Sleeping (S)"
+          ],
+          "answer": 2,
+          "explanation": "A terminated, unreaped child is a zombie (`Z`): the kernel keeps a minimal record (exit status) until the parent reaps it. An *orphan* is different -- a still-running child whose parent died, reparented to init/PID 1, which reaps it."
+        },
+        {
+          "topic": "Virtual Memory Management",
+          "q": "Which best describes a **major** page fault versus a **minor** page fault?",
+          "options": [
+            "Both require disk I/O; the difference is page size",
+            "Minor faults occur only in kernel mode",
+            "Major faults are satisfied from RAM/page cache; minor faults read from disk",
+            "Minor faults need no disk I/O (allocate+zero a frame or map a cached page, ~single-digit us); major faults require disk I/O (swap-in/file read, ~hundreds of us to ms)"
+          ],
+          "answer": 3,
+          "explanation": "A minor fault is resolved without disk (fresh zeroed frame, or a page already in the page cache). A major fault must fetch from storage and is orders of magnitude slower -- catastrophic on a hot path, which is why HFT pre-faults and `mlock`s its arenas."
+        },
+        {
+          "topic": "Kernel and OS Architecture",
+          "q": "What distinguishes a microkernel from Linux's monolithic design?",
+          "options": [
+            "A microkernel runs device drivers and filesystems as user-space servers, keeping only minimal services (scheduling, IPC, basic MM) in ring 0",
+            "A microkernel runs everything in ring 0 for speed",
+            "A monolithic kernel cannot load modules at runtime",
+            "A microkernel has no system calls"
+          ],
+          "answer": 0,
+          "explanation": "A microkernel keeps the kernel minimal and pushes drivers/FS/networking into user-space servers for strong isolation, at the cost of IPC overhead. Linux is monolithic (all subsystems in kernel space, fast direct calls) but modular (runtime-loadable modules)."
+        },
+        {
+          "topic": "Process Scheduling",
+          "q": "Two `SCHED_FIFO` threads at the **same** real-time priority are both runnable on one core. What happens?",
+          "options": [
+            "They round-robin on a time quantum",
+            "The running one keeps the core until it blocks, yields, or a higher-priority RT task preempts it -- same-priority FIFO tasks do not round-robin",
+            "The scheduler picks fairly by `vruntime`",
+            "Both run simultaneously via hyper-threading"
+          ],
+          "answer": 1,
+          "explanation": "`SCHED_FIFO` has no time slice; a running task holds the CPU until it blocks/yields or is preempted by a strictly higher-priority RT task. `SCHED_RR` is the variant where same-priority tasks round-robin on a quantum."
+        },
+        {
+          "topic": "OS-Level Synchronization Primitives",
+          "q": "What makes a Linux futex (\"fast userspace mutex\") fast in the uncontended case?",
+          "options": [
+            "It disables interrupts during the lock",
+            "It always traps into the kernel but uses a faster code path",
+            "The uncontended fast path is a pure userspace atomic CAS on an `int` (~tens of cycles, no syscall); only the contended slow path calls `futex(FUTEX_WAIT)` to park the thread",
+            "It spins forever instead of sleeping"
+          ],
+          "answer": 2,
+          "explanation": "The uncontended path flips the lock word with an atomic CAS entirely in user space -- no syscall. Only when there is contention does it call into the kernel (`FUTEX_WAIT`/`FUTEX_WAKE`) to park and wake threads."
+        },
+        {
+          "topic": "Deadlocks, Starvation, and Livelock",
+          "q": "Which is NOT one of the four Coffman conditions required for deadlock?",
+          "options": [
+            "Circular wait",
+            "Mutual exclusion",
+            "Hold-and-wait",
+            "Priority inheritance"
+          ],
+          "answer": 3,
+          "explanation": "The four Coffman conditions are mutual exclusion, hold-and-wait, no preemption, and circular wait; breaking any one prevents deadlock. Priority inheritance is a *fix* for priority inversion, not a deadlock condition."
+        },
+        {
+          "topic": "Deadlocks, Starvation, and Livelock",
+          "q": "Two threads acquire `mutex_a` and `mutex_b` in opposite orders and occasionally deadlock. Which standard tool acquires both at once using a deadlock-avoidance algorithm so the lock order no longer matters?",
+          "options": [
+            "`std::scoped_lock(mutex_a, mutex_b)` (built on `std::lock`)",
+            "A `std::recursive_mutex`",
+            "`std::call_once`",
+            "`std::lock_guard` on each mutex separately"
+          ],
+          "answer": 0,
+          "explanation": "`std::scoped_lock` (using `std::lock`'s try/back-off algorithm) locks all supplied mutexes atomically, breaking the hold-and-wait/circular-wait pattern regardless of argument order. Locking each separately with `lock_guard` is exactly what produces the AB-BA deadlock."
+        }
+      ],
+      "coding": [
+        {
+          "topic": "Process Creation and Lifecycle",
+          "lang": "cpp",
+          "prompt": "Write a function `int run(const char* path, char* const argv[])` that uses `fork`/`execv`/`waitpid` to run a program, wait for it, and return its exit code (or -1 on failure). Use `_exit` in the child after a failed `exec`, and decode the status with the standard macros.  Click **▶ Run tests** to check against the test cases.",
+          "hints": [
+            "`fork()` returns 0 in the child, the child PID in the parent.",
+            "On a successful `exec` the call never returns.",
+            "Use `WIFEXITED` / `WEXITSTATUS` to decode `waitpid`'s status."
+          ],
+          "starter": "#include <unistd.h>\n#include <sys/wait.h>\n\n// Use fork/execv/waitpid to run `path` with `argv`, wait for it, and return its\n// exit code (or -1 on failure). In the child after a failed exec, call _exit(127).\n// Decode the status with WIFEXITED / WEXITSTATUS.\nint run(const char* path, char* const argv[]) {\n    // TODO: fork; in child execv then _exit(127); in parent waitpid and decode status\n    return -1;\n}\n",
+          "harness": "#include <cstdio>\n#include <cstring>\nstatic int g_fail=0;\nstatic void check(const char* n, int got, int want){\n    bool ok=got==want; if(!ok) g_fail=1;\n    printf(\"__CASE__|%s|%s|got=%d want=%d\\n\", n, ok?\"PASS\":\"FAIL\", got, want);\n}\nint main(){\n    { char a0[]=\"/bin/sh\", a1[]=\"-c\", a2[]=\"exit 0\"; char* av[]={a0,a1,a2,nullptr};\n      check(\"exit-0\", run(\"/bin/sh\", av), 0); }\n    { char a0[]=\"/bin/sh\", a1[]=\"-c\", a2[]=\"exit 42\"; char* av[]={a0,a1,a2,nullptr};\n      check(\"exit-42\", run(\"/bin/sh\", av), 42); }\n    { char a0[]=\"true\"; char* av[]={a0,nullptr};\n      check(\"true\", run(\"/usr/bin/true\", av), 0); }\n    { char a0[]=\"false\"; char* av[]={a0,nullptr};\n      check(\"false\", run(\"/usr/bin/false\", av), 1); }\n    { char a0[]=\"x\"; char* av[]={a0,nullptr};\n      check(\"exec-fail-127\", run(\"/no/such/binary_xyz\", av), 127); }\n    { char a0[]=\"echo\", a1[]=\"hi\"; char* av[]={a0,a1,nullptr};\n      check(\"echo-ok\", run(\"/bin/echo\", av), 0); }\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "exit-0"
+            },
+            {
+              "name": "exit-42"
+            },
+            {
+              "name": "true"
+            },
+            {
+              "name": "false"
+            },
+            {
+              "name": "exec-fail-127"
+            },
+            {
+              "name": "echo-ok"
+            }
+          ],
+          "solution": "```cpp\n#include <unistd.h>\n#include <sys/wait.h>\n\n// Run `path` with `argv`, wait for it, return its exit code (or -1 on failure).\nint run(const char* path, char* const argv[]) {\n    pid_t pid = fork();\n    if (pid < 0) return -1;             // fork failed\n    if (pid == 0) {                     // child branch: fork() returns 0 here\n        execv(path, argv);              // on success this NEVER returns (image replaced)\n        _exit(127);                     // reached only if exec failed; _exit avoids\n                                        // flushing the parent's inherited stdio buffers\n    }\n    int status = 0;                     // parent branch: fork() returned the child PID\n    if (waitpid(pid, &status, 0) < 0) return -1;   // reap the child (prevents a zombie)\n    if (WIFEXITED(status)) return WEXITSTATUS(status);  // normal exit -> its code\n    return -1;                          // killed by a signal, etc.\n}\n```",
+          "discussion": "The child uses `_exit` (not `exit`) so it does not flush stdio buffers the parent set up. `waitpid` reaps the child (preventing a zombie) and `WIFEXITED`/`WEXITSTATUS` decode the packed status word. A robust supervisor of many children typically reaps in a `SIGCHLD` handler with `waitpid(-1, &status, WNOHANG)` in a loop. Note `fork`'s cost scales with mapped memory because the kernel duplicates page tables -- never fork on a hot path or from a process mapping many GB."
+        },
+        {
+          "topic": "OS-Level Synchronization Primitives",
+          "lang": "cpp",
+          "prompt": "Implement a thread-safe bounded buffer's `pop()` using a `std::mutex` and a `std::condition_variable`, correctly handling spurious and lost wakeups. Assume members `std::queue<int> q_; std::mutex m_; std::condition_variable cv_;`.  Click **▶ Run tests** to check against the test cases.",
+          "hints": [
+            "Always hold the mutex when changing the predicate and signalling.",
+            "Re-check the predicate in a loop, never a bare `if`.",
+            "The `wait(lock, pred)` overload atomically releases the lock and waits, closing the lost-wakeup race."
+          ],
+          "starter": "#include <condition_variable>\n#include <mutex>\n#include <queue>\n\n// Implement pop() so it correctly handles spurious AND lost wakeups\n// (re-check the predicate under the lock; use the wait(lock, pred) overload).\n// push() is provided.\nclass Queue {\n    std::queue<int> q_;\n    std::mutex m_;\n    std::condition_variable cv_;\npublic:\n    int pop() {\n        // TODO: lock m_, wait until !q_.empty(), then pop and return the front element\n        return 0;\n    }\n    void push(int v) {\n        {\n            std::lock_guard<std::mutex> lock(m_);\n            q_.push(v);\n        }\n        cv_.notify_one();\n    }\n};\n",
+          "harness": "#include <cstdio>\n#include <thread>\nstatic int g_fail=0;\nstatic void check(const char* n, bool ok, const char* detail){\n    if(!ok) g_fail=1; printf(\"__CASE__|%s|%s|%s\\n\", n, ok?\"PASS\":\"FAIL\", detail);\n}\nint main(){\n    char buf[128];\n    { Queue q; q.push(7); int v=q.pop(); snprintf(buf,sizeof buf,\"got=%d want=7\",v); check(\"single\", v==7, buf); }\n    { Queue q; for(int i=1;i<=5;++i) q.push(i); bool ok=true; for(int i=1;i<=5;++i) ok &= (q.pop()==i);\n      check(\"fifo-order\", ok, \"1..5 in order\"); }\n    { Queue q; int got=-1;\n      std::thread c([&]{ got=q.pop(); });\n      std::thread p([&]{ q.push(99); });\n      p.join(); c.join();\n      snprintf(buf,sizeof buf,\"got=%d want=99\",got); check(\"blocking-handoff\", got==99, buf); }\n    { Queue q; const int N=10000; long sum=0;\n      std::thread c([&]{ for(int i=0;i<N;++i) sum+=q.pop(); });\n      std::thread p([&]{ for(int i=1;i<=N;++i) q.push(i); });\n      p.join(); c.join();\n      long want=(long)N*(N+1)/2; snprintf(buf,sizeof buf,\"sum=%ld want=%ld\",sum,want);\n      check(\"stream-sum\", sum==want, buf); }\n    { Queue q; q.push(1); int a=q.pop(); q.push(2); q.push(3); int b=q.pop(); int c=q.pop();\n      snprintf(buf,sizeof buf,\"a=%d b=%d c=%d\",a,b,c); check(\"interleaved\", a==1&&b==2&&c==3, buf); }\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "single"
+            },
+            {
+              "name": "fifo-order"
+            },
+            {
+              "name": "blocking-handoff"
+            },
+            {
+              "name": "stream-sum"
+            },
+            {
+              "name": "interleaved"
+            }
+          ],
+          "solution": "```cpp\n#include <condition_variable>\n#include <mutex>\n#include <queue>\n\nclass Queue {\n    std::queue<int> q_;\n    std::mutex m_;\n    std::condition_variable cv_;\npublic:\n    int pop() {\n        std::unique_lock<std::mutex> lock(m_);\n        // The predicate-form wait is equivalent to `while (!pred()) cv_.wait(lock);`:\n        // it atomically releases the mutex and blocks, defeating the LOST-wakeup race\n        // (producer pushing+signalling between a manual check and the sleep), and the\n        // internal loop absorbs SPURIOUS wakeups. Never use a bare `if`.\n        cv_.wait(lock, [this]{ return !q_.empty(); });\n        int v = q_.front();   // predicate guarantees the queue is non-empty here\n        q_.pop();\n        return v;             // mutex released by unique_lock's destructor\n    }\n    void push(int v) {\n        {\n            std::lock_guard<std::mutex> lock(m_);   // hold the lock while mutating the queue...\n            q_.push(v);\n        }                                            // ...release BEFORE notifying\n        cv_.notify_one();    // wake one waiter; the predicate is already true\n    }\n};\n```",
+          "discussion": "The predicate-form `wait(lock, pred)` is equivalent to `while (!pred()) cv_.wait(lock);` -- it releases the mutex and blocks atomically, defeating the lost-wakeup race (producer pushes+signals between a manual check and sleep), and the loop absorbs spurious wakeups. The producer must hold the mutex while mutating the queue, then signal. Note this is a control-plane pattern; an HFT hot path would instead busy-poll a lock-free SPSC ring."
+        }
+      ]
+    },
+    "networking": {
+      "mcqs": [
+        {
+          "topic": "TCP/IP Model Overview",
+          "q": "The TCP/IP model has four layers. Which lists the data-unit names from transport down to link, in order?",
+          "options": [
+            "frame -> packet -> segment",
+            "segment/datagram (transport) -> packet (internet) -> frame (link)",
+            "packet -> frame -> segment",
+            "datagram -> frame -> segment"
+          ],
+          "answer": 1,
+          "explanation": "Transport produces a TCP *segment* or UDP *datagram*; the internet layer wraps it in an IP *packet*; the link layer wraps that in an Ethernet *frame*. IP is the 'narrow waist' all layers pass through."
+        },
+        {
+          "topic": "TCP/IP Model Overview",
+          "q": "On a 1500-byte Ethernet MTU, the typical TCP MSS negotiated in the handshake is:",
+          "options": [
+            "576 bytes",
+            "1500 bytes",
+            "1460 bytes (1500 - 20 IP header - 20 TCP header)",
+            "1472 bytes (1500 - 20 IP - 8 UDP)"
+          ],
+          "answer": 2,
+          "explanation": "MSS is the payload that fits without IP fragmentation: 1500 - 20 (IPv4 header) - 20 (TCP header) = 1460 bytes. 1472 is the analogous figure for UDP (8-byte UDP header)."
+        },
+        {
+          "topic": "Internet Layer",
+          "q": "What does a router do to the IPv4 **TTL** field, and what does it recompute as a result?",
+          "options": [
+            "Leaves TTL unchanged; recomputes nothing",
+            "Decrements TTL; recomputes the Ethernet FCS only",
+            "Increments TTL; recomputes the TCP checksum",
+            "Decrements TTL by 1 (dropping the packet at 0); recomputes the IPv4 header checksum"
+          ],
+          "answer": 3,
+          "explanation": "Each hop decrements TTL by 1 and drops the packet (returning ICMP time-exceeded) at 0. Because TTL changed, every router must recompute the 16-bit IPv4 header checksum (which covers the header only, not the payload). IPv6 dropped the header checksum to avoid this per-hop work."
+        },
+        {
+          "topic": "Internet Layer",
+          "q": "In the IPv4 header, the Protocol field value 17 indicates the payload is which transport protocol?",
+          "options": [
+            "UDP",
+            "IGMP",
+            "TCP",
+            "ICMP"
+          ],
+          "answer": 0,
+          "explanation": "Protocol 17 = UDP, 6 = TCP, 1 = ICMP, 2 = IGMP. The receiving host's internet layer uses this field to demultiplex the payload to the correct transport."
+        },
+        {
+          "topic": "Network Access Layer",
+          "q": "ARP (Address Resolution Protocol) is used to:",
+          "options": [
+            "Map a domain name to an IP address",
+            "Resolve an IP address to a link-layer MAC address, using broadcast requests and unicast replies",
+            "Decrement TTL at each hop",
+            "Negotiate the TCP window size"
+          ],
+          "answer": 1,
+          "explanation": "ARP bridges IP to MAC. It runs directly over Ethernet (EtherType 0x0806), broadcasts the request ('who has this IP?'), receives a unicast reply, and caches the result in the ARP cache. (Name->IP is DNS, a different mechanism.)"
+        },
+        {
+          "topic": "Transport Layer",
+          "q": "What uniquely identifies a single TCP connection on a host?",
+          "options": [
+            "The IP Identification field",
+            "The destination port alone",
+            "The 4-tuple (source IP, source port, destination IP, destination port)",
+            "The source MAC address"
+          ],
+          "answer": 2,
+          "explanation": "A TCP connection is keyed by the 4-tuple. This is why one server port can serve many simultaneous clients -- each connection differs in the remote IP/port. The transport demuxes incoming data to the matching socket by this tuple."
+        },
+        {
+          "topic": "Transport Layer",
+          "q": "Why do many market-data feeds use UDP rather than TCP, while order-entry uses TCP?",
+          "options": [
+            "UDP is encrypted by default and TCP is not",
+            "TCP cannot carry binary data",
+            "UDP has a larger header so carries more data",
+            "TCP's in-order delivery causes head-of-line blocking -- a lost segment stalls later ones for >= 1 RTT, delivering stale prices -- whereas UDP datagrams are independent and support multicast fan-out; orders need TCP's reliability/ordering"
+          ],
+          "answer": 3,
+          "explanation": "For prices you want the freshest data, not a retransmit of a stale one, and multicast lets one send reach thousands of subscribers; UDP gives both with no head-of-line blocking. Orders cannot be silently lost or reordered, so they use TCP."
+        },
+        {
+          "topic": "UDP Protocol",
+          "q": "How large is the UDP header, and which statement about message boundaries is correct?",
+          "options": [
+            "8 bytes; one `sendto` produces exactly one datagram and one `recvfrom` returns exactly one datagram (boundaries preserved)",
+            "8 bytes; UDP coalesces datagrams like a byte stream",
+            "12 bytes; boundaries are preserved",
+            "20 bytes; UDP does not preserve message boundaries"
+          ],
+          "answer": 0,
+          "explanation": "The UDP header is a fixed 8 bytes (source port, dest port, length, checksum). UDP is message-oriented: each `sendto` is one datagram and each `recvfrom` returns exactly one (truncated and lost if the buffer is too small). TCP is the byte stream that does not preserve boundaries."
+        },
+        {
+          "topic": "TCP Protocol",
+          "q": "The combination of Nagle's algorithm and delayed ACKs can produce a characteristic ~40 ms stall on small messages. Which one-line fix is standard on an order-entry socket?",
+          "options": [
+            "Enable `SO_REUSEADDR`",
+            "Set `TCP_NODELAY` to disable Nagle's algorithm",
+            "Increase `SO_RCVBUF`",
+            "Set the socket to non-blocking"
+          ],
+          "answer": 1,
+          "explanation": "Nagle withholds a small send while unacked data is in flight; delayed ACK withholds the ACK hoping to piggyback -- together they deadlock for ~40 ms. `setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof one)` disables Nagle and is set on every latency-sensitive TCP session."
+        },
+        {
+          "topic": "TCP Protocol",
+          "q": "Roughly how much latency does the TCP 3-way handshake add before the first byte of application data can flow?",
+          "options": [
+            "Two full RTTs",
+            "Zero -- data flows with the SYN",
+            "About one round-trip time (RTT): SYN, SYN+ACK, then the client's ACK precedes data",
+            "About 40 ms regardless of RTT"
+          ],
+          "answer": 2,
+          "explanation": "SYN -> SYN+ACK -> ACK costs ~1 RTT before data. Slow start then ramps the congestion window over several more RTTs. This is why HFT pre-establishes and warms connections so a hot order never pays the handshake or slow-start."
+        }
+      ],
+      "coding": [
+        {
+          "topic": "UDP Protocol",
+          "lang": "cpp",
+          "prompt": "Write a function that opens a UDP socket, allows multiple binders with `SO_REUSEADDR`, binds to a port on all interfaces, and joins an IPv4 multicast group on a specific local interface. Return the socket fd or -1. Signature: `int join_multicast(const char* group, const char* iface_ip, uint16_t port);`  Click **▶ Run tests** to check against the test cases.",
+          "hints": [
+            "Use `socket(AF_INET, SOCK_DGRAM, 0)`.",
+            "Set `SO_REUSEADDR` before `bind`.",
+            "Fill an `ip_mreq` with the group IP and the interface IP, then `setsockopt(IP_ADD_MEMBERSHIP)`."
+          ],
+          "starter": "#include <sys/socket.h>\n#include <netinet/in.h>\n#include <arpa/inet.h>\n#include <unistd.h>\n#include <cstdint>\n\n// Open a UDP socket, set SO_REUSEADDR (before bind), bind INADDR_ANY:port,\n// then join the IPv4 multicast `group` on the local interface `iface_ip`\n// (fill an ip_mreq and IP_ADD_MEMBERSHIP). Return the fd, or -1 on any failure.\nint join_multicast(const char* group, const char* iface_ip, uint16_t port) {\n    // TODO: socket -> setsockopt(SO_REUSEADDR) -> bind -> setsockopt(IP_ADD_MEMBERSHIP)\n    return -1;\n}\n",
+          "harness": "#include <cstdio>\n#include <cerrno>\n#include <cstring>\nstatic int g_fail=0;\nstatic void check(const char* n, bool ok, const char* detail){\n    if(!ok) g_fail=1; printf(\"__CASE__|%s|%s|%s\\n\", n, ok?\"PASS\":\"FAIL\", detail);\n}\nint main(){\n    char buf[160];\n    int fd = join_multicast(\"239.1.2.3\", \"127.0.0.1\", 0);\n    snprintf(buf,sizeof buf,\"fd=%d errno=%s\", fd, fd<0?strerror(errno):\"-\");\n    check(\"join-ok\", fd >= 0, buf);\n    if (fd >= 0) {\n        int type=0; socklen_t tl=sizeof type; ::getsockopt(fd, SOL_SOCKET, SO_TYPE, &type, &tl);\n        snprintf(buf,sizeof buf,\"SO_TYPE=%d want=%d(SOCK_DGRAM)\", type, SOCK_DGRAM);\n        check(\"is-udp\", type==SOCK_DGRAM, buf);\n        int reuse=0; socklen_t rl=sizeof reuse; ::getsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuse, &rl);\n        snprintf(buf,sizeof buf,\"SO_REUSEADDR=%d\", reuse);\n        check(\"reuseaddr-set\", reuse!=0, buf);\n        sockaddr_in sa{}; socklen_t sl=sizeof sa; int gr=::getsockname(fd,(sockaddr*)&sa,&sl);\n        snprintf(buf,sizeof buf,\"getsockname=%d family=%d port=%u\", gr, sa.sin_family, ntohs(sa.sin_port));\n        check(\"is-bound\", gr==0 && sa.sin_family==AF_INET, buf);\n        ::close(fd);\n    } else { check(\"is-udp\",false,\"skipped\"); check(\"reuseaddr-set\",false,\"skipped\"); check(\"is-bound\",false,\"skipped\"); }\n    int fd2 = join_multicast(\"239.9.9.9\", \"127.0.0.1\", 0);\n    snprintf(buf,sizeof buf,\"fd2=%d\", fd2);\n    check(\"second-join-ok\", fd2 >= 0, buf);\n    if (fd2>=0) ::close(fd2);\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "join-ok"
+            },
+            {
+              "name": "is-udp"
+            },
+            {
+              "name": "reuseaddr-set"
+            },
+            {
+              "name": "is-bound"
+            },
+            {
+              "name": "second-join-ok"
+            }
+          ],
+          "solution": "```cpp\n#include <sys/socket.h>\n#include <netinet/in.h>\n#include <arpa/inet.h>\n#include <unistd.h>\n#include <cstdint>\n\nint join_multicast(const char* group, const char* iface_ip, uint16_t port) {\n    int fd = ::socket(AF_INET, SOCK_DGRAM, 0);          // UDP socket\n    if (fd < 0) return -1;\n\n    int one = 1;                                        // let several consumers bind the\n    if (::setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one) < 0) { ::close(fd); return -1; }\n                                                        // same group:port -- set BEFORE bind\n\n    sockaddr_in addr{};\n    addr.sin_family = AF_INET;\n    addr.sin_addr.s_addr = htonl(INADDR_ANY);           // bind all interfaces; htonl: host->net order\n    addr.sin_port = htons(port);                        // ports go on the wire big-endian\n    if (::bind(fd, reinterpret_cast<sockaddr*>(&addr), sizeof addr) < 0) { ::close(fd); return -1; }\n\n    ip_mreq mreq{};\n    mreq.imr_multiaddr.s_addr = ::inet_addr(group);     // the multicast group IP\n    mreq.imr_interface.s_addr = ::inet_addr(iface_ip);  // WHICH NIC to receive on (critical on a\n                                                        // multi-homed box: wrong iface -> silence)\n    if (::setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof mreq) < 0) { ::close(fd); return -1; }\n\n    return fd;\n}\n```",
+          "discussion": "`SO_REUSEADDR` lets several consumers bind the same group:port. The interface IP in `ip_mreq` is critical on a multi-homed colo box receiving the A feed on one NIC and the B feed on another -- joining on the wrong interface silently receives nothing. Ports/addresses go on the wire big-endian, hence `htons`/`htonl`. To survive microbursts, size `SO_RCVBUF` and drain quickly (e.g. `recvmmsg`), since the kernel silently drops datagrams when the per-socket queue fills."
+        },
+        {
+          "topic": "TCP Protocol",
+          "lang": "cpp",
+          "prompt": "TCP is a byte stream with no message boundaries, so a single `recv` may return a partial or coalesced message. Write `bool recv_exact(int fd, void* buf, size_t n)` that reads exactly `n` bytes (handling short reads and `EINTR`), returning false on EOF or error.  Click **▶ Run tests** to check against the test cases.",
+          "hints": [
+            "Loop until all `n` bytes are read.",
+            "`recv` returning 0 means the peer closed (EOF).",
+            "Retry on `errno == EINTR`; advance the buffer pointer by bytes received."
+          ],
+          "starter": "#include <sys/socket.h>\n#include <cerrno>\n#include <cstddef>\n#include <cstdint>\n\n// Read EXACTLY n bytes from a byte-stream socket, handling short reads and EINTR.\n// Return false on EOF (peer closed before n bytes) or a real error.\nbool recv_exact(int fd, void* buf, size_t n) {\n    // TODO: loop calling recv until n bytes received; 0 => EOF (false); EINTR => retry\n    return false;\n}\n",
+          "harness": "#include <cstdio>\n#include <cstring>\n#include <unistd.h>\n#include <thread>\nstatic int g_fail=0;\nstatic void check(const char* n, bool ok, const char* detail){\n    if(!ok) g_fail=1; printf(\"__CASE__|%s|%s|%s\\n\", n, ok?\"PASS\":\"FAIL\", detail);\n}\nstatic bool make_pair(int sv[2]){ return ::socketpair(AF_UNIX, SOCK_STREAM, 0, sv)==0; }\nint main(){\n    char buf[160];\n    { int sv[2]; make_pair(sv); const char msg[]=\"HELLO\"; ::write(sv[1],msg,5);\n      char out[5]={0}; bool ok=recv_exact(sv[0],out,5); ok = ok && memcmp(out,msg,5)==0;\n      snprintf(buf,sizeof buf,\"got='%.5s'\",out); check(\"exact-5\", ok, buf); ::close(sv[0]); ::close(sv[1]); }\n    { int sv[2]; make_pair(sv);\n      std::thread w([&]{ const char* m=\"ABCDEFGH\"; for(int i=0;i<8;++i){ ::write(sv[1],m+i,1); } });\n      char out[8]={0}; bool ok=recv_exact(sv[0],out,8); ok = ok && memcmp(out,\"ABCDEFGH\",8)==0;\n      w.join(); snprintf(buf,sizeof buf,\"got='%.8s'\",out); check(\"dribbled-8\", ok, buf); ::close(sv[0]); ::close(sv[1]); }\n    { int sv[2]; make_pair(sv); ::write(sv[1],\"abc\",3); ::close(sv[1]);\n      char out[5]={0}; bool ok=recv_exact(sv[0],out,5);\n      snprintf(buf,sizeof buf,\"ret=%d want=false(EOF)\", ok); check(\"eof-short\", ok==false, buf); ::close(sv[0]); }\n    { int sv[2]; make_pair(sv); char out[1]; bool ok=recv_exact(sv[0],out,0);\n      check(\"zero-bytes\", ok==true, \"ret=true\"); ::close(sv[0]); ::close(sv[1]); }\n    { int sv[2]; make_pair(sv); ::write(sv[1],\"foo\",3); ::write(sv[1],\"bar\",3);\n      char out[6]={0}; bool ok=recv_exact(sv[0],out,6); ok = ok && memcmp(out,\"foobar\",6)==0;\n      snprintf(buf,sizeof buf,\"got='%.6s'\",out); check(\"coalesced-6\", ok, buf); ::close(sv[0]); ::close(sv[1]); }\n    { int sv[2]; make_pair(sv); const int N=4096;\n      std::thread w([&]{ char chunk[256]; for(int i=0;i<N/256;++i){ for(int j=0;j<256;j++) chunk[j]=(char)((i*256+j)&0xFF); ::write(sv[1],chunk,256);} });\n      char* out=new char[N]; bool ok=recv_exact(sv[0],out,N);\n      for(int i=0;ok&&i<N;++i) ok = (out[i]==(char)(i&0xFF));\n      w.join(); snprintf(buf,sizeof buf,\"ret=%d N=%d\", ok, N); check(\"framed-4096\", ok, buf);\n      delete[] out; ::close(sv[0]); ::close(sv[1]); }\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "exact-5"
+            },
+            {
+              "name": "dribbled-8"
+            },
+            {
+              "name": "eof-short"
+            },
+            {
+              "name": "zero-bytes"
+            },
+            {
+              "name": "coalesced-6"
+            },
+            {
+              "name": "framed-4096"
+            }
+          ],
+          "solution": "```cpp\n#include <sys/socket.h>\n#include <cerrno>\n#include <cstddef>\n#include <cstdint>\n\n// TCP is a byte stream with NO message boundaries: one recv() may return a partial\n// chunk or several sends coalesced. So we must loop until we have exactly n bytes.\nbool recv_exact(int fd, void* buf, size_t n) {\n    auto* p = static_cast<uint8_t*>(buf);\n    size_t got = 0;\n    while (got < n) {\n        ssize_t r = ::recv(fd, p + got, n - got, 0);   // ask only for what's still missing\n        if (r > 0) { got += static_cast<size_t>(r); continue; }  // partial read: advance & continue\n        if (r == 0) return false;                 // peer performed an orderly close: EOF before n\n        if (errno == EINTR) continue;             // interrupted by a signal: just retry\n        return false;                             // real error (or EAGAIN/EWOULDBLOCK on a nonblocking fd)\n    }\n    return true;\n    // Framing (length prefix or delimiter) is the caller's job; recv_exact is the\n    // building block. On a non-blocking socket you would treat EAGAIN by waiting for\n    // readability via epoll/kqueue instead of returning false.\n}\n```",
+          "discussion": "Because TCP does not preserve message boundaries, applications must frame messages themselves (a length prefix or delimiter) and read until they have a whole message -- `recv_exact` is the building block. A single `recv` can return any prefix of the bytes the peer sent, or bytes from several sends coalesced. `recv` returning 0 is EOF (orderly close); negative with `EINTR` should be retried. On a non-blocking socket you would also handle `EAGAIN`/`EWOULDBLOCK` by waiting for readability via epoll."
+        }
+      ]
+    },
+    "ipc": {
+      "mcqs": [
+        {
+          "topic": "TCP/UDP System Calls",
+          "q": "On a listening TCP socket, what does `accept()` return?",
+          "options": [
+            "The number of pending connections",
+            "The peer's port number",
+            "Nothing -- it reuses the listening fd for the new connection",
+            "A brand-new file descriptor for the established connection, while the listening fd keeps listening"
+          ],
+          "answer": 3,
+          "explanation": "`accept()` pops a completed-handshake connection off the accept queue and returns a *new* fd for it; the original listening socket continues to accept further connections. Confusing the two fds is a classic bug."
+        },
+        {
+          "topic": "TCP/UDP System Calls",
+          "q": "With **edge-triggered** epoll (`EPOLLET`), what must your code do that level-triggered epoll does not require?",
+          "options": [
+            "Drain the fd in a loop until `recv` returns `EAGAIN`, or data can stall unreported",
+            "Call `accept` twice per event",
+            "Set `TCP_NODELAY` first",
+            "Re-arm the fd with `epoll_ctl` after every event"
+          ],
+          "answer": 0,
+          "explanation": "Edge-triggered mode notifies only on the not-ready -> ready transition, so you must read until `EAGAIN`/`EWOULDBLOCK`; otherwise leftover data sits in the buffer with no further notification. Level-triggered keeps reporting readability as long as data remains."
+        },
+        {
+          "topic": "Pipes and Message Queues",
+          "q": "On Linux, a `write()` of how many bytes to a pipe is guaranteed **atomic** (will not interleave with another writer's bytes)?",
+          "options": [
+            "Any size",
+            "Up to `PIPE_BUF` (4096 bytes on Linux)",
+            "Up to 64 KiB (the default pipe capacity)",
+            "Exactly one byte"
+          ],
+          "answer": 1,
+          "explanation": "Writes of <= `PIPE_BUF` (4096 on Linux) are atomic; larger writes may be split and interleaved with other writers. The pipe's total buffer defaults to 64 KiB (tunable via `F_SETPIPE_SZ`), but that is capacity, not the atomicity bound."
+        },
+        {
+          "topic": "Pipes and Message Queues",
+          "q": "What happens when a process writes to a pipe after all read ends have been closed (default signal disposition)?",
+          "options": [
+            "`write` blocks forever",
+            "`write` returns 0",
+            "The kernel raises `SIGPIPE`, which terminates the process by default (and `write` would otherwise fail with `EPIPE`)",
+            "The data is buffered until a reader appears"
+          ],
+          "answer": 2,
+          "explanation": "Writing to a pipe with no readers raises `SIGPIPE` (default action: terminate). If `SIGPIPE` is ignored/blocked, the `write` fails with `EPIPE`. Conversely, reading after all writers close returns 0 (EOF)."
+        },
+        {
+          "topic": "Memory-Mapped Files (mmap)",
+          "q": "Which `mmap` flag makes writes visible to other processes mapping the same file, turning `mmap` into an IPC channel?",
+          "options": [
+            "`MAP_ANONYMOUS`",
+            "`MAP_POPULATE`",
+            "`MAP_PRIVATE`",
+            "`MAP_SHARED`"
+          ],
+          "answer": 3,
+          "explanation": "`MAP_SHARED` propagates writes to the backing file and to all other mappers of it -- the basis of shared-memory IPC. `MAP_PRIVATE` is copy-on-write (private to the writer). `MAP_ANONYMOUS` has no file backing; `MAP_POPULATE` just pre-faults."
+        },
+        {
+          "topic": "POSIX Shared Memory",
+          "q": "What is the correct three-step idiom to create and map a POSIX shared-memory region for IPC?",
+          "options": [
+            "`shm_open(\"/name\", ...)` -> `ftruncate(fd, size)` -> `mmap(..., MAP_SHARED, fd, 0)`",
+            "`open` -> `read` -> `write`",
+            "`malloc` -> `mlock` -> `shm_open`",
+            "`mmap` -> `shm_open` -> `ftruncate`"
+          ],
+          "answer": 0,
+          "explanation": "`shm_open` returns an fd to a tmpfs-backed object in `/dev/shm`; `ftruncate` sizes it (mapping past EOF would raise `SIGBUS`); `mmap(MAP_SHARED)` maps it. The object persists until `shm_unlink`. The mapping outlives the fd, so you may `close(fd)` after mapping."
+        },
+        {
+          "topic": "POSIX Shared Memory",
+          "q": "Why must you NOT store a `std::string`, `std::vector`, or raw pointer between objects inside a shared-memory region used by two processes?",
+          "options": [
+            "They are too large to fit",
+            "Those types hold heap pointers (or virtual-table pointers); each process maps the region at a different virtual address, so absolute pointers are meaningless across processes",
+            "tmpfs does not support strings",
+            "`shm_open` rejects non-trivial types"
+          ],
+          "answer": 1,
+          "explanation": "Only trivially-copyable/standard-layout data is safe. A `std::string`/`std::vector` stores a pointer into one process's heap, invalid in the other; vtable pointers fail similarly. Use offsets/indices relative to the region base (or Boost.Interprocess `offset_ptr`) and construct in place with placement-new."
+        },
+        {
+          "topic": "Zero-Copy Techniques",
+          "q": "The naive read-file-then-write-to-socket path performs four data movements. Which two does `sendfile(2)` eliminate?",
+          "options": [
+            "The interrupt and the context switch",
+            "The two unavoidable DMA transfers (disk->page cache and socket->NIC)",
+            "The page-cache->user-buffer copy (from `read`) and the user-buffer->socket-buffer copy (from `write`)",
+            "The TCP and IP header constructions"
+          ],
+          "answer": 2,
+          "explanation": "`sendfile` keeps data in the kernel: it removes the two CPU copies through user space (the `read` copy and the `write` copy). The two DMA transfers remain (they are unavoidable); on scatter-gather-DMA hardware the page-cache pages go straight to the NIC."
+        },
+        {
+          "topic": "Zero-Copy Techniques",
+          "q": "A subtle requirement when using `MSG_ZEROCOPY` on a TCP send is:",
+          "options": [
+            "It encrypts the payload before sending",
+            "It requires `MAP_HUGETLB`",
+            "It always reduces latency for small order messages",
+            "Completion is asynchronous -- `send()` returns before transmission finishes, so you must not reuse/free the buffer until a completion arrives on the socket's error queue (`MSG_ERRQUEUE`)"
+          ],
+          "answer": 3,
+          "explanation": "The kernel pins your user pages and DMAs from them, so the bytes must stay valid past `send()`; completion (a `SO_EE_ORIGIN_ZEROCOPY` notification with a matching sequence number) is read from `MSG_ERRQUEUE` via `recvmsg`. It is generally only a win above ~10 KB; for tiny messages the pinning/bookkeeping costs more than just copying."
+        },
+        {
+          "topic": "Lock-Free IPC Patterns",
+          "q": "In an SPSC ring buffer, the producer publishes a new item by storing the head index with **release** semantics and the consumer reads it with **acquire**. What does this release/acquire pair guarantee?",
+          "options": [
+            "A happens-before edge: once the consumer observes the advanced head (acquire), the payload the producer wrote before the release store is guaranteed visible",
+            "That only one thread ever runs",
+            "That the operations are sequentially consistent across all cores",
+            "That the indices never overflow"
+          ],
+          "answer": 0,
+          "explanation": "Release on the publish store pairs with acquire on the load: seeing the new index implies all writes sequenced before the release (the payload) are visible. Using `relaxed` would let the consumer read the payload slot before it is actually published. SPSC needs no CAS because each index has exactly one writer."
+        },
+        {
+          "topic": "IPC Trade-offs and Performance",
+          "q": "Why does shared memory beat a pipe or local socket for hot-path IPC latency (tens-to-hundreds of ns vs microseconds)?",
+          "options": [
+            "Shared memory uses a faster syscall per message",
+            "After one-time setup it has zero kernel copies, zero syscalls in steady state, and no context switch (a busy-polling reader is always runnable) -- only cache-line transfer cost remains",
+            "Shared memory compresses the data",
+            "Pipes always go over the network"
+          ],
+          "answer": 1,
+          "explanation": "A pipe/socket pays two copies + a syscall each way + a wakeup (microseconds). Shared memory's producer store and consumer load hit the same physical page, so the only cost is cross-core cache-line coherence (tens of ns). The trade-off: you lose built-in backpressure, framing, and isolation -- you build the protocol (e.g. an SPSC ring) yourself."
+        }
+      ],
+      "coding": [
+        {
+          "topic": "Lock-Free IPC Patterns",
+          "lang": "cpp",
+          "prompt": "Implement a single-producer/single-consumer lock-free ring buffer `SpscRing<T, Cap>` with `bool try_push(const T&)` and `bool try_pop(T&)`. `Cap` must be a power of two. Use the correct memory orderings and pad head/tail to avoid false sharing. No CAS.  Click **▶ Run tests** to check against the test cases.",
+          "hints": [
+            "Power-of-two capacity lets you mask with `& (Cap - 1)` instead of modulo.",
+            "Producer writes only `head_`; consumer writes only `tail_`. Each index has one writer, so no CAS is needed.",
+            "Publish with `release`, observe with `acquire`; pad `head_` and `tail_` onto separate cache lines."
+          ],
+          "starter": "#include <atomic>\n#include <cstddef>\n#include <new>\n\n// Portable cache-line size (C++17 constant where available, else 64).\n#if defined(__cpp_lib_hardware_interference_size)\ninline constexpr std::size_t kSpscAlign = std::hardware_destructive_interference_size;\n#else\ninline constexpr std::size_t kSpscAlign = 64;\n#endif\n\n// Single-producer / single-consumer lock-free ring. Cap must be a power of two.\n// Producer writes only head_, consumer writes only tail_  => no CAS needed.\n// Publish payload with release; observe the other index with acquire.\n// Pad head_ and tail_ onto separate cache lines to avoid false sharing.\ntemplate <class T, std::size_t Cap>\nclass SpscRing {\n    static_assert((Cap & (Cap - 1)) == 0, \"Cap must be a power of two\");\n    T buffer_[Cap];\n    alignas(kSpscAlign) std::atomic<std::size_t> head_{0};\n    alignas(kSpscAlign) std::atomic<std::size_t> tail_{0};\npublic:\n    bool try_push(const T& v) {\n        // TODO: reject when full (head-tail==Cap); else write buffer_[head & (Cap-1)]\n        //       and publish head_ with release.\n        (void)v;\n        return false;\n    }\n    bool try_pop(T& out) {\n        // TODO: reject when empty (head==tail); else read buffer_[tail & (Cap-1)] into out\n        //       and advance tail_ with release.\n        (void)out;\n        return false;\n    }\n};\n",
+          "harness": "#include <cstdio>\n#include <thread>\n#include <vector>\n#include <atomic>\nstatic int g_fail=0;\nstatic void check(const char* n, bool ok, const char* detail){\n    if(!ok) g_fail=1; printf(\"__CASE__|%s|%s|%s\\n\", n, ok?\"PASS\":\"FAIL\", detail);\n}\nint main(){\n    char buf[160];\n    { SpscRing<int,4> r; int v=-1; bool ok = (r.try_pop(v)==false);\n      check(\"empty-pop-false\", ok, \"pop on empty -> false\"); }\n    { SpscRing<int,4> r; r.try_push(10); r.try_push(20); int a=0,b=0; r.try_pop(a); r.try_pop(b);\n      snprintf(buf,sizeof buf,\"a=%d b=%d want 10,20\",a,b); check(\"fifo\", a==10&&b==20, buf); }\n    { SpscRing<int,4> r; bool ok=true; for(int i=0;i<4;++i) ok &= r.try_push(i);\n      bool full = (r.try_push(99)==false);\n      snprintf(buf,sizeof buf,\"filled4=%d push5-fails=%d\", ok, full); check(\"full-rejects\", ok&&full, buf); }\n    { SpscRing<int,4> r; bool ok=true; int next=0;\n      for(int round=0; round<100; ++round){ ok &= r.try_push(round); int v=-1; ok &= r.try_pop(v); ok &= (v==next++); }\n      check(\"wraparound-fifo\", ok, \"100 push/pop in order\"); }\n    // concurrent SPSC with BOUNDED spins so a broken impl fails instead of hanging\n    { SpscRing<int,1024> r; const int N=100000; std::atomic<long> received{0}; std::atomic<bool> order_ok{true};\n      std::thread cons([&]{ int v=0,expect=0; long spins=0; while(received.load()<N && spins<50000000L){ if(r.try_pop(v)){ if(v!=expect++) order_ok=false; received.fetch_add(1);} else ++spins; } });\n      std::thread prod([&]{ long spins=0; for(int i=0;i<N;){ if(r.try_push(i)) ++i; else if(++spins>50000000L) break; } });\n      prod.join(); cons.join();\n      snprintf(buf,sizeof buf,\"received=%ld order_ok=%d\",received.load(),(int)order_ok.load()); check(\"concurrent-spsc\", received.load()==N&&order_ok.load(), buf); }\n    { SpscRing<int,1> r; bool p1=r.try_push(7); bool p2=r.try_push(8); int v=0; bool po=r.try_pop(v);\n      snprintf(buf,sizeof buf,\"p1=%d p2=%d v=%d\",p1,p2,v); check(\"cap1\", p1&&!p2&&po&&v==7, buf); }\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "empty-pop-false"
+            },
+            {
+              "name": "fifo"
+            },
+            {
+              "name": "full-rejects"
+            },
+            {
+              "name": "wraparound-fifo"
+            },
+            {
+              "name": "concurrent-spsc"
+            },
+            {
+              "name": "cap1"
+            }
+          ],
+          "solution": "```cpp\n#include <atomic>\n#include <cstddef>\n#include <new>\n\n// Cache-line size for padding: C++17 constant where available, else 64.\n#if defined(__cpp_lib_hardware_interference_size)\ninline constexpr std::size_t kSpscAlign = std::hardware_destructive_interference_size;\n#else\ninline constexpr std::size_t kSpscAlign = 64;\n#endif\n\ntemplate <class T, std::size_t Cap>\nclass SpscRing {\n    // Power-of-two capacity lets us index with a cheap mask `& (Cap-1)` instead of modulo,\n    // and lets the monotonic indices wrap naturally.\n    static_assert((Cap & (Cap - 1)) == 0, \"Cap must be a power of two\");\n\n    T buffer_[Cap];\n    // head_ and tail_ are padded onto SEPARATE cache lines so the producer's store to\n    // head_ does not invalidate the consumer's line (and vice versa) -- no false sharing.\n    alignas(kSpscAlign) std::atomic<std::size_t> head_{0};  // producer-only writer\n    alignas(kSpscAlign) std::atomic<std::size_t> tail_{0};  // consumer-only writer\n\npublic:\n    bool try_push(const T& v) {\n        const std::size_t h = head_.load(std::memory_order_relaxed);   // we are head_'s only writer\n        const std::size_t t = tail_.load(std::memory_order_acquire);   // observe consumer progress\n        if (h - t == Cap) return false;                                // full (monotonic indices: never ambiguous)\n        buffer_[h & (Cap - 1)] = v;                                    // write payload BEFORE publishing\n        head_.store(h + 1, std::memory_order_release);                 // publish: release pairs with pop's acquire\n        return true;\n    }\n\n    bool try_pop(T& out) {\n        const std::size_t t = tail_.load(std::memory_order_relaxed);   // we are tail_'s only writer\n        const std::size_t h = head_.load(std::memory_order_acquire);   // observe producer's publish\n        if (h == t) return false;                                      // empty\n        out = buffer_[t & (Cap - 1)];                                  // read the published payload\n        tail_.store(t + 1, std::memory_order_release);                 // free the slot for the producer\n        return true;\n    }\n    // Single writer per index => no CAS, no retry loop. On x86 these acquire/release ops\n    // are plain MOVs, so the only real cost is cross-core cache-line coherence. Trivially\n    // copyable -> works in a MAP_SHARED region for cross-process IPC. MPMC would need CAS.\n};\n```",
+          "discussion": "Monotonically increasing indices (masked only when indexing) make `head_ - tail_` the exact count and never confuse full with empty. Each index has a single writer, so plain atomic load/store with release (publish) and acquire (observe) suffices -- no read-modify-write, no retry loop. Padding `head_`/`tail_` onto separate cache lines stops the producer's store to `head_` from invalidating the consumer's line. On x86 these acquire/release ops compile to ordinary `MOV`s, so the dominant cost is the cross-core cache-line coherence traffic, not barriers. The layout is trivially-copyable and works in a `MAP_SHARED` region for cross-process IPC. MPMC would require CAS (and brings the ABA problem)."
+        },
+        {
+          "topic": "POSIX Shared Memory",
+          "lang": "cpp",
+          "prompt": "Write the producer side that creates a POSIX shared-memory object, sizes it, maps it, and publishes a value to a consumer using an atomic flag. Define a shared layout `struct Shared { std::atomic<int> ready; int value; };` and show the `shm_open`/`ftruncate`/`mmap` sequence with placement-construction and release/acquire publication.  Click **▶ Run tests** to check against the test cases.",
+          "hints": [
+            "Open with `O_CREAT | O_RDWR`; the name starts with `/` and has no other slashes.",
+            "`ftruncate` before `mmap`, or stores past EOF raise `SIGBUS`.",
+            "Construct the struct in place with placement-new; publish `value` then store `ready` with `memory_order_release`."
+          ],
+          "starter": "#include <sys/mman.h>\n#include <sys/stat.h>\n#include <fcntl.h>\n#include <unistd.h>\n#include <atomic>\n#include <new>\n#include <cstdio>\n\nstruct Shared {\n    std::atomic<int> ready;\n    int value;\n};\n\n// Create a POSIX shared-memory object `name`, size it to sizeof(Shared), map it\n// MAP_SHARED, placement-construct Shared in the pages, write `value`, then publish\n// with a release store on `ready`. Return 0 on success, -1 on any failure.\nint produce(const char* name, int v) {\n    // TODO: shm_open(O_CREAT|O_RDWR) -> ftruncate -> mmap(MAP_SHARED) -> close(fd)\n    //       -> placement-new Shared -> write value -> ready.store(1, release) -> munmap\n    return -1;\n}\n",
+          "harness": "#include <cerrno>\n#include <cstring>\nstatic int g_fail=0;\nstatic void check(const char* n, bool ok, const char* detail){\n    if(!ok) g_fail=1; printf(\"__CASE__|%s|%s|%s\\n\", n, ok?\"PASS\":\"FAIL\", detail);\n}\n// Consumer side (same process, SECOND mapping of the same object) reads back the value.\n// Returns 0 if value read (ready observed), -1 if the object/mapping is unavailable.\nstatic int consume(const char* name, int* out){\n    int fd = ::shm_open(name, O_RDWR, 0600);\n    if (fd < 0) return -1;\n    void* p = ::mmap(nullptr, sizeof(Shared), PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);\n    ::close(fd);\n    if (p == MAP_FAILED) return -1;\n    auto* s = static_cast<Shared*>(p);\n    int spins=0; while (s->ready.load(std::memory_order_acquire)==0 && spins++<2000000) {}\n    bool was_ready = s->ready.load(std::memory_order_acquire)!=0;\n    int got = s->value;            // guaranteed visible once ready observed (acquire)\n    ::munmap(p, sizeof(Shared));\n    *out = got;\n    return was_ready ? 0 : -2;\n}\nint main(){\n    char buf[160];\n    // 1) produce returns 0, and a second mapping reads back the published value\n    { const char* nm=\"/cs_quiz_shm_a\"; ::shm_unlink(nm);\n      int r = produce(nm, 12345);\n      snprintf(buf,sizeof buf,\"ret=%d errno=%s\", r, r<0?strerror(errno):\"-\"); check(\"produce-ok\", r==0, buf);\n      int got=-1; int cr = consume(nm, &got);\n      snprintf(buf,sizeof buf,\"consume=%d value=%d want=12345\", cr, got); check(\"handoff-value\", cr==0 && got==12345, buf);\n      ::shm_unlink(nm); }\n    // 2) negative value handed off correctly (fresh object)\n    { const char* nm=\"/cs_quiz_shm_b\"; ::shm_unlink(nm);\n      produce(nm, -777); int got=0; int cr=consume(nm, &got);\n      snprintf(buf,sizeof buf,\"consume=%d value=%d want=-777\", cr, got); check(\"negative-value\", cr==0 && got==-777, buf); ::shm_unlink(nm); }\n    // 3) zero value: ready must still be observed even though value==0\n    { const char* nm=\"/cs_quiz_shm_c\"; ::shm_unlink(nm);\n      produce(nm, 0); int got=-1; int cr=consume(nm,&got);\n      snprintf(buf,sizeof buf,\"consume=%d value=%d\", cr, got); check(\"zero-value\", cr==0 && got==0, buf); ::shm_unlink(nm); }\n    // 4) the object is sized to at least sizeof(Shared)\n    { const char* nm=\"/cs_quiz_shm_d\"; ::shm_unlink(nm); int pr=produce(nm, 5);\n      int fd=::shm_open(nm,O_RDWR,0600); struct stat st{}; int sr=(fd>=0)?fstat(fd,&st):-1; if(fd>=0)::close(fd);\n      snprintf(buf,sizeof buf,\"produce=%d fstat=%d size=%lld need>=%zu\", pr, sr,(long long)st.st_size, sizeof(Shared));\n      check(\"object-sized\", pr==0 && sr==0 && (size_t)st.st_size>=sizeof(Shared), buf); ::shm_unlink(nm); }\n    // 5) ready flag is published after produce\n    { const char* nm=\"/cs_quiz_shm_e\"; ::shm_unlink(nm); int pr=produce(nm, 9);\n      int rdy=0; int fd=::shm_open(nm,O_RDWR,0600);\n      if(fd>=0){ void* p=::mmap(nullptr,sizeof(Shared),PROT_READ|PROT_WRITE,MAP_SHARED,fd,0); ::close(fd);\n        if(p!=MAP_FAILED){ auto* s=static_cast<Shared*>(p); rdy=s->ready.load(std::memory_order_acquire); ::munmap(p,sizeof(Shared)); } }\n      snprintf(buf,sizeof buf,\"produce=%d ready=%d\", pr, rdy); check(\"ready-published\", pr==0 && rdy!=0, buf); ::shm_unlink(nm); }\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "produce-ok"
+            },
+            {
+              "name": "handoff-value"
+            },
+            {
+              "name": "negative-value"
+            },
+            {
+              "name": "zero-value"
+            },
+            {
+              "name": "object-sized"
+            },
+            {
+              "name": "ready-published"
+            }
+          ],
+          "solution": "```cpp\n#include <sys/mman.h>\n#include <sys/stat.h>\n#include <fcntl.h>\n#include <unistd.h>\n#include <atomic>\n#include <new>\n#include <cstdio>\n\nstruct Shared {\n    std::atomic<int> ready;\n    int value;\n};\n\n// Producer: create + size + map a POSIX shm object, construct Shared in place,\n// write value, then publish with a release store on `ready`. Returns 0 / -1.\nint produce(const char* name, int v) {\n    int fd = ::shm_open(name, O_CREAT | O_RDWR, 0600);   // tmpfs-backed object (/dev/shm)\n    if (fd < 0) return -1;\n    if (::ftruncate(fd, sizeof(Shared)) < 0) { ::close(fd); return -1; }  // size BEFORE mapping (else SIGBUS)\n\n    void* p = ::mmap(nullptr, sizeof(Shared), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);\n    ::close(fd);                                  // the mapping outlives the fd\n    if (p == MAP_FAILED) return -1;\n\n    auto* s = ::new (p) Shared{};                 // placement-new into the shared pages\n    s->value = v;                                 // write payload first\n    s->ready.store(1, std::memory_order_release); // publish: release pairs with consumer's acquire\n\n    ::munmap(p, sizeof(Shared));\n    // consumer (other process) maps the same name and spins on `ready` with acquire,\n    // then reads `value` (guaranteed visible). shm_unlink when done with the object.\n    return 0;\n}\n```",
+          "discussion": "The object lives on tmpfs in `/dev/shm` (RAM-backed, no disk I/O) and persists until `shm_unlink`. `std::atomic<int>` works across processes because atomics act on the memory itself, and the release/acquire pair gives the consumer a happens-before guarantee on `value`. After warm-up this hand-off is tens-to-hundreds of ns -- no kernel copy and no syscall per message -- versus single-digit microseconds for a pipe/socket round trip. Only trivially-copyable types may live in the region (no `std::string`/`std::vector`/raw inter-object pointers, since each process maps at a different address); pad hot fields with `alignas(64)` to avoid false sharing. For mutual exclusion you would use a `pthread_mutex_t` initialized `PTHREAD_PROCESS_SHARED` (ideally `_ROBUST`)."
+        }
+      ]
+    },
+    "userspace-networking": {
+      "mcqs": [
+        {
+          "topic": "Zero-Copy Networking",
+          "q": "What is the difference between 'zero-copy' and 'kernel bypass'?",
+          "options": [
+            "Zero-copy only applies to disk I/O",
+            "They are synonyms",
+            "Zero-copy removes the CPU `memcpy` between NIC DMA buffers and the application buffer; kernel bypass takes the entire kernel network stack off the data path. Bypass implies zero-copy, but not vice versa",
+            "Kernel bypass removes copies; zero-copy removes interrupts"
+          ],
+          "answer": 2,
+          "explanation": "Zero-copy is specifically about eliminating the CPU copy; kernel bypass (DPDK, ef_vi) removes the syscall, the stack, the interrupt/softirq, and the copy. A path can be zero-copy while still going through the kernel (e.g. PACKET_MMAP), so bypass is the stronger property."
+        },
+        {
+          "topic": "Zero-Copy Networking",
+          "q": "For tiny HFT market-data packets (tens of bytes), why does merely eliminating the data copy 'barely move the needle'?",
+          "options": [
+            "The copy is actually free on modern CPUs",
+            "Small packets are never copied",
+            "The compiler removes the copy automatically",
+            "The copy of tens of bytes is dwarfed by the syscall, interrupt, and protocol-processing overhead"
+          ],
+          "answer": 3,
+          "explanation": "For a few dozen bytes the `memcpy` is almost the cheap part; the syscall transition, the interrupt/softirq, and the stack's per-packet work dominate. To win you must also remove the syscall and the interrupt -- which is why full kernel bypass beats copy-avoidance alone for HFT."
+        },
+        {
+          "topic": "Polling vs Interrupts",
+          "q": "What is **receive livelock**, the failure mode that NAPI was designed to prevent?",
+          "options": [
+            "At high packet rates the CPU spends nearly all its time in interrupt context, starving the bottom-half packet processing, so usable throughput collapses toward zero",
+            "Packets arriving out of order",
+            "The NIC running out of descriptors",
+            "Two threads deadlocking on a socket lock"
+          ],
+          "answer": 0,
+          "explanation": "Each arriving packet raises an interrupt that preempts processing; past a threshold the core is so busy taking interrupts that it never drains the queue, and throughput collapses. NAPI fixes this: one interrupt disables further RX interrupts and switches to polling the ring up to a budget, re-enabling interrupts only when the ring drains."
+        },
+        {
+          "topic": "Polling vs Interrupts",
+          "q": "Compared to interrupt-driven delivery, pure busy-polling of the NIC removes which costs?",
+          "options": [
+            "It removes the DMA transfer of the frame",
+            "IRQ delivery latency, the context switch into a woken thread, the scheduler decision, and C-state exit -- while keeping the core's caches warm",
+            "It removes the need for a network cable",
+            "It removes the cache-coherence protocol"
+          ],
+          "answer": 1,
+          "explanation": "A pinned, spinning thread is already running on a hot core, so there is no interrupt, no wakeup/context switch, no scheduler hop, and no deep C-state to climb out of. The cost is a fully consumed core -- acceptable for a few latency-critical flows, not for a 10k-connection server."
+        },
+        {
+          "topic": "Polling vs Interrupts",
+          "q": "What knob does interrupt coalescing (`ethtool -C rx-usecs/rx-frames`) trade off?",
+          "options": [
+            "TCP vs UDP behaviour",
+            "Bandwidth vs encryption",
+            "Latency vs throughput -- holding off interrupts until N frames arrive or a timer expires raises throughput but adds per-packet waiting time",
+            "CPU count vs memory"
+          ],
+          "answer": 2,
+          "explanation": "Coalescing batches RX interrupts, amortizing interrupt overhead (more throughput) at the cost of extra per-packet delay (more latency). It is a direct latency-vs-throughput dial; latency-sensitive setups minimize it (or bypass interrupts entirely)."
+        },
+        {
+          "topic": "Kernel Bypass Techniques: DPDK",
+          "q": "In DPDK, what is a Poll Mode Driver (PMD)?",
+          "options": [
+            "A power-management daemon",
+            "A protocol stack for TCP",
+            "A kernel module that delivers interrupts faster",
+            "A userspace driver that continuously spins reading the NIC's RX ring with no interrupts, pegging its core at 100%"
+          ],
+          "answer": 3,
+          "explanation": "A PMD polls the NIC's descriptor rings from userspace in a tight loop, eliminating interrupts and their latency/jitter. It keeps the core at 100% even with no traffic -- intentional in HFT, trading a core for deterministic low latency."
+        },
+        {
+          "topic": "Kernel Bypass Techniques: DPDK",
+          "q": "Why does DPDK back its packet-buffer pools (mempools) with **hugepages**?",
+          "options": [
+            "They provide stable pinned DMA addresses and let far fewer TLB entries cover the buffer pool (fewer TLB misses), with large physically-contiguous regions",
+            "Hugepages make the NIC faster",
+            "They are required to compile DPDK",
+            "Hugepages are encrypted"
+          ],
+          "answer": 0,
+          "explanation": "Hugepages (2 MB/1 GB) give pinned, contiguous memory the NIC can DMA into with stable physical addresses, and one TLB entry covers vastly more memory, slashing TLB misses on the buffer pool. DPDK is also NUMA-aware so mempools/rings/lcores sit on the NIC's node."
+        },
+        {
+          "topic": "Kernel Bypass Techniques: DPDK",
+          "q": "Which statement about VFIO versus UIO for binding a NIC to userspace is correct?",
+          "options": [
+            "UIO programs the IOMMU to constrain DMA; VFIO does not",
+            "VFIO (`vfio-pci`) programs the IOMMU to restrict DMA to allowed memory, making it the safer modern choice; UIO has no such DMA protection",
+            "They are identical",
+            "VFIO requires no kernel support at all"
+          ],
+          "answer": 1,
+          "explanation": "VFIO uses the IOMMU to confine device DMA to permitted regions; UIO (`igb_uio`, `uio_pci_generic`) is the legacy passthrough with no DMA isolation, so a misbehaving device/app could DMA anywhere. VFIO is preferred on modern systems."
+        }
+      ],
+      "coding": [
+        {
+          "topic": "Polling vs Interrupts",
+          "lang": "cpp",
+          "prompt": "Sketch the busy-poll receive loop structure DPDK uses (run-to-completion on one lcore): repeatedly burst-receive packets, process them, and free the buffers, with no syscalls or blocking. Use `rte_eth_rx_burst` and show why it is non-blocking. (Pseudocode-level DPDK C is fine.)  Click **▶ Run tests** to check against the test cases.",
+          "hints": [
+            "`rte_eth_rx_burst(port, queue, bufs, BURST)` returns 0..BURST mbuf pointers without blocking.",
+            "When it returns 0 you just spin again -- no sleeping.",
+            "Free each mbuf with `rte_pktmbuf_free` after processing."
+          ],
+          "starter": "#include <cstdint>\n#include <cstddef>\n\n// --- Mock NIC layer (stands in for DPDK: real APIs are rte_eth_rx_burst / rte_pktmbuf_free).\n//     This scaffolding is provided; implement rx_loop below. ---\nstruct Mbuf { int payload; bool freed; };\nstruct MockNic {\n    int* src; int total; int pos;\n    long processed_sum; int processed_count; int freed_count;\n    uint16_t rx_burst(Mbuf* out, uint16_t max) {    // NON-BLOCKING: returns 0..max ready packets\n        uint16_t n = 0;\n        while (n < max && pos < total) { out[n].payload = src[pos++]; out[n].freed = false; ++n; }\n        return n;\n    }\n    void process(Mbuf* m) { processed_sum += m->payload; ++processed_count; }\n    void pkt_free(Mbuf* m) { m->freed = true; ++freed_count; }\n    bool done() const { return pos >= total; }\n};\n\nstatic constexpr uint16_t BURST = 32;\n\n// Implement the run-to-completion poll loop: repeatedly burst-receive up to BURST packets\n// with nic.rx_burst(bufs, BURST); if it returns 0, spin again (no blocking); otherwise\n// process each packet (nic.process) and free each buffer (nic.pkt_free).\n// Stop when nic.done() is true (so the unit test terminates).\nvoid rx_loop(MockNic& nic) {\n    // TODO: while(!nic.done()) { n = nic.rx_burst(bufs, BURST); if(!n) continue; for each: process + free }\n    (void)nic;\n}\n",
+          "harness": "#include <cstdio>\n#include <vector>\n#include <numeric>\nstatic int g_fail=0;\nstatic void check(const char* n, bool ok, const char* detail){\n    if(!ok) g_fail=1; printf(\"__CASE__|%s|%s|%s\\n\", n, ok?\"PASS\":\"FAIL\", detail);\n}\nint main(){\n    char buf[160];\n    { std::vector<int> d{1,2,3,4,5}; MockNic nic{d.data(),(int)d.size(),0,0,0,0}; rx_loop(nic);\n      snprintf(buf,sizeof buf,\"count=%d want=5 sum=%ld want=15\",nic.processed_count,nic.processed_sum);\n      check(\"drains-all\", nic.processed_count==5 && nic.processed_sum==15, buf); }\n    { std::vector<int> d{10,20,30}; MockNic nic{d.data(),(int)d.size(),0,0,0,0}; rx_loop(nic);\n      snprintf(buf,sizeof buf,\"freed=%d processed=%d\",nic.freed_count,nic.processed_count);\n      check(\"frees-every-buffer\", nic.freed_count==nic.processed_count && nic.freed_count==3, buf); }\n    { std::vector<int> d(1000); std::iota(d.begin(),d.end(),0); MockNic nic{d.data(),(int)d.size(),0,0,0,0}; rx_loop(nic);\n      long want=(long)999*1000/2; snprintf(buf,sizeof buf,\"count=%d sum=%ld want=%ld\",nic.processed_count,nic.processed_sum,want);\n      check(\"multi-burst-1000\", nic.processed_count==1000 && nic.processed_sum==want, buf); }\n    { MockNic nic{nullptr,0,0,0,0,0}; rx_loop(nic);\n      snprintf(buf,sizeof buf,\"count=%d\",nic.processed_count); check(\"empty-queue\", nic.processed_count==0, buf); }\n    { std::vector<int> d(32,1); MockNic nic{d.data(),(int)d.size(),0,0,0,0}; rx_loop(nic);\n      snprintf(buf,sizeof buf,\"count=%d sum=%ld\",nic.processed_count,nic.processed_sum);\n      check(\"exact-burst-32\", nic.processed_count==32 && nic.processed_sum==32, buf); }\n    { std::vector<int> d(33,2); MockNic nic{d.data(),(int)d.size(),0,0,0,0}; rx_loop(nic);\n      snprintf(buf,sizeof buf,\"count=%d sum=%ld\",nic.processed_count,nic.processed_sum);\n      check(\"burst-plus-one-33\", nic.processed_count==33 && nic.processed_sum==66, buf); }\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "drains-all"
+            },
+            {
+              "name": "frees-every-buffer"
+            },
+            {
+              "name": "multi-burst-1000"
+            },
+            {
+              "name": "empty-queue"
+            },
+            {
+              "name": "exact-burst-32"
+            },
+            {
+              "name": "burst-plus-one-33"
+            }
+          ],
+          "solution": "```cpp\n#include <cstdint>\n#include <cstddef>\n\n// --- Mock NIC layer (stands in for DPDK; the real APIs are rte_eth_rx_burst /\n//     rte_pktmbuf_free, which need the DPDK SDK and a bound NIC -- not buildable here).\n//     A \"packet\" is just an int payload. rx_burst() is NON-BLOCKING: it returns 0..max\n//     ready packets, exactly like rte_eth_rx_burst reading the RX descriptor ring. ---\nstruct Mbuf { int payload; bool freed; };\nstruct MockNic {\n    int* src; int total; int pos;\n    long processed_sum; int processed_count; int freed_count;\n    uint16_t rx_burst(Mbuf* out, uint16_t max) {    // returns 0..max ready packets; never blocks\n        uint16_t n = 0;\n        while (n < max && pos < total) { out[n].payload = src[pos++]; out[n].freed = false; ++n; }\n        return n;                                    // may be 0: caller must spin, not sleep\n    }\n    void process(Mbuf* m) { processed_sum += m->payload; ++processed_count; }\n    void pkt_free(Mbuf* m) { m->freed = true; ++freed_count; }\n    bool done() const { return pos >= total; }\n};\n\nstatic constexpr uint16_t BURST = 32;\n\n// Run-to-completion poll loop, mirroring a DPDK lcore: burst-receive, process each\n// packet, free each buffer -- with NO syscalls and NO blocking. rx_burst()==0 just\n// means \"nothing ready yet\", so we spin again (in real DPDK this is `for(;;)`; here we\n// stop when the mock source drains so the unit test terminates).\nvoid rx_loop(MockNic& nic) {\n    Mbuf bufs[BURST];\n    while (!nic.done()) {\n        const uint16_t n = nic.rx_burst(bufs, BURST);   // non-blocking burst receive\n        if (n == 0) continue;                           // spin again -- no sleep, no syscall\n        for (uint16_t i = 0; i < n; ++i) {\n            nic.process(&bufs[i]);                       // frame already DMA'd into the mbuf -> no copy\n            nic.pkt_free(&bufs[i]);                      // return the buffer to the mempool\n        }\n    }\n    // The trade-off: a core pegged at 100% even with zero traffic -- correct for HFT,\n    // buying deterministic sub-microsecond, low-jitter delivery. Batching (the _burst\n    // APIs) amortizes per-packet PCIe/descriptor cost. lcore+mempool+rings live on the NIC's NUMA node.\n}\n```",
+          "discussion": "`rte_eth_rx_burst` is non-blocking: it returns however many frames are ready (0 to BURST) by reading descriptor memory and never traps into the kernel. The hot loop contains no `recv`, no `socket`, no `malloc`, no lock, and no scheduler interaction -- so there is no interrupt latency, no context switch, no C-state wakeup. The trade-off is a core pegged at 100% even with zero traffic, which is correct for HFT: you spend a core to buy deterministic, sub-microsecond, low-jitter delivery. Batching (the `_burst` APIs) amortizes per-packet PCIe/descriptor cost for line-rate throughput. The lcore, its mempool, and rings should all live on the NIC's NUMA node."
+        }
+      ]
+    },
+    "programming-principles": {
+      "mcqs": [
+        {
+          "topic": "Algorithmic Complexity",
+          "q": "Why is `std::vector::push_back` described as amortized O(1) even though a single call can be O(n)?",
+          "options": [
+            "Each insertion copies only one element",
+            "Reallocation never actually happens",
+            "Capacity grows geometrically (e.g. x2), so the total reallocation work across n insertions is 1 + 2 + 4 + ... < 2n = O(n), i.e. O(1) per insertion on average",
+            "`push_back` is implemented in hardware"
+          ],
+          "answer": 2,
+          "explanation": "A growth reallocation copies all elements (O(n)), but because capacity doubles, those expensive events are geometrically rare; summed over n pushes the total is bounded by 2n, giving O(1) amortized per push."
+        },
+        {
+          "topic": "Algorithmic Complexity",
+          "q": "What is the worst-case time complexity of a lookup in `std::unordered_map`, and when does it occur?",
+          "options": [
+            "O(1) always, by construction",
+            "O(n log n), during a rehash",
+            "O(log n), when the tree is unbalanced",
+            "O(n), when adversarial keys all hash into a single bucket"
+          ],
+          "answer": 3,
+          "explanation": "`unordered_map` is O(1) average but degrades to O(n) when every key collides into one bucket (worst case / adversarial input). A balanced `std::map` (red-black tree) is O(log n) for lookup in all cases."
+        },
+        {
+          "topic": "Algorithmic Complexity",
+          "q": "For small n (say a few dozen ints), a linear scan over a contiguous array often beats an O(1) `std::unordered_map` lookup. Why?",
+          "options": [
+            "The contiguous scan benefits from prefetching, vectorization, and no pointer chasing, while the hash map pays cache misses and indirection that dominate at small n",
+            "`unordered_map` lookups are O(n^2)",
+            "The compiler refuses to optimize hash maps",
+            "The array has lower asymptotic complexity"
+          ],
+          "answer": 0,
+          "explanation": "Big-O ignores constants and the cache. A small contiguous array is one or two cache lines the prefetcher loves; the hash map chases pointers and misses cache. Below ~50-1000 elements the linear scan wins despite being O(n) vs O(1)."
+        },
+        {
+          "topic": "Compiler Optimizations",
+          "q": "What does the compiler's 'as-if' rule permit?",
+          "options": [
+            "Any transformation, even one that changes program output",
+            "Any transformation, provided the program's observable behaviour (volatile accesses, I/O, output at termination) is preserved",
+            "Only optimizations explicitly listed in the standard",
+            "Optimizations only at -O3"
+          ],
+          "answer": 1,
+          "explanation": "The as-if rule lets the compiler reshape code freely as long as observable behaviour is unchanged. Copy elision (RVO) and `-ffast-math` are the notable cases where the compiler is granted extra latitude beyond strict as-if."
+        },
+        {
+          "topic": "Compiler Optimizations",
+          "q": "Why is `-ffast-math` unacceptable for pricing/PnL computations?",
+          "options": [
+            "It makes the binary larger",
+            "It disables inlining",
+            "It permits reassociation of floating-point operations (which is not associative) and assumes no NaNs/Infs, so results can change bit-for-bit and lose reproducibility",
+            "It only works at -O0"
+          ],
+          "answer": 2,
+          "explanation": "`-ffast-math` lets the compiler reassociate FP, flush denormals, and assume no NaN/Inf. Since FP addition is not associative, the numeric result can change -- unacceptable where bit-exact, reproducible PnL is required."
+        },
+        {
+          "topic": "Compiler Optimizations",
+          "q": "Why does potential pointer **aliasing** block optimizations like vectorization and common-subexpression elimination?",
+          "options": [
+            "Aliasing only affects debug builds",
+            "Aliasing disables inlining specifically",
+            "Aliased pointers are always null",
+            "If two pointers might refer to overlapping memory, the compiler must assume a write through one can change reads through the other, forbidding reordering/caching of those values"
+          ],
+          "answer": 3,
+          "explanation": "When the compiler cannot prove non-overlap, it must conservatively assume any store may affect any later load, killing reordering, CSE, and vectorization. Promising non-overlap with `__restrict` re-enables these optimizations."
+        },
+        {
+          "topic": "Memory Management Fundamentals",
+          "q": "Which best characterizes the cost difference between stack and heap allocation?",
+          "options": [
+            "Stack allocation is roughly a single pointer adjustment (~1 cycle); heap allocation costs tens of ns (warm free list) up to us if it must syscall or page-fault",
+            "Heap allocation is always faster because it is cached",
+            "Both cost exactly the same",
+            "Stack allocation requires a syscall per frame"
+          ],
+          "answer": 0,
+          "explanation": "A stack allocation is essentially bumping the stack pointer (sub-ns). The heap allocator may hit a warm free list (~tens of ns), contend on a lock (hundreds of ns), syscall via brk/mmap (~us), or trigger a first-touch page fault (~us). Keep allocation off the hot path."
+        },
+        {
+          "topic": "Memory Management Fundamentals",
+          "q": "What distinguishes an **arena (monotonic) allocator** from a general-purpose allocator?",
+          "options": [
+            "It can free individual objects in O(1)",
+            "It hands out memory by bumping a pointer through one big buffer and can only reset everything at once (no per-object free) -- allocation is a couple of instructions with no free list, lock, or syscall",
+            "It always uses mmap per allocation",
+            "It is slower but thread-safe"
+          ],
+          "answer": 1,
+          "explanation": "An arena grabs a big buffer once and bump-allocates slices; you cannot free individual objects, only reset the whole arena. That makes allocation near-free and is ideal for per-tick scratch memory. `std::pmr::monotonic_buffer_resource` provides this."
+        },
+        {
+          "topic": "Garbage Collection Techniques",
+          "q": "What is the fundamental limitation of plain reference counting (as in `std::shared_ptr`)?",
+          "options": [
+            "It fragments the heap badly",
+            "It pauses all threads periodically",
+            "It cannot reclaim reference cycles (A->B, B->A unreachable but counts never reach zero), and atomic count updates cost in multithreaded code",
+            "It requires a separate GC thread"
+          ],
+          "answer": 2,
+          "explanation": "Reference counting reclaims immediately and incrementally (no big pause), but a cycle keeps counts above zero forever and leaks. `std::weak_ptr` breaks cycles manually; CPython adds a separate cycle collector. Atomic increments/decrements also cost ~tens of ns and bounce cache lines."
+        },
+        {
+          "topic": "Garbage Collection Techniques",
+          "q": "The 'weak generational hypothesis' underpinning generational GC states that:",
+          "options": [
+            "Objects never die",
+            "Cycles are impossible",
+            "Old objects are collected most often",
+            "Most objects die young, so a frequently-collected young generation (nursery) reclaims most garbage cheaply, while the old generation is collected rarely"
+          ],
+          "answer": 3,
+          "explanation": "Because most allocations are short-lived, generational collectors collect the small young generation often and cheaply (copying the few survivors) and the large old generation rarely. A write barrier maintains a remembered set of old->young pointers so young collections need not scan the whole old gen."
+        },
+        {
+          "topic": "Object-Oriented Design Principles",
+          "q": "In a hot loop, what is usually the **largest** hidden cost of a `virtual` call (beyond the indirection itself)?",
+          "options": [
+            "It is an inlining barrier: the compiler cannot see which function runs, so it cannot inline and loses downstream optimizations (constant propagation, vectorization); megamorphic sites also risk branch mispredictions",
+            "Virtual calls allocate heap memory each time",
+            "Virtual calls always throw exceptions",
+            "The vtable consumes too much memory"
+          ],
+          "answer": 0,
+          "explanation": "The vtable lookup and indirect call are a few extra cycles, and a megamorphic indirect target can mispredict (~15-20 cycles). But the dominant cost is lost inlining and the optimizations it unlocks. Hot paths use static polymorphism (CRTP, templates, `std::variant`) instead."
+        },
+        {
+          "topic": "Object-Oriented Design Principles",
+          "q": "If a hot loop reads only the `price` field of records, why can Struct-of-Arrays (SoA) outperform Array-of-Structs (AoS)?",
+          "options": [
+            "SoA uses less total memory",
+            "SoA stores all `price` values contiguously, so each 64-byte cache line is full of useful data and the loop vectorizes; AoS drags the cold fields (qty/id/side) into cache on every record",
+            "AoS cannot be iterated",
+            "SoA avoids the need for a loop"
+          ],
+          "answer": 1,
+          "explanation": "With AoS, fetching one `price` pulls the rest of the record's fields you do not need, wasting bandwidth and cache. SoA keeps `price` dense and contiguous, so you fetch ~8 doubles of useful data per line and the prefetcher/SIMD engine love it -- a core data-oriented-design technique."
+        }
+      ],
+      "coding": [
+        {
+          "topic": "Memory Management Fundamentals",
+          "lang": "cpp",
+          "prompt": "Implement a minimal `ArenaAllocator` for per-tick scratch memory: it bump-allocates aligned slices from a fixed buffer and supports `reset()` to reclaim everything at once. Provide `void* allocate(size_t bytes, size_t align)` and `void reset()`. No per-object free.  Click **▶ Run tests** to check against the test cases.",
+          "hints": [
+            "Track a current offset into the buffer.",
+            "Round the offset up to the requested alignment before carving.",
+            "`reset()` just sets the offset back to 0."
+          ],
+          "starter": "#include <cstddef>\n#include <cstdint>\n#include <new>\n\n// Bump-pointer (monotonic) arena: carve ALIGNED slices out of one fixed buffer.\n// No per-object free; reset() reclaims everything at once.\nclass ArenaAllocator {\n    std::byte* buf_;\n    std::size_t cap_;\n    std::size_t off_ = 0;\npublic:\n    ArenaAllocator(std::byte* buffer, std::size_t cap) : buf_(buffer), cap_(cap) {}\n\n    void* allocate(std::size_t bytes, std::size_t align) {\n        // TODO: round the bump offset UP to `align` (power of two), check it fits in cap_,\n        //       then bump past `bytes` and return the slice (nullptr if it would overflow).\n        return nullptr;\n    }\n\n    void reset() { /* TODO: reclaim everything at once */ }\n};\n",
+          "harness": "#include <cstdio>\nstatic int g_fail=0;\nstatic void check(const char* n, bool ok, const char* detail){\n    if(!ok) g_fail=1; printf(\"__CASE__|%s|%s|%s\\n\", n, ok?\"PASS\":\"FAIL\", detail);\n}\nint main(){\n    char msg[160];\n    alignas(64) static std::byte storage[1024];\n    ArenaAllocator a(storage, sizeof storage);\n    void* p1 = a.allocate(16, 8);\n    bool in = p1 && p1>=storage && p1<storage+1024;\n    check(\"first-alloc-in-range\", in, in?\"ok\":\"out of range\");\n    void* p2 = a.allocate(1, 16);\n    bool al = p2 && (reinterpret_cast<std::uintptr_t>(p2) % 16)==0;\n    snprintf(msg,sizeof msg,\"p2=%p\",p2);\n    check(\"alignment-16\", al, msg);\n    void* p3 = a.allocate(32, 1);\n    bool fwd = p2 && p3 && reinterpret_cast<std::uintptr_t>(p3) >= reinterpret_cast<std::uintptr_t>(p2)+1;\n    check(\"bumps-forward\", fwd, fwd?\"p3 after p2\":\"overlap/null\");\n    void* big = a.allocate(100000, 1);\n    check(\"oversize-nullptr\", big==nullptr, big?\"unexpected ptr\":\"nullptr as expected\");\n    a.reset();\n    void* p4 = a.allocate(8, 8);\n    bool reset_ok = (p4 == storage);\n    snprintf(msg,sizeof msg,\"p4=%p base=%p\", p4,(void*)storage);\n    check(\"reset-rewinds\", reset_ok, msg);\n    a.reset();\n    void* fit = a.allocate(1024, 1);\n    void* over = a.allocate(1, 1);\n    snprintf(msg,sizeof msg,\"fit=%p over=%p\", fit, over);\n    check(\"exact-fit-then-full\", fit!=nullptr && over==nullptr, msg);\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "first-alloc-in-range"
+            },
+            {
+              "name": "alignment-16"
+            },
+            {
+              "name": "bumps-forward"
+            },
+            {
+              "name": "oversize-nullptr"
+            },
+            {
+              "name": "reset-rewinds"
+            },
+            {
+              "name": "exact-fit-then-full"
+            }
+          ],
+          "solution": "```cpp\n#include <cstddef>\n#include <cstdint>\n#include <new>\n\n// Bump-pointer (monotonic) allocator: carve aligned slices out of one fixed buffer.\n// Allocation is just \"align the offset, then add the size\" -- no free list, no lock,\n// no syscall -- so it is far cheaper than a general malloc. reset() reclaims everything\n// at once (you cannot free a single object), which fits per-tick scratch memory perfectly.\nclass ArenaAllocator {\n    std::byte* buf_;\n    std::size_t cap_;\n    std::size_t off_ = 0;\npublic:\n    ArenaAllocator(std::byte* buffer, std::size_t cap) : buf_(buffer), cap_(cap) {}\n\n    void* allocate(std::size_t bytes, std::size_t align) {\n        std::uintptr_t cur = reinterpret_cast<std::uintptr_t>(buf_ + off_);    // current address\n        std::uintptr_t aligned = (cur + (align - 1)) & ~(std::uintptr_t)(align - 1); // round UP (align = 2^k)\n        std::size_t pad = static_cast<std::size_t>(aligned - cur);             // bytes skipped to align\n        if (off_ + pad + bytes > cap_) return nullptr;                         // would overflow the arena\n        off_ += pad;                                                           // consume the padding\n        void* p = buf_ + off_;\n        off_ += bytes;                                                         // consume the request\n        return p;\n    }\n\n    void reset() { off_ = 0; }   // reclaim everything at once; no per-object free\n    // This is exactly std::pmr::monotonic_buffer_resource. Combine with placement-new (or\n    // pmr containers) to build objects in the bytes. Pre-fault + mlock the backing buffer\n    // at startup so the hot path never takes a page fault.\n};\n```",
+          "discussion": "Allocation is a couple of instructions -- align the offset, bump it -- with no free list, no lock, and no syscall, so it is far cheaper than a general `malloc`. The trade-off is the defining one: you cannot free a single object, only `reset()` the whole arena, which fits per-tick scratch memory perfectly (allocate freely during the tick, reset at the end). This is exactly the model `std::pmr::monotonic_buffer_resource` provides; combine it with placement-new (or pmr containers) to construct objects in the arena's bytes. Pre-fault and `mlock` the backing buffer at startup so the hot path never takes a page fault."
+        },
+        {
+          "topic": "Object-Oriented Design Principles",
+          "lang": "cpp",
+          "prompt": "Replace a hot-path `virtual` dispatch with CRTP (static polymorphism) so the dispatched call can inline. Show a `Strategy<Derived>` base whose `run()` forwards to the derived `onTick()`, and a `Momentum` strategy. Explain why this avoids the virtual-call cost.  Click **▶ Run tests** to check against the test cases.",
+          "hints": [
+            "The base is a template parameterized on the derived type.",
+            "`run()` does `static_cast<Derived*>(this)->onTick()`.",
+            "No `virtual` keyword anywhere -- dispatch is resolved at compile time."
+          ],
+          "starter": "#include <cstdint>\n\n// CRTP base parameterized on the concrete Derived type. Implement run() so it\n// forwards to the derived onTick() WITHOUT any virtual dispatch (resolve at compile\n// time with static_cast<Derived*>(this)).\ntemplate <class Derived>\nstruct Strategy {\n    void run(int tick) {\n        // TODO: call the derived class's onTick(tick) via static_cast (compile-time dispatch)\n        (void)tick;\n    }\n};\n\n// Concrete strategies (provided): each defines its own onTick.\nstruct Momentum : Strategy<Momentum> {\n    long signal = 0;\n    void onTick(int tick) { signal += tick; }\n};\nstruct MeanReversion : Strategy<MeanReversion> {\n    int count = 0;\n    void onTick(int /*tick*/) { ++count; }\n};\n",
+          "harness": "#include <cstdio>\nstatic int g_fail=0;\nstatic void check(const char* n, bool ok, const char* detail){\n    if(!ok) g_fail=1; printf(\"__CASE__|%s|%s|%s\\n\", n, ok?\"PASS\":\"FAIL\", detail);\n}\nint main(){\n    char buf[160];\n    { Momentum m; m.run(5); snprintf(buf,sizeof buf,\"signal=%ld want=5\",m.signal); check(\"forwards-onTick\", m.signal==5, buf); }\n    { Momentum m; long want=0; for(int t=1;t<=100;++t){ m.run(t); want+=t; }\n      snprintf(buf,sizeof buf,\"signal=%ld want=%ld\",m.signal,want); check(\"loop-accumulates\", m.signal==want, buf); }\n    { MeanReversion mr; for(int t=0;t<7;++t) mr.run(t); snprintf(buf,sizeof buf,\"count=%d want=7\",mr.count); check(\"per-type-dispatch\", mr.count==7, buf); }\n    { Momentum m; m.run(0); m.run(-10); m.run(10); snprintf(buf,sizeof buf,\"signal=%ld want=0\",m.signal); check(\"signed-ticks\", m.signal==0, buf); }\n    { Momentum a,b; a.run(3); b.run(100); snprintf(buf,sizeof buf,\"a=%ld b=%ld\",a.signal,b.signal); check(\"independent-state\", a.signal==3 && b.signal==100, buf); }\n    { snprintf(buf,sizeof buf,\"sizeof(Momentum)=%zu sizeof(long)=%zu\",sizeof(Momentum),sizeof(long));\n      check(\"zero-overhead-size\", sizeof(Momentum)==sizeof(long), buf); }\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "forwards-onTick"
+            },
+            {
+              "name": "loop-accumulates"
+            },
+            {
+              "name": "per-type-dispatch"
+            },
+            {
+              "name": "signed-ticks"
+            },
+            {
+              "name": "independent-state"
+            },
+            {
+              "name": "zero-overhead-size"
+            }
+          ],
+          "solution": "```cpp\n#include <cstdint>\n\n// CRTP base parameterized on the concrete Derived type. run() forwards to the derived\n// onTick() via static_cast resolved AT COMPILE TIME -- no vtable load, no indirect call,\n// hence no branch-target misprediction, and (the big win) no inlining barrier, so\n// constant propagation and vectorization can flow across the call.\ntemplate <class Derived>\nstruct Strategy {\n    void run(int tick) {\n        static_cast<Derived*>(this)->onTick(tick);  // compile-time dispatch to the derived method\n    }\n};\n\n// A concrete strategy: sums the ticks it sees (stand-in for \"compute a signal\").\nstruct Momentum : Strategy<Momentum> {\n    long signal = 0;\n    void onTick(int tick) { signal += tick; }   // called directly; the compiler can inline it\n};\n\n// A second strategy proves dispatch is per-type and resolved statically (no shared vtable).\nstruct MeanReversion : Strategy<MeanReversion> {\n    int count = 0;\n    void onTick(int /*tick*/) { ++count; }\n};\n// Use static polymorphism (CRTP/templates/std::variant) on hot paths where the type is\n// fixed at compile time. Reserve `virtual` for cold paths where the type set is unknown\n// until runtime (plugins, config) -- the zero-overhead principle: do not pay for dynamic\n// dispatch you do not need. The empty CRTP base adds zero bytes (empty base optimization).\n```",
+          "discussion": "With CRTP the concrete type is known at compile time, so `run()` -> `onTick()` is a direct call the compiler can inline -- there is no vtable load, no indirect call, and therefore no branch-target misprediction, and (most importantly) no inlining barrier, so constant propagation and vectorization can flow across the call. Use this on hot paths where the strategy type is fixed at compile time. Genuine runtime polymorphism (`virtual`) is appropriate only on cold paths where the type set is unknown until runtime (plugins, config), per the zero-overhead principle: you do not pay for dynamic dispatch you do not need."
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,1286 @@
+{
+  "title": "BeQuant \u2014 local study build",
+  "tagline": "Quant developer prep \u00b7 reconstructed locally",
+  "placeholderMarker": "<!-- PLACEHOLDER -->",
+  "roadmaps": [
+    {
+      "id": "cppbasics",
+      "title": "C++ Basics",
+      "estimate": "1 month",
+      "topicCount": 33,
+      "graph": {
+        "nodes": {
+          "syntax-and-fundamentals": [
+            0,
+            1
+          ],
+          "pointers": [
+            1,
+            1
+          ],
+          "templates": [
+            2,
+            0
+          ],
+          "object-oriented-programming": [
+            2,
+            2
+          ],
+          "stl-containers-and-algorithms": [
+            3,
+            0
+          ],
+          "advanced-features": [
+            4,
+            1
+          ]
+        },
+        "edges": [
+          [
+            "syntax-and-fundamentals",
+            "pointers"
+          ],
+          [
+            "pointers",
+            "templates"
+          ],
+          [
+            "pointers",
+            "object-oriented-programming"
+          ],
+          [
+            "templates",
+            "stl-containers-and-algorithms"
+          ],
+          [
+            "stl-containers-and-algorithms",
+            "advanced-features"
+          ],
+          [
+            "object-oriented-programming",
+            "advanced-features"
+          ]
+        ]
+      },
+      "modules": [
+        {
+          "slug": "syntax-and-fundamentals",
+          "title": "Syntax & Fundamentals",
+          "topics": [
+            {
+              "slug": "the-cpp-compiler",
+              "title": "The C++ Compiler",
+              "difficulty": "Easy",
+              "contentPath": "content/cppbasics/syntax-and-fundamentals/the-cpp-compiler.md"
+            },
+            {
+              "slug": "types-and-initialization",
+              "title": "Types and Initialization",
+              "difficulty": "Easy",
+              "contentPath": "content/cppbasics/syntax-and-fundamentals/types-and-initialization.md"
+            },
+            {
+              "slug": "expressions-and-casting",
+              "title": "Expressions and Casting",
+              "difficulty": "Easy",
+              "contentPath": "content/cppbasics/syntax-and-fundamentals/expressions-and-casting.md"
+            },
+            {
+              "slug": "enums-and-strong-enums",
+              "title": "Enums and Strong Enums",
+              "difficulty": "Easy",
+              "contentPath": "content/cppbasics/syntax-and-fundamentals/enums-and-strong-enums.md"
+            },
+            {
+              "slug": "storage-and-attributes",
+              "title": "Storage and Attributes",
+              "difficulty": "Medium",
+              "contentPath": "content/cppbasics/syntax-and-fundamentals/storage-and-attributes.md"
+            }
+          ]
+        },
+        {
+          "slug": "pointers",
+          "title": "Pointers",
+          "topics": [
+            {
+              "slug": "pointers-and-free-store",
+              "title": "Pointers and Free Store",
+              "difficulty": "Easy",
+              "contentPath": "content/cppbasics/pointers/pointers-and-free-store.md"
+            },
+            {
+              "slug": "pointers-and-free-store-ii",
+              "title": "Pointers & Free Store II",
+              "difficulty": "Easy",
+              "contentPath": "content/cppbasics/pointers/pointers-and-free-store-ii.md"
+            },
+            {
+              "slug": "array-copying-with-pointers",
+              "title": "Array Copying with Pointers",
+              "difficulty": "Easy",
+              "contentPath": "content/cppbasics/pointers/array-copying-with-pointers.md"
+            },
+            {
+              "slug": "array-reversal-with-pointers",
+              "title": "Array Reversal with Pointers",
+              "difficulty": "Easy",
+              "contentPath": "content/cppbasics/pointers/array-reversal-with-pointers.md"
+            },
+            {
+              "slug": "const-and-pointers",
+              "title": "Const and Pointers",
+              "difficulty": "Medium",
+              "contentPath": "content/cppbasics/pointers/const-and-pointers.md"
+            },
+            {
+              "slug": "function-pointers-functors-and-lambdas",
+              "title": "Function Pointers, Functors, and Lambdas",
+              "difficulty": "Medium",
+              "contentPath": "content/cppbasics/pointers/function-pointers-functors-and-lambdas.md"
+            }
+          ]
+        },
+        {
+          "slug": "templates",
+          "title": "Templates",
+          "topics": [
+            {
+              "slug": "type-deduction",
+              "title": "Type Deduction",
+              "difficulty": "Easy",
+              "contentPath": "content/cppbasics/templates/type-deduction.md"
+            },
+            {
+              "slug": "constexpr-functions",
+              "title": "constexpr functions",
+              "difficulty": "Easy",
+              "contentPath": "content/cppbasics/templates/constexpr-functions.md"
+            },
+            {
+              "slug": "introduction-to-templates",
+              "title": "Introduction to Templates",
+              "difficulty": "Easy",
+              "contentPath": "content/cppbasics/templates/introduction-to-templates.md"
+            },
+            {
+              "slug": "template-specialization",
+              "title": "Template Specialization",
+              "difficulty": "Medium",
+              "contentPath": "content/cppbasics/templates/template-specialization.md"
+            },
+            {
+              "slug": "lambdas",
+              "title": "Lambdas",
+              "difficulty": "Medium",
+              "contentPath": "content/cppbasics/templates/lambdas.md"
+            }
+          ]
+        },
+        {
+          "slug": "stl-containers-and-algorithms",
+          "title": "STL Containers and Algorithms",
+          "topics": [
+            {
+              "slug": "auxiliary-data-types",
+              "title": "Auxiliary Data Types",
+              "difficulty": "Easy",
+              "contentPath": "content/cppbasics/stl-containers-and-algorithms/auxiliary-data-types.md"
+            },
+            {
+              "slug": "std-array-fixed-size-array-container",
+              "title": "std::array: Fixed-Size Array Container",
+              "difficulty": "Easy",
+              "contentPath": "content/cppbasics/stl-containers-and-algorithms/std-array-fixed-size-array-container.md"
+            },
+            {
+              "slug": "std-vector",
+              "title": "std::vector",
+              "difficulty": "Medium",
+              "contentPath": "content/cppbasics/stl-containers-and-algorithms/std-vector.md"
+            },
+            {
+              "slug": "std-list",
+              "title": "std::list",
+              "difficulty": "Medium",
+              "contentPath": "content/cppbasics/stl-containers-and-algorithms/std-list.md"
+            },
+            {
+              "slug": "hashing-containers",
+              "title": "Hashing Containers",
+              "difficulty": "Medium",
+              "contentPath": "content/cppbasics/stl-containers-and-algorithms/hashing-containers.md"
+            },
+            {
+              "slug": "ordered-containers",
+              "title": "Ordered Containers",
+              "difficulty": "Medium",
+              "contentPath": "content/cppbasics/stl-containers-and-algorithms/ordered-containers.md"
+            },
+            {
+              "slug": "std-deque",
+              "title": "std::deque",
+              "difficulty": "Medium",
+              "contentPath": "content/cppbasics/stl-containers-and-algorithms/std-deque.md"
+            },
+            {
+              "slug": "adapter-containers",
+              "title": "Adapter Containers",
+              "difficulty": "Medium",
+              "contentPath": "content/cppbasics/stl-containers-and-algorithms/adapter-containers.md"
+            }
+          ]
+        },
+        {
+          "slug": "object-oriented-programming",
+          "title": "Object Oriented Programming",
+          "topics": [
+            {
+              "slug": "classes-and-structs",
+              "title": "Classes and Structs",
+              "difficulty": "Easy",
+              "contentPath": "content/cppbasics/object-oriented-programming/classes-and-structs.md"
+            },
+            {
+              "slug": "constructor-initialization-lists",
+              "title": "Constructor Initialization Lists",
+              "difficulty": "Easy",
+              "contentPath": "content/cppbasics/object-oriented-programming/constructor-initialization-lists.md"
+            },
+            {
+              "slug": "inheritance-basics",
+              "title": "Inheritance Basics",
+              "difficulty": "Easy",
+              "contentPath": "content/cppbasics/object-oriented-programming/inheritance-basics.md"
+            },
+            {
+              "slug": "advanced-constructors",
+              "title": "Advanced Constructors",
+              "difficulty": "Medium",
+              "contentPath": "content/cppbasics/object-oriented-programming/advanced-constructors.md"
+            },
+            {
+              "slug": "operator-overloading",
+              "title": "Operator Overloading",
+              "difficulty": "Medium",
+              "contentPath": "content/cppbasics/object-oriented-programming/operator-overloading.md"
+            }
+          ]
+        },
+        {
+          "slug": "advanced-features",
+          "title": "Advanced Features",
+          "topics": [
+            {
+              "slug": "type-aliasing",
+              "title": "Type Aliasing",
+              "difficulty": "Medium",
+              "contentPath": "content/cppbasics/advanced-features/type-aliasing.md"
+            },
+            {
+              "slug": "exception-handling",
+              "title": "Exception Handling",
+              "difficulty": "Medium",
+              "contentPath": "content/cppbasics/advanced-features/exception-handling.md"
+            },
+            {
+              "slug": "dynamic-casting",
+              "title": "Dynamic Casting",
+              "difficulty": "Medium",
+              "contentPath": "content/cppbasics/advanced-features/dynamic-casting.md"
+            },
+            {
+              "slug": "rtti-std-any-and-std-variant",
+              "title": "RTTI, std::any, and std::variant",
+              "difficulty": "Hard",
+              "contentPath": "content/cppbasics/advanced-features/rtti-std-any-and-std-variant.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "csfundamentals",
+      "title": "CS for Quants",
+      "estimate": "1-2 months",
+      "topicCount": 42,
+      "graph": {
+        "nodes": {
+          "cpu-architecture-basics": [
+            0,
+            1
+          ],
+          "cpu-architecture-advanced": [
+            1,
+            2.2
+          ],
+          "operating-systems": [
+            1,
+            0.6
+          ],
+          "networking": [
+            2,
+            0
+          ],
+          "programming-principles": [
+            2,
+            2
+          ],
+          "ipc": [
+            3,
+            0
+          ],
+          "userspace-networking": [
+            4,
+            0
+          ]
+        },
+        "edges": [
+          [
+            "cpu-architecture-basics",
+            "operating-systems"
+          ],
+          [
+            "cpu-architecture-basics",
+            "cpu-architecture-advanced"
+          ],
+          [
+            "operating-systems",
+            "networking"
+          ],
+          [
+            "operating-systems",
+            "programming-principles"
+          ],
+          [
+            "networking",
+            "ipc"
+          ],
+          [
+            "ipc",
+            "userspace-networking"
+          ]
+        ]
+      },
+      "modules": [
+        {
+          "slug": "cpu-architecture-basics",
+          "title": "CPU Architecture Basics",
+          "topics": [
+            {
+              "slug": "bitwise-operations",
+              "title": "Bitwise Operations",
+              "difficulty": "Easy",
+              "contentPath": "content/csfundamentals/cpu-architecture-basics/bitwise-operations.md"
+            },
+            {
+              "slug": "binary-representation-of-types",
+              "title": "Binary Representation of Types",
+              "difficulty": "Easy",
+              "contentPath": "content/csfundamentals/cpu-architecture-basics/binary-representation-of-types.md"
+            },
+            {
+              "slug": "byte-order-and-endianness",
+              "title": "Byte Order and Endianness",
+              "difficulty": "Easy",
+              "contentPath": "content/csfundamentals/cpu-architecture-basics/byte-order-and-endianness.md"
+            },
+            {
+              "slug": "cpu-registers-and-assembly-instructions",
+              "title": "CPU Registers and Assembly Instructions",
+              "difficulty": "Easy",
+              "contentPath": "content/csfundamentals/cpu-architecture-basics/cpu-registers-and-assembly-instructions.md"
+            },
+            {
+              "slug": "cpu-cache-hierarchy-and-prefetching",
+              "title": "CPU Cache Hierarchy and Prefetching",
+              "difficulty": "Easy",
+              "contentPath": "content/csfundamentals/cpu-architecture-basics/cpu-cache-hierarchy-and-prefetching.md"
+            },
+            {
+              "slug": "pipelined-processors-and-instruction-level-parallelism",
+              "title": "Pipelined Processors and Instruction-Level Parallelism",
+              "difficulty": "Easy",
+              "contentPath": "content/csfundamentals/cpu-architecture-basics/pipelined-processors-and-instruction-level-parallelism.md"
+            },
+            {
+              "slug": "odd-one-out",
+              "title": "Odd one out!",
+              "difficulty": "Medium",
+              "contentPath": "content/csfundamentals/cpu-architecture-basics/odd-one-out.md"
+            }
+          ]
+        },
+        {
+          "slug": "cpu-architecture-advanced",
+          "title": "CPU Architecture Advanced",
+          "topics": [
+            {
+              "slug": "branch-prediction",
+              "title": "Branch Prediction",
+              "difficulty": "Easy",
+              "contentPath": "content/csfundamentals/cpu-architecture-advanced/branch-prediction.md"
+            },
+            {
+              "slug": "advanced-cache-analysis-and-optimization",
+              "title": "Advanced Cache Analysis and Optimization",
+              "difficulty": "Medium",
+              "contentPath": "content/csfundamentals/cpu-architecture-advanced/advanced-cache-analysis-and-optimization.md"
+            },
+            {
+              "slug": "instruction-reordering-and-out-of-order-execution",
+              "title": "Instruction Reordering and Out-of-Order Execution",
+              "difficulty": "Medium",
+              "contentPath": "content/csfundamentals/cpu-architecture-advanced/instruction-reordering-and-out-of-order-execution.md"
+            },
+            {
+              "slug": "vectorization-simd-and-avx-512",
+              "title": "Vectorization, SIMD, and AVX-512",
+              "difficulty": "Hard",
+              "contentPath": "content/csfundamentals/cpu-architecture-advanced/vectorization-simd-and-avx-512.md"
+            },
+            {
+              "slug": "numa-architecture",
+              "title": "NUMA Architecture",
+              "difficulty": "Hard",
+              "contentPath": "content/csfundamentals/cpu-architecture-advanced/numa-architecture.md"
+            }
+          ]
+        },
+        {
+          "slug": "operating-systems",
+          "title": "Operating Systems",
+          "topics": [
+            {
+              "slug": "process-vs-threads",
+              "title": "Process vs Threads",
+              "difficulty": "Easy",
+              "contentPath": "content/csfundamentals/operating-systems/process-vs-threads.md"
+            },
+            {
+              "slug": "process-memory-model",
+              "title": "Process Memory Model",
+              "difficulty": "Easy",
+              "contentPath": "content/csfundamentals/operating-systems/process-memory-model.md"
+            },
+            {
+              "slug": "virtual-memory-management",
+              "title": "Virtual Memory Management",
+              "difficulty": "Easy",
+              "contentPath": "content/csfundamentals/operating-systems/virtual-memory-management.md"
+            },
+            {
+              "slug": "process-creation-and-lifecycle",
+              "title": "Process Creation and Lifecycle",
+              "difficulty": "Easy",
+              "contentPath": "content/csfundamentals/operating-systems/process-creation-and-lifecycle.md"
+            },
+            {
+              "slug": "kernel-and-os-architecture",
+              "title": "Kernel and OS Architecture",
+              "difficulty": "Easy",
+              "contentPath": "content/csfundamentals/operating-systems/kernel-and-os-architecture.md"
+            },
+            {
+              "slug": "context-switching-and-system-calls",
+              "title": "Context Switching and System Calls",
+              "difficulty": "Easy",
+              "contentPath": "content/csfundamentals/operating-systems/context-switching-and-system-calls.md"
+            },
+            {
+              "slug": "process-scheduling",
+              "title": "Process Scheduling",
+              "difficulty": "Easy",
+              "contentPath": "content/csfundamentals/operating-systems/process-scheduling.md"
+            },
+            {
+              "slug": "os-level-synchronization-primitives",
+              "title": "OS-Level Synchronization Primitives",
+              "difficulty": "Easy",
+              "contentPath": "content/csfundamentals/operating-systems/os-level-synchronization-primitives.md"
+            },
+            {
+              "slug": "deadlocks-starvation-and-livelock",
+              "title": "Deadlocks, Starvation, and Livelock",
+              "difficulty": "Easy",
+              "contentPath": "content/csfundamentals/operating-systems/deadlocks-starvation-and-livelock.md"
+            }
+          ]
+        },
+        {
+          "slug": "networking",
+          "title": "Networking",
+          "topics": [
+            {
+              "slug": "tcp-ip-model-overview",
+              "title": "TCP/IP Model Overview",
+              "difficulty": "Easy",
+              "contentPath": "content/csfundamentals/networking/tcp-ip-model-overview.md"
+            },
+            {
+              "slug": "network-access-layer",
+              "title": "Network Access Layer",
+              "difficulty": "Easy",
+              "contentPath": "content/csfundamentals/networking/network-access-layer.md"
+            },
+            {
+              "slug": "internet-layer",
+              "title": "Internet Layer",
+              "difficulty": "Easy",
+              "contentPath": "content/csfundamentals/networking/internet-layer.md"
+            },
+            {
+              "slug": "transport-layer",
+              "title": "Transport Layer",
+              "difficulty": "Easy",
+              "contentPath": "content/csfundamentals/networking/transport-layer.md"
+            },
+            {
+              "slug": "udp-protocol",
+              "title": "UDP Protocol",
+              "difficulty": "Easy",
+              "contentPath": "content/csfundamentals/networking/udp-protocol.md"
+            },
+            {
+              "slug": "tcp-protocol",
+              "title": "TCP Protocol",
+              "difficulty": "Medium",
+              "contentPath": "content/csfundamentals/networking/tcp-protocol.md"
+            }
+          ]
+        },
+        {
+          "slug": "ipc",
+          "title": "IPC",
+          "topics": [
+            {
+              "slug": "tcp-udp-system-calls",
+              "title": "TCP/UDP System Calls",
+              "difficulty": "Medium",
+              "contentPath": "content/csfundamentals/ipc/tcp-udp-system-calls.md"
+            },
+            {
+              "slug": "pipes-and-message-queues",
+              "title": "Pipes and Message Queues",
+              "difficulty": "Medium",
+              "contentPath": "content/csfundamentals/ipc/pipes-and-message-queues.md"
+            },
+            {
+              "slug": "memory-mapped-files-mmap",
+              "title": "Memory-Mapped Files (mmap)",
+              "difficulty": "Medium",
+              "contentPath": "content/csfundamentals/ipc/memory-mapped-files-mmap.md"
+            },
+            {
+              "slug": "posix-shared-memory",
+              "title": "POSIX Shared Memory",
+              "difficulty": "Medium",
+              "contentPath": "content/csfundamentals/ipc/posix-shared-memory.md"
+            },
+            {
+              "slug": "ipc-trade-offs-and-performance",
+              "title": "IPC Trade-offs and Performance",
+              "difficulty": "Medium",
+              "contentPath": "content/csfundamentals/ipc/ipc-trade-offs-and-performance.md"
+            },
+            {
+              "slug": "zero-copy-techniques",
+              "title": "Zero-Copy Techniques",
+              "difficulty": "Hard",
+              "contentPath": "content/csfundamentals/ipc/zero-copy-techniques.md"
+            },
+            {
+              "slug": "lock-free-ipc-patterns",
+              "title": "Lock-Free IPC Patterns",
+              "difficulty": "Hard",
+              "contentPath": "content/csfundamentals/ipc/lock-free-ipc-patterns.md"
+            }
+          ]
+        },
+        {
+          "slug": "userspace-networking",
+          "title": "Userspace Networking",
+          "topics": [
+            {
+              "slug": "zero-copy-networking",
+              "title": "Zero-Copy Networking",
+              "difficulty": "Medium",
+              "contentPath": "content/csfundamentals/userspace-networking/zero-copy-networking.md"
+            },
+            {
+              "slug": "polling-vs-interrupts",
+              "title": "Polling vs Interrupts",
+              "difficulty": "Medium",
+              "contentPath": "content/csfundamentals/userspace-networking/polling-vs-interrupts.md"
+            },
+            {
+              "slug": "kernel-bypass-techniques-dpdk",
+              "title": "Kernel Bypass Techniques: DPDK",
+              "difficulty": "Hard",
+              "contentPath": "content/csfundamentals/userspace-networking/kernel-bypass-techniques-dpdk.md"
+            }
+          ]
+        },
+        {
+          "slug": "programming-principles",
+          "title": "Programming Principles",
+          "topics": [
+            {
+              "slug": "algorithmic-complexity",
+              "title": "Algorithmic Complexity",
+              "difficulty": "Easy",
+              "contentPath": "content/csfundamentals/programming-principles/algorithmic-complexity.md"
+            },
+            {
+              "slug": "compiler-optimizations",
+              "title": "Compiler Optimizations",
+              "difficulty": "Easy",
+              "contentPath": "content/csfundamentals/programming-principles/compiler-optimizations.md"
+            },
+            {
+              "slug": "memory-management-fundamentals",
+              "title": "Memory Management Fundamentals",
+              "difficulty": "Easy",
+              "contentPath": "content/csfundamentals/programming-principles/memory-management-fundamentals.md"
+            },
+            {
+              "slug": "garbage-collection-techniques",
+              "title": "Garbage Collection Techniques",
+              "difficulty": "Medium",
+              "contentPath": "content/csfundamentals/programming-principles/garbage-collection-techniques.md"
+            },
+            {
+              "slug": "object-oriented-design-principles",
+              "title": "Object-Oriented Design Principles",
+              "difficulty": "Medium",
+              "contentPath": "content/csfundamentals/programming-principles/object-oriented-design-principles.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lowlatency",
+      "title": "Low Latency C++",
+      "estimate": "1-2 months",
+      "topicCount": 44,
+      "graph": {
+        "nodes": {
+          "cpp-fundamentals": [
+            0,
+            1.5
+          ],
+          "multithreading": [
+            1,
+            0
+          ],
+          "stl-and-algorithms": [
+            1,
+            1.5
+          ],
+          "templates-basics": [
+            1,
+            3
+          ],
+          "queues": [
+            2,
+            1.5
+          ],
+          "multithreaded-queues": [
+            3,
+            0
+          ],
+          "system-design-basics": [
+            3,
+            1.5
+          ],
+          "templates-advanced": [
+            3,
+            3
+          ],
+          "system-design-advanced": [
+            4,
+            1.5
+          ]
+        },
+        "edges": [
+          [
+            "cpp-fundamentals",
+            "multithreading"
+          ],
+          [
+            "cpp-fundamentals",
+            "stl-and-algorithms"
+          ],
+          [
+            "cpp-fundamentals",
+            "templates-basics"
+          ],
+          [
+            "stl-and-algorithms",
+            "queues"
+          ],
+          [
+            "multithreading",
+            "multithreaded-queues"
+          ],
+          [
+            "queues",
+            "multithreaded-queues"
+          ],
+          [
+            "queues",
+            "system-design-basics"
+          ],
+          [
+            "system-design-basics",
+            "system-design-advanced"
+          ],
+          [
+            "templates-basics",
+            "templates-advanced"
+          ]
+        ]
+      },
+      "modules": [
+        {
+          "slug": "cpp-fundamentals",
+          "title": "C++ Fundamentals",
+          "topics": [
+            {
+              "slug": "virtual-functions-and-inheritance",
+              "title": "Virtual Functions and Inheritance",
+              "difficulty": "Easy",
+              "contentPath": "content/lowlatency/cpp-fundamentals/virtual-functions-and-inheritance.md"
+            },
+            {
+              "slug": "l-values-and-r-values",
+              "title": "L-values and R-values",
+              "difficulty": "Easy",
+              "contentPath": "content/lowlatency/cpp-fundamentals/l-values-and-r-values.md"
+            },
+            {
+              "slug": "copy-move-elision",
+              "title": "Copy-Move Elision",
+              "difficulty": "Easy",
+              "contentPath": "content/lowlatency/cpp-fundamentals/copy-move-elision.md"
+            },
+            {
+              "slug": "raii",
+              "title": "RAII",
+              "difficulty": "Easy",
+              "contentPath": "content/lowlatency/cpp-fundamentals/raii.md"
+            },
+            {
+              "slug": "smart-pointers",
+              "title": "Smart Pointers",
+              "difficulty": "Easy",
+              "contentPath": "content/lowlatency/cpp-fundamentals/smart-pointers.md"
+            },
+            {
+              "slug": "rule-of-five",
+              "title": "Rule of Five",
+              "difficulty": "Easy",
+              "contentPath": "content/lowlatency/cpp-fundamentals/rule-of-five.md"
+            }
+          ]
+        },
+        {
+          "slug": "multithreading",
+          "title": "Multithreading",
+          "topics": [
+            {
+              "slug": "launching-threads",
+              "title": "Launching Threads",
+              "difficulty": "Easy",
+              "contentPath": "content/lowlatency/multithreading/launching-threads.md"
+            },
+            {
+              "slug": "race-conditions-and-mutexes",
+              "title": "Race Conditions & Mutexes",
+              "difficulty": "Easy",
+              "contentPath": "content/lowlatency/multithreading/race-conditions-and-mutexes.md"
+            },
+            {
+              "slug": "condition-variables-and-unique-locks",
+              "title": "Condition Variables & Unique Locks",
+              "difficulty": "Medium",
+              "contentPath": "content/lowlatency/multithreading/condition-variables-and-unique-locks.md"
+            },
+            {
+              "slug": "atomic-operations",
+              "title": "Atomic Operations",
+              "difficulty": "Medium",
+              "contentPath": "content/lowlatency/multithreading/atomic-operations.md"
+            },
+            {
+              "slug": "memory-ordering",
+              "title": "Memory Ordering",
+              "difficulty": "Hard",
+              "contentPath": "content/lowlatency/multithreading/memory-ordering.md"
+            },
+            {
+              "slug": "compare-exchange-and-lock-free-programming",
+              "title": "Compare-Exchange & Lock-Free Programming",
+              "difficulty": "Hard",
+              "contentPath": "content/lowlatency/multithreading/compare-exchange-and-lock-free-programming.md"
+            },
+            {
+              "slug": "spinlock",
+              "title": "Spinlock",
+              "difficulty": "Hard",
+              "contentPath": "content/lowlatency/multithreading/spinlock.md"
+            },
+            {
+              "slug": "false-sharing-and-cache-performance",
+              "title": "False Sharing & Cache Performance",
+              "difficulty": "Hard",
+              "contentPath": "content/lowlatency/multithreading/false-sharing-and-cache-performance.md"
+            }
+          ]
+        },
+        {
+          "slug": "stl-and-algorithms",
+          "title": "STL & Algorithms",
+          "topics": [
+            {
+              "slug": "cpu-core-allocation-problem",
+              "title": "CPU Core Allocation Problem",
+              "difficulty": "Easy",
+              "contentPath": "content/lowlatency/stl-and-algorithms/cpu-core-allocation-problem.md"
+            },
+            {
+              "slug": "variable-length-integer-encoding",
+              "title": "Variable-Length Integer Encoding",
+              "difficulty": "Easy",
+              "contentPath": "content/lowlatency/stl-and-algorithms/variable-length-integer-encoding.md"
+            },
+            {
+              "slug": "progressive-binary-search",
+              "title": "Progressive Binary Search",
+              "difficulty": "Easy",
+              "contentPath": "content/lowlatency/stl-and-algorithms/progressive-binary-search.md"
+            },
+            {
+              "slug": "efficient-itoa-implementation",
+              "title": "Efficient itoa Implementation",
+              "difficulty": "Medium",
+              "contentPath": "content/lowlatency/stl-and-algorithms/efficient-itoa-implementation.md"
+            }
+          ]
+        },
+        {
+          "slug": "templates-basics",
+          "title": "Templates Basics",
+          "topics": [
+            {
+              "slug": "templates-and-type-deduction",
+              "title": "Templates & Type Deduction",
+              "difficulty": "Easy",
+              "contentPath": "content/lowlatency/templates-basics/templates-and-type-deduction.md"
+            },
+            {
+              "slug": "variadic-templates",
+              "title": "Variadic Templates",
+              "difficulty": "Easy",
+              "contentPath": "content/lowlatency/templates-basics/variadic-templates.md"
+            },
+            {
+              "slug": "perfect-forwarding",
+              "title": "Perfect Forwarding",
+              "difficulty": "Easy",
+              "contentPath": "content/lowlatency/templates-basics/perfect-forwarding.md"
+            },
+            {
+              "slug": "nth-argument-access",
+              "title": "Nth Argument Access",
+              "difficulty": "Medium",
+              "contentPath": "content/lowlatency/templates-basics/nth-argument-access.md"
+            },
+            {
+              "slug": "simple-unique-ptr",
+              "title": "Simple unique_ptr",
+              "difficulty": "Medium",
+              "contentPath": "content/lowlatency/templates-basics/simple-unique-ptr.md"
+            },
+            {
+              "slug": "simple-tuple-implementation",
+              "title": "Simple Tuple Implementation",
+              "difficulty": "Medium",
+              "contentPath": "content/lowlatency/templates-basics/simple-tuple-implementation.md"
+            },
+            {
+              "slug": "shared-ptr-with-custom-deleter",
+              "title": "shared_ptr with Custom Deleter",
+              "difficulty": "Hard",
+              "contentPath": "content/lowlatency/templates-basics/shared-ptr-with-custom-deleter.md"
+            }
+          ]
+        },
+        {
+          "slug": "queues",
+          "title": "Queues",
+          "topics": [
+            {
+              "slug": "linked-list-based-queue",
+              "title": "Linked List based Queue",
+              "difficulty": "Easy",
+              "contentPath": "content/lowlatency/queues/linked-list-based-queue.md"
+            },
+            {
+              "slug": "memory-pooled-linked-list-queue",
+              "title": "Memory-Pooled Linked List Queue",
+              "difficulty": "Medium",
+              "contentPath": "content/lowlatency/queues/memory-pooled-linked-list-queue.md"
+            },
+            {
+              "slug": "array-based-queue",
+              "title": "Array based Queue",
+              "difficulty": "Medium",
+              "contentPath": "content/lowlatency/queues/array-based-queue.md"
+            },
+            {
+              "slug": "resizing-array-based-queue",
+              "title": "Resizing Array based Queue",
+              "difficulty": "Medium",
+              "contentPath": "content/lowlatency/queues/resizing-array-based-queue.md"
+            },
+            {
+              "slug": "segmented-deque",
+              "title": "Segmented Deque",
+              "difficulty": "Hard",
+              "contentPath": "content/lowlatency/queues/segmented-deque.md"
+            }
+          ]
+        },
+        {
+          "slug": "multithreaded-queues",
+          "title": "Multithreaded Queues",
+          "topics": [
+            {
+              "slug": "linked-list-based-spsc-blocking-queue",
+              "title": "Linked List Based SPSC Blocking Queue",
+              "difficulty": "Medium",
+              "contentPath": "content/lowlatency/multithreaded-queues/linked-list-based-spsc-blocking-queue.md"
+            },
+            {
+              "slug": "linked-list-based-mpmc-blocking-queue",
+              "title": "Linked List Based MPMC Blocking Queue",
+              "difficulty": "Hard",
+              "contentPath": "content/lowlatency/multithreaded-queues/linked-list-based-mpmc-blocking-queue.md"
+            },
+            {
+              "slug": "array-based-mpmc-blocking-queue",
+              "title": "Array-Based MPMC Blocking Queue",
+              "difficulty": "Hard",
+              "contentPath": "content/lowlatency/multithreaded-queues/array-based-mpmc-blocking-queue.md"
+            },
+            {
+              "slug": "spsc-lock-free-queue",
+              "title": "SPSC Lock-Free Queue",
+              "difficulty": "Medium",
+              "contentPath": "content/lowlatency/multithreaded-queues/spsc-lock-free-queue.md"
+            },
+            {
+              "slug": "mpsc-lock-free-queue",
+              "title": "MPSC Lock-Free Queue",
+              "difficulty": "Hard",
+              "contentPath": "content/lowlatency/multithreaded-queues/mpsc-lock-free-queue.md"
+            },
+            {
+              "slug": "array-based-mpsc-lock-free-queue",
+              "title": "Array-Based MPSC Lock-Free Queue",
+              "difficulty": "Hard",
+              "contentPath": "content/lowlatency/multithreaded-queues/array-based-mpsc-lock-free-queue.md"
+            }
+          ]
+        },
+        {
+          "slug": "system-design-basics",
+          "title": "System Design Basics",
+          "topics": [
+            {
+              "slug": "design-lru-cache",
+              "title": "Design LRU Cache",
+              "difficulty": "Easy",
+              "contentPath": "content/lowlatency/system-design-basics/design-lru-cache.md"
+            },
+            {
+              "slug": "packed-struct-offset-lookup",
+              "title": "Packed Struct Offset Lookup",
+              "difficulty": "Medium",
+              "contentPath": "content/lowlatency/system-design-basics/packed-struct-offset-lookup.md"
+            },
+            {
+              "slug": "design-lfu-cache",
+              "title": "Design LFU Cache",
+              "difficulty": "Hard",
+              "contentPath": "content/lowlatency/system-design-basics/design-lfu-cache.md"
+            }
+          ]
+        },
+        {
+          "slug": "system-design-advanced",
+          "title": "System Design Advanced",
+          "topics": [
+            {
+              "slug": "order-book-implementation",
+              "title": "Order Book Implementation",
+              "difficulty": "Medium",
+              "contentPath": "content/lowlatency/system-design-advanced/order-book-implementation.md"
+            },
+            {
+              "slug": "content-scheduler",
+              "title": "Content Scheduler",
+              "difficulty": "Medium",
+              "contentPath": "content/lowlatency/system-design-advanced/content-scheduler.md"
+            }
+          ]
+        },
+        {
+          "slug": "templates-advanced",
+          "title": "Templates Advanced",
+          "topics": [
+            {
+              "slug": "type-traits-and-metafunctions",
+              "title": "Type Traits and Metafunctions",
+              "difficulty": "Medium",
+              "contentPath": "content/lowlatency/templates-advanced/type-traits-and-metafunctions.md"
+            },
+            {
+              "slug": "constexpr-consteval-and-if-constexpr",
+              "title": "constexpr, consteval, and if constexpr",
+              "difficulty": "Medium",
+              "contentPath": "content/lowlatency/templates-advanced/constexpr-consteval-and-if-constexpr.md"
+            },
+            {
+              "slug": "crtp",
+              "title": "CRTP",
+              "difficulty": "Hard",
+              "contentPath": "content/lowlatency/templates-advanced/crtp.md"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "python",
+      "title": "Python for Research",
+      "estimate": "1-2 months",
+      "topicCount": 23,
+      "graph": {
+        "nodes": {
+          "foundations": [
+            0,
+            1
+          ],
+          "numpy-essentials": [
+            1,
+            1
+          ],
+          "pandas": [
+            2,
+            0
+          ],
+          "analytics-and-ml-libraries": [
+            2,
+            1
+          ],
+          "vectorization-and-performance": [
+            2,
+            2
+          ]
+        },
+        "edges": [
+          [
+            "foundations",
+            "numpy-essentials"
+          ],
+          [
+            "numpy-essentials",
+            "pandas"
+          ],
+          [
+            "numpy-essentials",
+            "analytics-and-ml-libraries"
+          ],
+          [
+            "numpy-essentials",
+            "vectorization-and-performance"
+          ]
+        ]
+      },
+      "modules": [
+        {
+          "slug": "foundations",
+          "title": "Foundations",
+          "topics": [
+            {
+              "slug": "lists-sets-and-dicts",
+              "title": "Lists, Sets, and Dicts",
+              "difficulty": "Easy",
+              "contentPath": "content/python/foundations/lists-sets-and-dicts.md"
+            },
+            {
+              "slug": "functions-and-decorators",
+              "title": "Functions and Decorators",
+              "difficulty": "Easy",
+              "contentPath": "content/python/foundations/functions-and-decorators.md"
+            },
+            {
+              "slug": "pickling-and-serialization",
+              "title": "Pickling and Serialization",
+              "difficulty": "Easy",
+              "contentPath": "content/python/foundations/pickling-and-serialization.md"
+            },
+            {
+              "slug": "classes-and-objects",
+              "title": "Classes and Objects",
+              "difficulty": "Easy",
+              "contentPath": "content/python/foundations/classes-and-objects.md"
+            },
+            {
+              "slug": "generators-and-iterators",
+              "title": "Generators and Iterators",
+              "difficulty": "Easy",
+              "contentPath": "content/python/foundations/generators-and-iterators.md"
+            },
+            {
+              "slug": "context-managers",
+              "title": "Context Managers",
+              "difficulty": "Easy",
+              "contentPath": "content/python/foundations/context-managers.md"
+            },
+            {
+              "slug": "multiprocessing-and-threading",
+              "title": "Multiprocessing and Threading",
+              "difficulty": "Medium",
+              "contentPath": "content/python/foundations/multiprocessing-and-threading.md"
+            }
+          ]
+        },
+        {
+          "slug": "numpy-essentials",
+          "title": "Numpy Essentials",
+          "inferred": true,
+          "topics": [
+            {
+              "slug": "the-ndarray-and-dtypes",
+              "title": "The ndarray and dtypes",
+              "difficulty": "Easy",
+              "contentPath": "content/python/numpy-essentials/the-ndarray-and-dtypes.md"
+            },
+            {
+              "slug": "indexing-slicing-and-views",
+              "title": "Indexing, Slicing, and Views",
+              "difficulty": "Easy",
+              "contentPath": "content/python/numpy-essentials/indexing-slicing-and-views.md"
+            },
+            {
+              "slug": "broadcasting",
+              "title": "Broadcasting",
+              "difficulty": "Medium",
+              "contentPath": "content/python/numpy-essentials/broadcasting.md"
+            },
+            {
+              "slug": "universal-functions-and-linear-algebra",
+              "title": "Universal Functions & Linear Algebra",
+              "difficulty": "Medium",
+              "contentPath": "content/python/numpy-essentials/universal-functions-and-linear-algebra.md"
+            }
+          ]
+        },
+        {
+          "slug": "pandas",
+          "title": "Pandas",
+          "topics": [
+            {
+              "slug": "introduction-to-pandas",
+              "title": "Introduction to Pandas",
+              "difficulty": "Easy",
+              "contentPath": "content/python/pandas/introduction-to-pandas.md"
+            },
+            {
+              "slug": "indexing-selection-and-assignment",
+              "title": "Indexing, Selection, and Assignment",
+              "difficulty": "Easy",
+              "contentPath": "content/python/pandas/indexing-selection-and-assignment.md"
+            },
+            {
+              "slug": "groupby-pivot-and-melt",
+              "title": "GroupBy, Pivot, and Melt",
+              "difficulty": "Medium",
+              "contentPath": "content/python/pandas/groupby-pivot-and-melt.md"
+            },
+            {
+              "slug": "time-series-operations",
+              "title": "Time Series Operations",
+              "difficulty": "Medium",
+              "contentPath": "content/python/pandas/time-series-operations.md"
+            },
+            {
+              "slug": "joins-and-merges-at-scale",
+              "title": "Joins and Merges at Scale",
+              "difficulty": "Medium",
+              "contentPath": "content/python/pandas/joins-and-merges-at-scale.md"
+            }
+          ]
+        },
+        {
+          "slug": "vectorization-and-performance",
+          "title": "Vectorization & Performance",
+          "topics": [
+            {
+              "slug": "cpython-interpreter-and-loop-performance",
+              "title": "CPython Interpreter & Loop Performance",
+              "difficulty": "Easy",
+              "contentPath": "content/python/vectorization-and-performance/cpython-interpreter-and-loop-performance.md"
+            },
+            {
+              "slug": "vectorization-patterns",
+              "title": "Vectorization Patterns",
+              "difficulty": "Medium",
+              "contentPath": "content/python/vectorization-and-performance/vectorization-patterns.md"
+            },
+            {
+              "slug": "numba-jit-compilation",
+              "title": "Numba JIT Compilation",
+              "difficulty": "Medium",
+              "contentPath": "content/python/vectorization-and-performance/numba-jit-compilation.md"
+            }
+          ]
+        },
+        {
+          "slug": "analytics-and-ml-libraries",
+          "title": "Analytics and ML Libraries",
+          "topics": [
+            {
+              "slug": "ta-lib-technical-indicators",
+              "title": "TA-Lib Technical Indicators",
+              "difficulty": "Medium",
+              "contentPath": "content/python/analytics-and-ml-libraries/ta-lib-technical-indicators.md"
+            },
+            {
+              "slug": "scikit-learn",
+              "title": "Scikit-Learn",
+              "difficulty": "Medium",
+              "contentPath": "content/python/analytics-and-ml-libraries/scikit-learn.md"
+            },
+            {
+              "slug": "tensorflow-basics",
+              "title": "TensorFlow Basics",
+              "difficulty": "Medium",
+              "contentPath": "content/python/analytics-and-ml-libraries/tensorflow-basics.md"
+            },
+            {
+              "slug": "pytorch-basics",
+              "title": "PyTorch Basics",
+              "difficulty": "Medium",
+              "contentPath": "content/python/analytics-and-ml-libraries/pytorch-basics.md"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

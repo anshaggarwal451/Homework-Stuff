@@ -1,0 +1,1371 @@
+{
+  "rid": "cppbasics",
+  "title": "C++ Basics",
+  "modules": {
+    "syntax-and-fundamentals": {
+      "mcqs": [
+        {
+          "topic": "The C++ Compiler",
+          "q": "What is a *translation unit* in the C++ build model?",
+          "options": [
+            "A single `.cpp` file after preprocessing (the source plus everything its `#include`s pulled in)",
+            "The final linked executable that the loader maps into memory",
+            "Any header file that has been guarded with `#pragma once`",
+            "The set of all `.o` files passed to the linker at once"
+          ],
+          "answer": 0,
+          "explanation": "A translation unit is one `.cpp` file *after preprocessing*. The compiler sees exactly one TU at a time and knows nothing about the others, which is why it cannot inline a function defined in a different `.cpp` without LTO."
+        },
+        {
+          "topic": "The C++ Compiler",
+          "q": "A header contains `int counter = 0;` and is included by three `.cpp` files. What error results, and what is a correct fix?",
+          "options": [
+            "An \"undefined reference\" link error; add `extern` in the header",
+            "A \"multiple definition\" link error; mark it `inline` (or move the definition to one `.cpp`)",
+            "No error at all; each TU gets its own private copy automatically",
+            "A preprocessor error; add an include guard"
+          ],
+          "answer": 1,
+          "explanation": "A non-`inline` variable with external linkage defined in a header violates the One-Definition Rule across TUs, giving a multiple-definition link error. `inline int counter = 0;` (C++17 inline variables) or a single out-of-line definition fixes it."
+        },
+        {
+          "topic": "The C++ Compiler",
+          "q": "Which statement about `-Ofast` is TRUE?",
+          "options": [
+            "It is identical to `-O2` but with faster compile times",
+            "It guarantees the same floating-point results as `-O0`",
+            "It implies `-ffast-math`, which breaks strict IEEE-754 semantics and is risky for pricing math",
+            "It optimizes purely for binary size like `-Os`"
+          ],
+          "answer": 2,
+          "explanation": "`-Ofast` is `-O3` plus `-ffast-math`, which reorders/contracts floating-point operations and breaks IEEE-754 semantics. `-O2`/`-O3` keep IEEE semantics; `-ffast-math` does not, so `-Ofast` is rarely safe near pricing math."
+        },
+        {
+          "topic": "Types and Initialization",
+          "q": "What is the difference between `std::vector<int> a(3);` and `std::vector<int> a{3};`?",
+          "options": [
+            "Both create three elements equal to `0`",
+            "`a(3)` has one element `3`; `a{3}` has three elements all `0`",
+            "Both create one element equal to `3`",
+            "`a(3)` has three elements all `0`; `a{3}` has one element with value `3`"
+          ],
+          "answer": 3,
+          "explanation": "`(3)` is direct-init that selects the `(size_t, value)` constructor giving three value-initialized `0`s; `{3}` prefers the `initializer_list<int>` constructor, yielding a single element `3`. This is the classic brace-vs-paren ambiguity."
+        },
+        {
+          "topic": "Types and Initialization",
+          "q": "For a local `int x;` (default-initialized) followed by reading `x` before any assignment, what does the standard say?",
+          "options": [
+            "It is undefined behavior; the value is indeterminate and the compiler may optimize on the assumption it never happens",
+            "`x` is guaranteed to be `0` because locals are zero-initialized",
+            "It is a compile error under any conforming compiler",
+            "It is well-defined but implementation-defined to some garbage value"
+          ],
+          "answer": 0,
+          "explanation": "A default-initialized built-in with automatic storage holds an indeterminate value, and reading it is undefined behavior. Only static/thread-duration objects are zero-initialized. `int x{};` would value-initialize it to 0."
+        },
+        {
+          "topic": "Types and Initialization",
+          "q": "Which type trait must hold before you may safely `std::memcpy` an object?",
+          "options": [
+            "`std::is_polymorphic_v<T>`",
+            "`std::is_trivially_copyable_v<T>`",
+            "`std::has_virtual_destructor_v<T>`",
+            "`std::is_default_constructible_v<T>`"
+          ],
+          "answer": 1,
+          "explanation": "`std::is_trivially_copyable` is the precise property `memcpy`/`bit_cast` need. A type with a `std::string` member is excluded because copying its bytes would duplicate an owning pointer rather than perform the deep copy the string requires."
+        },
+        {
+          "topic": "Expressions and Casting",
+          "q": "Predict the type and value of `c` in:\n\n```cpp\nstd::uint8_t a = 200, b = 100;\nauto c = a + b;\n```",
+          "options": [
+            "`c` is `std::uint8_t` with value `44` (wraps mod 256)",
+            "`c` is `unsigned` with value `300`",
+            "`c` is `int` with value `300`",
+            "`c` is `std::uint8_t` with value `300`, which is UB"
+          ],
+          "answer": 2,
+          "explanation": "Integer promotion lifts both `uint8_t` operands to `int` before the addition, so `a + b` is an `int` equal to `300` — it does not wrap. It would only truncate if you assigned the result back into a `uint8_t`."
+        },
+        {
+          "topic": "Expressions and Casting",
+          "q": "Why are C-style casts like `(Order*)p` banned in many HFT/style-guide codebases?",
+          "options": [
+            "They are slower at runtime than the named casts",
+            "They are a syntax error in C++17 and later",
+            "They always invoke a `dynamic_cast` and pull in RTTI",
+            "They silently expand to whichever of const_cast/static_cast/reinterpret_cast compiles first, are un-greppable, and a refactor can change which"
+          ],
+          "answer": 3,
+          "explanation": "A C-style cast tries const_cast, static_cast, static_cast+const_cast, reinterpret_cast, then reinterpret_cast+const_cast in order, using the first that compiles. You cannot tell which you got, can't grep for the dangerous ones, and a refactor can silently turn a benign static_cast into a reinterpret_cast."
+        },
+        {
+          "topic": "Expressions and Casting",
+          "q": "What is the correct, well-defined way to reinterpret a `float`'s bits as a `std::uint32_t` in C++20?",
+          "options": [
+            "`std::bit_cast<std::uint32_t>(f)`",
+            "`(std::uint32_t)f`",
+            "`reinterpret_cast<std::uint32_t&>(f)`",
+            "`static_cast<std::uint32_t>(f)`"
+          ],
+          "answer": 0,
+          "explanation": "`std::bit_cast` copies the object representation without violating strict aliasing and is `constexpr`. `reinterpret_cast<uint32_t&>(f)` is strict-aliasing UB; `static_cast`/the C-cast perform a value conversion (truncating 1.5f to 1), not a bit reinterpretation."
+        },
+        {
+          "topic": "Enums and Strong Enums",
+          "q": "Which is a leak of a plain unscoped `enum` that `enum class` fixes?",
+          "options": [
+            "Unscoped enums always allocate on the heap",
+            "Enumerators implicitly convert to `int` and the names leak into the enclosing scope",
+            "Unscoped enums forbid use inside a `switch`",
+            "Unscoped enums cannot have an underlying type at all"
+          ],
+          "answer": 1,
+          "explanation": "Unscoped `enum`s implicitly convert to `int` (so `Color == 1` compiles) and inject their enumerators into the enclosing scope (so two enums can't both have `Buy`). `enum class` removes the implicit conversion and scopes the names under the enum's name."
+        },
+        {
+          "topic": "Enums and Strong Enums",
+          "q": "What is the underlying type of `enum class E { A, B };` when unspecified?",
+          "options": [
+            "`std::uint8_t`",
+            "`unsigned int`",
+            "`int`",
+            "Implementation-defined, chosen to fit the values"
+          ],
+          "answer": 2,
+          "explanation": "A scoped enum's underlying type defaults to `int` when unspecified. By contrast, an unscoped enum without an explicit underlying type has an implementation-defined underlying type chosen to fit its values — a portability hazard for serialization."
+        },
+        {
+          "topic": "Storage and Attributes",
+          "q": "`static` is overloaded in C++. Which set of meanings is correct depending on where it appears?",
+          "options": [
+            "Namespace scope = external linkage; function-local = automatic duration; class member = per-object",
+            "It is only valid on class members in modern C++",
+            "It always means \"static storage duration\" regardless of context",
+            "Namespace scope = internal linkage; function-local = static duration (no linkage); class member = one shared instance"
+          ],
+          "answer": 3,
+          "explanation": "At namespace scope `static` gives internal linkage; inside a function it gives static storage duration with no linkage (initialized once, thread-safely since C++11); on a class member it means a single instance shared by all objects."
+        },
+        {
+          "topic": "Storage and Attributes",
+          "q": "Which attribute is the standard cure for *false sharing* between two atomics hammered by different threads?",
+          "options": [
+            "`alignas(64)` (or `std::hardware_destructive_interference_size`) so each gets its own cache line",
+            "`[[likely]]` on the access branch",
+            "`thread_local` on each atomic",
+            "`[[nodiscard]]` on the accessor functions"
+          ],
+          "answer": 0,
+          "explanation": "False sharing occurs when two independently-written variables share a 64-byte cache line, causing cache-line ping-pong. Padding each to its own line with `alignas(64)` (or `hardware_destructive_interference_size`) eliminates it."
+        }
+      ],
+      "coding": [
+        {
+          "topic": "Types and Initialization",
+          "lang": "cpp",
+          "prompt": "Define a POD-style wire message `struct Tick { std::int64_t ts; std::int32_t px; std::int32_t qty; };` and add `static_assert`s proving it is **trivially copyable** and **standard-layout** (so it is safe to `memcpy`/`bit_cast`). Then write `std::size_t serialize(const Tick& t, std::byte* out)` that copies a `Tick` into a caller-provided `std::byte` buffer using `std::memcpy`, returning the number of bytes written. Click **▶ Run tests** to check against the test cases.",
+          "hints": [
+            "Include `<cstdint>`, `<cstddef>`, `<cstring>`, and `<type_traits>`.",
+            "The traits you want are `std::is_trivially_copyable_v` and `std::is_standard_layout_v`."
+          ],
+          "starter": "#include <cstdint>\n#include <cstddef>\n#include <cstring>\n#include <type_traits>\n\nstruct Tick {\n    std::int64_t ts;\n    std::int32_t px;\n    std::int32_t qty;\n};\n\n// Copy `t` into `out` as raw bytes; return the number of bytes written.\nstd::size_t serialize(const Tick& t, std::byte* out) {\n    // TODO: memcpy the Tick into out and return its size\n    (void)t; (void)out;\n    return 0;\n}\n",
+          "harness": "#include <cstdio>\n#include <cstdint>\n#include <cstddef>\n#include <cstring>\n#include <type_traits>\n\nstatic void check(const char* n, bool ok, const char* detail){\n    printf(\"__CASE__|%s|%s|%s\\n\", n, ok?\"PASS\":\"FAIL\", detail);\n}\nint main(){\n    // The type properties the prompt asks the student to prove.\n    check(\"trivially-copyable\", std::is_trivially_copyable_v<Tick>,\n          std::is_trivially_copyable_v<Tick> ? \"Tick is trivially copyable\" : \"Tick is NOT trivially copyable\");\n    check(\"standard-layout\", std::is_standard_layout_v<Tick>,\n          std::is_standard_layout_v<Tick> ? \"Tick is standard-layout\" : \"Tick is NOT standard-layout\");\n\n    Tick t{ int64_t(1700000000123LL), int32_t(-12345), int32_t(500) };\n    std::byte buf[sizeof(Tick)];\n    std::memset(buf, 0xAA, sizeof buf);\n    std::size_t n = serialize(t, buf);\n\n    char d1[64]; std::snprintf(d1, sizeof d1, \"returned=%zu want=%zu\", n, sizeof(Tick));\n    check(\"returns-size\", n == sizeof(Tick), d1);\n\n    // Bytes in buf must equal the object representation of t.\n    bool same = std::memcmp(buf, &t, sizeof(Tick)) == 0;\n    check(\"bytes-match\", same, same ? \"buffer equals object bytes\" : \"buffer differs from object bytes\");\n\n    // Round-trip: copy bytes back into a fresh Tick.\n    Tick r{};\n    std::memcpy(&r, buf, sizeof(Tick));\n    bool rt = (r.ts == t.ts && r.px == t.px && r.qty == t.qty);\n    char d2[96]; std::snprintf(d2, sizeof d2, \"ts=%lld px=%d qty=%d\", (long long)r.ts, (int)r.px, (int)r.qty);\n    check(\"round-trip\", rt, d2);\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "trivially-copyable"
+            },
+            {
+              "name": "standard-layout"
+            },
+            {
+              "name": "returns-size"
+            },
+            {
+              "name": "bytes-match"
+            },
+            {
+              "name": "round-trip"
+            }
+          ],
+          "solution": "```cpp\n// C++17\n#include <cstdint>\n#include <cstddef>\n#include <cstring>\n#include <type_traits>\n\n// A \"plain old data\" wire message: fixed-width integers only, no owning members.\nstruct Tick {\n    std::int64_t ts;   // timestamp  (8 bytes, alignment 8)\n    std::int32_t px;   // price      (4 bytes)\n    std::int32_t qty;  // quantity   (4 bytes)\n};\n\n// Trivially copyable == the object's value is fully described by its bytes,\n// so std::memcpy / std::bit_cast on it is well-defined (no owning pointers).\nstatic_assert(std::is_trivially_copyable_v<Tick>, \"must be memcpy-able\");\n// Standard-layout == C-compatible layout (members laid out in order, one access\n// control), which is what lets the byte image be shared with other languages.\nstatic_assert(std::is_standard_layout_v<Tick>,    \"C-compatible layout\");\n\nstd::size_t serialize(const Tick& t, std::byte* out) {\n    // memcpy reads sizeof(Tick) bytes from &t and writes them to out.\n    // Legal precisely because Tick is trivially copyable.\n    std::memcpy(out, &t, sizeof(Tick));\n    // Report how many bytes we produced so the caller can advance its cursor.\n    return sizeof(Tick);\n}\n```",
+          "discussion": "Trivial copyability is exactly the precondition `std::memcpy`/`std::bit_cast` require — the bytes fully represent the value, with no owning pointers (a `std::string` member would break it). `sizeof(Tick)` is 16 here (no padding, since members are in descending-alignment order). On the wire you would still pin field widths with `<cstdint>` types and worry about endianness; trivially-copyable + standard-layout is what makes the fast copy-by-bytes path legal."
+        },
+        {
+          "topic": "Enums and Strong Enums",
+          "lang": "cpp",
+          "prompt": "Define a scoped enum `MsgType : char` with `NewOrder = 'N'`, `Cancel = 'C'`, `Execution = 'E'`. Add a `static_assert` that `sizeof(MsgType) == 1`. Write `const char* name(MsgType)` that maps each value to a string using an **exhaustive `switch` with no `default`** so a future enumerator forces a compiler warning. Also provide a C++17-compatible `to_underlying` helper. Unknown values should return `\"?\"`.",
+          "hints": [
+            "Pin the underlying type to `char` in the enum declaration.",
+            "`std::underlying_type_t<MsgType>` gives the integer type for the cast."
+          ],
+          "starter": "#include <type_traits>\n\nenum class MsgType : char {\n    NewOrder  = 'N',\n    Cancel    = 'C',\n    Execution = 'E',\n};\n\ntemplate <class E>\nconstexpr auto to_underlying(E e) noexcept {\n    // TODO: cast e to its underlying integer type (correct return type kept so the\n    // stub compiles against the harness; replace the dummy value with the real cast)\n    (void)e;\n    return static_cast<std::underlying_type_t<E>>(0);\n}\n\nconst char* name(MsgType m) {\n    // TODO: map each enumerator to its string; return \"?\" otherwise\n    (void)m;\n    return \"?\";\n}\n",
+          "harness": "#include <cstdio>\n#include <cstring>\n#include <type_traits>\n\nstatic void check(const char* n, bool ok, const char* detail){\n    printf(\"__CASE__|%s|%s|%s\\n\", n, ok?\"PASS\":\"FAIL\", detail);\n}\nstatic bool seq(const char* a, const char* b){ return std::strcmp(a,b)==0; }\nint main(){\n    check(\"sizeof-1\", sizeof(MsgType) == 1, sizeof(MsgType)==1 ? \"1 byte\" : \"not 1 byte\");\n\n    const char* a = name(MsgType::NewOrder);\n    check(\"name-NewOrder\", seq(a,\"NewOrder\"), a);\n    const char* b = name(MsgType::Cancel);\n    check(\"name-Cancel\", seq(b,\"Cancel\"), b);\n    const char* c = name(MsgType::Execution);\n    check(\"name-Execution\", seq(c,\"Execution\"), c);\n\n    // Unknown enumerator value (cast in) must yield \"?\"\n    MsgType bad = static_cast<MsgType>('Z');\n    const char* d = name(bad);\n    check(\"name-unknown\", seq(d,\"?\"), d);\n\n    auto u = to_underlying(MsgType::NewOrder);\n    static_assert(std::is_same_v<decltype(u), char>, \"to_underlying must return char\");\n    char buf[32]; std::snprintf(buf, sizeof buf, \"underlying='%c'(%d)\", (char)u, (int)u);\n    check(\"to_underlying\", u == 'N', buf);\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "sizeof-1"
+            },
+            {
+              "name": "name-NewOrder"
+            },
+            {
+              "name": "name-Cancel"
+            },
+            {
+              "name": "name-Execution"
+            },
+            {
+              "name": "name-unknown"
+            },
+            {
+              "name": "to_underlying"
+            }
+          ],
+          "solution": "```cpp\n// C++17\n#include <type_traits>\n\n// Scoped enum with a pinned 1-byte underlying type, mirroring a one-byte wire tag.\nenum class MsgType : char {\n    NewOrder  = 'N',\n    Cancel    = 'C',\n    Execution = 'E',\n};\nstatic_assert(sizeof(MsgType) == 1);  // ': char' guarantees exactly one byte\n\n// Hand-rolled std::to_underlying (which only exists since C++23).\ntemplate <class E>\nconstexpr auto to_underlying(E e) noexcept {\n    // underlying_type_t<E> is 'char' here; the cast strips the enum's type safety.\n    return static_cast<std::underlying_type_t<E>>(e);\n}\n\nconst char* name(MsgType m) {\n    switch (m) {                 // build with -Wswitch -Werror to catch new cases\n        case MsgType::NewOrder:  return \"NewOrder\";\n        case MsgType::Cancel:    return \"Cancel\";\n        case MsgType::Execution: return \"Execution\";\n        // No 'default': adding a 4th enumerator makes -Wswitch flag this switch.\n    }\n    return \"?\";                  // reached only for an out-of-range cast-in value\n}\n```",
+          "discussion": "Pinning `: char` makes `sizeof` exactly one byte — what you want when the enum mirrors a one-byte wire tag — and lets the enum be forward-declared. Omitting `default` is deliberate: with `-Wswitch -Werror`, adding a fourth enumerator turns every unhandled `switch` into a build break instead of a silent fall-through in production. In C++23 you would use the standard `std::to_underlying` instead of the hand-rolled helper."
+        }
+      ]
+    },
+    "pointers": {
+      "mcqs": [
+        {
+          "topic": "Pointers and Free Store",
+          "q": "Given `int a[4];` and `int* p = a;`, why does `p + 1` advance 4 bytes while a `char* c; c + 1` advances 1?",
+          "options": [
+            "`int*` is wider than `char*`, so the pointer itself is larger",
+            "Pointer arithmetic is scaled by `sizeof(T)` of the pointee type",
+            "Pointers always advance by 1 byte; the difference is a compiler bug",
+            "The array bounds force `int*` to skip padding"
+          ],
+          "answer": 1,
+          "explanation": "Adding `n` to a `T*` advances by `n * sizeof(T)` bytes so the result points at the next `T`. `sizeof(int)` is 4 and `sizeof(char)` is 1, which is the single rule explaining both. This is also why `void*` arithmetic is ill-formed in standard C++."
+        },
+        {
+          "topic": "Pointers and Free Store",
+          "q": "Why is `f(NULL)` ambiguous (or wrong) when both `void f(int)` and `void f(int*)` exist, but `f(nullptr)` is not?",
+          "options": [
+            "There is no difference; both call `f(int*)`",
+            "`nullptr` is a macro that expands to `(void*)0`",
+            "`NULL`/`0` are integer constants and prefer `f(int)`; `nullptr` has type `std::nullptr_t` that converts only to pointers",
+            "`NULL` is a keyword reserved for pointers only"
+          ],
+          "answer": 2,
+          "explanation": "`NULL`/`0` are null pointer *constants* that are integer literals, so they match `f(int)`. `nullptr` is of type `std::nullptr_t`, which implicitly converts to any pointer type but never to an integer, so it unambiguously selects `f(int*)`."
+        },
+        {
+          "topic": "Pointers and Free Store",
+          "q": "What two operations does `new T{...}` perform, and in what order?",
+          "options": [
+            "It only allocates storage; the constructor runs lazily on first use",
+            "It calls `malloc` then `memset`s the bytes to zero",
+            "First the constructor runs, then `operator new` allocates storage",
+            "First `operator new` obtains raw storage, then the constructor builds the `T` object in it"
+          ],
+          "answer": 3,
+          "explanation": "`new T{...}` calls `operator new(sizeof(T))` to get suitably-aligned raw storage (which may hit the allocator/OS), then constructs a `T` in place. `delete` is the mirror: run the destructor, then `operator delete`."
+        },
+        {
+          "topic": "Pointers & Free Store II",
+          "q": "Why is `delete a;` (without brackets) undefined behavior for `int* a = new int[10];`?",
+          "options": [
+            "`new[]` stores element-count bookkeeping that only `delete[]` consults; plain `delete` skips it and corrupts the allocator",
+            "It is actually fine; `delete` and `delete[]` are interchangeable",
+            "`a` is `const` so it cannot be deleted",
+            "`delete` cannot free heap memory, only `free` can"
+          ],
+          "answer": 0,
+          "explanation": "`new[]` typically stores the element count in a header so `delete[]` knows how many destructors to run and how to return the block. Calling plain `delete` skips that bookkeeping — UB. You must pair `new`/`delete` and `new[]`/`delete[]` exactly."
+        },
+        {
+          "topic": "Pointers and Free Store",
+          "q": "Spot the bug:\n\n```cpp\nint* dangle() {\n    int local = 5;\n    return &local;\n}\n```",
+          "options": [
+            "It leaks `local` because there is no matching `delete`",
+            "It returns the address of an automatic object whose lifetime ends at return; dereferencing the result is UB (dangling pointer)",
+            "It is fine; `local` is copied into the returned pointer",
+            "It is a double free"
+          ],
+          "answer": 1,
+          "explanation": "`local` has automatic storage duration and dies when the function returns, so the returned pointer dangles and dereferencing it is undefined behavior. Returning by value, or allocating with a lifetime that outlives the call, is the fix."
+        },
+        {
+          "topic": "Const and Pointers",
+          "q": "Which is true of `const int* p;` versus `int* const q;`?",
+          "options": [
+            "Both forbid writing through the pointer",
+            "Both are identical because const binds to the pointer either way",
+            "`p` can be repointed but you cannot write through it; `q` cannot be repointed but you can write through it",
+            "`p` cannot be repointed; `q` can be repointed"
+          ],
+          "answer": 2,
+          "explanation": "Read right-to-left: `const int* p` is a (mutable) pointer to const int — repointable, not writable-through. `int* const q` is a const pointer to (mutable) int — writable-through, not repointable. `const int*` protects the data; `int* const` protects the binding."
+        },
+        {
+          "topic": "Const and Pointers",
+          "q": "Why is adding low-level const (`const int* r = some_int_ptr;`) allowed implicitly, but dropping it (`int* s = r;`) requires a `const_cast`?",
+          "options": [
+            "It is a compiler limitation that LTO removes",
+            "Both directions are implicit; the question's premise is false",
+            "Low-level const is part of the name, not the type, so it cannot convert at all",
+            "Adding a const promise is always safe; removing it could let you write through a pointer the type system promised was read-only"
+          ],
+          "answer": 3,
+          "explanation": "Adding low-level const only strengthens the read-only guarantee, so it is always implicit. Dropping it would silently re-enable mutation through a pointer the type said was const, so the language forces an explicit `const_cast`."
+        },
+        {
+          "topic": "Const and Pointers",
+          "q": "Why is returning `const std::string` by value an anti-pattern?",
+          "options": [
+            "The top-level const on the returned value blocks move semantics, forcing copies",
+            "It changes the function's mangled name and breaks linking",
+            "It causes a memory leak in the caller",
+            "`const` return values cannot be assigned to any variable"
+          ],
+          "answer": 0,
+          "explanation": "A `const` prvalue cannot be moved from (the move constructor takes a non-const rvalue reference), so callers are forced to copy the result. Return a plain `std::string` so the result can be moved or elided."
+        },
+        {
+          "topic": "Function Pointers, Functors, and Lambdas",
+          "q": "Why does a lambda passed to a function *template* inline, while the same lambda stored in a `std::function` does not?",
+          "options": [
+            "`std::function` disables optimization globally",
+            "The template preserves the lambda's concrete type so the call is direct; `std::function` type-erases it into an indirect call the optimizer can't see through",
+            "Templates copy the lambda's body textually into the caller",
+            "Lambdas in templates are always `constexpr`"
+          ],
+          "answer": 1,
+          "explanation": "When the callable's concrete type is a template parameter, `op(args)` is a direct call the optimizer flattens. `std::function` erases the type behind a vtable-like dispatch, producing an indirect call (and possibly a heap allocation) that defeats inlining."
+        },
+        {
+          "topic": "Function Pointers, Functors, and Lambdas",
+          "q": "Under what condition can a lambda be implicitly converted to a plain function pointer?",
+          "options": [
+            "Only when it is marked `mutable`",
+            "Never; lambdas are always closure objects",
+            "Only when it is captureless (stateless)",
+            "Whenever it captures exactly one variable by value"
+          ],
+          "answer": 2,
+          "explanation": "A captureless lambda has no state, so the standard makes it convertible to a function pointer of the matching signature — handy for C APIs. A capturing lambda carries state with nowhere to live in a bare function pointer, so no such conversion exists."
+        },
+        {
+          "topic": "Function Pointers, Functors, and Lambdas",
+          "q": "Which statement about `std::function` is TRUE?",
+          "options": [
+            "It guarantees the same machine code as a templated callable parameter",
+            "It never allocates and always inlines through the call",
+            "It can only hold lambdas, not free functions or functors",
+            "It may heap-allocate when the wrapped callable's state exceeds its small-buffer size, and each call is an indirect call"
+          ],
+          "answer": 3,
+          "explanation": "`std::function` stores the callable in a small inline buffer; if the captured state is larger than that buffer it silently heap-allocates. Calls dispatch through an internal vtable-like mechanism — an indirect call the compiler generally cannot inline."
+        }
+      ],
+      "coding": [
+        {
+          "topic": "Array Copying with Pointers",
+          "lang": "cpp",
+          "prompt": "Without using `<algorithm>` or any STL container, write `void copy_array(const int* src, int* dst, std::size_t n)` that copies `n` ints from `src` to `dst` using only pointer arithmetic (no indexing with `[]`). Assume the ranges do not overlap.",
+          "hints": [
+            "Walk a `const int*` over the source and an `int*` over the destination.",
+            "`*dst++ = *src++;` advances both pointers while assigning."
+          ],
+          "starter": "#include <cstddef>\n\nvoid copy_array(const int* src, int* dst, std::size_t n) {\n    // TODO: copy n ints from src to dst using pointer arithmetic only\n    (void)src; (void)dst; (void)n;\n}\n",
+          "harness": "#include <cstdio>\n#include <cstddef>\n\nstatic void check(const char* n, bool ok, const char* detail){\n    printf(\"__CASE__|%s|%s|%s\\n\", n, ok?\"PASS\":\"FAIL\", detail);\n}\nstatic bool eq(const int* a, const int* b, std::size_t n){\n    for (std::size_t i=0;i<n;++i) if (a[i]!=b[i]) return false; return true;\n}\nint main(){\n    {\n        const int src[5] = {10,20,30,40,50};\n        int dst[5] = {0,0,0,0,0};\n        copy_array(src, dst, 5);\n        check(\"five-ints\", eq(src,dst,5), eq(src,dst,5)?\"copied [10..50]\":\"mismatch\");\n    }\n    {\n        const int src[1] = {42};\n        int dst[1] = {-1};\n        copy_array(src, dst, 1);\n        check(\"single\", dst[0]==42, dst[0]==42?\"copied 42\":\"mismatch\");\n    }\n    {\n        const int src[3] = {1,2,3};\n        int dst[3] = {9,9,9};\n        copy_array(src, dst, 0);     // n==0 must touch nothing\n        check(\"zero-n\", dst[0]==9 && dst[1]==9 && dst[2]==9, \"dst untouched\");\n    }\n    {\n        const int src[4] = {-5,0,7,-100};\n        int dst[4] = {0,0,0,0};\n        copy_array(src, dst, 4);\n        check(\"negatives\", eq(src,dst,4), \"signed values copied\");\n    }\n    {\n        // copy into the back half of a buffer (non-overlapping)\n        int buf[6] = {1,2,3,0,0,0};\n        copy_array(buf, buf+3, 3);\n        check(\"disjoint-halves\", buf[3]==1 && buf[4]==2 && buf[5]==3, \"front copied to back\");\n    }\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "five-ints"
+            },
+            {
+              "name": "single"
+            },
+            {
+              "name": "zero-n"
+            },
+            {
+              "name": "negatives"
+            },
+            {
+              "name": "disjoint-halves"
+            }
+          ],
+          "solution": "```cpp\n// C++17\n#include <cstddef>\n\nvoid copy_array(const int* src, int* dst, std::size_t n) {\n    const int* end = src + n;          // one-past-the-end is a legal address to form\n    while (src != end)                 // loop until src reaches that sentinel\n        *dst++ = *src++;               // read *src, write to *dst, then advance both\n}\n```",
+          "discussion": "`*dst++ = *src++` dereferences then post-increments both pointers; pointer arithmetic is scaled by `sizeof(int)` so each `++` steps a full element. Forming `src + n` (one-past-the-end) is legal as long as you do not dereference it. Complexity is O(n) with one load and one store per element. For overlapping ranges you would need `std::memmove` semantics; here non-overlap is assumed (like `memcpy`)."
+        },
+        {
+          "topic": "Array Reversal with Pointers",
+          "lang": "cpp",
+          "prompt": "Write `void reverse_in_place(int* a, std::size_t n)` that reverses an array of `n` ints in place using two pointers walking toward each other (no extra array, no `[]` indexing).",
+          "hints": [
+            "Use a `left` pointer at the start and a `right` pointer at `a + n - 1`.",
+            "Swap `*left` and `*right`, then move `left` forward and `right` backward until they meet or cross."
+          ],
+          "starter": "#include <cstddef>\n#include <utility>   // std::swap\n\nvoid reverse_in_place(int* a, std::size_t n) {\n    // TODO: reverse a[0..n-1] in place with two converging pointers\n    (void)a; (void)n;\n}\n",
+          "harness": "#include <cstdio>\n#include <cstddef>\n#include <utility>\n\nstatic void check(const char* n, bool ok, const char* detail){\n    printf(\"__CASE__|%s|%s|%s\\n\", n, ok?\"PASS\":\"FAIL\", detail);\n}\nstatic bool eq(const int* a, const int* b, std::size_t n){\n    for (std::size_t i=0;i<n;++i) if (a[i]!=b[i]) return false; return true;\n}\nint main(){\n    {\n        int a[6] = {1,2,3,4,5,6};\n        const int want[6] = {6,5,4,3,2,1};\n        reverse_in_place(a, 6);\n        check(\"even-len\", eq(a,want,6), \"1..6 -> 6..1\");\n    }\n    {\n        int a[5] = {1,2,3,4,5};\n        const int want[5] = {5,4,3,2,1};\n        reverse_in_place(a, 5);\n        check(\"odd-len\", eq(a,want,5), \"middle element fixed\");\n    }\n    {\n        int a[1] = {99};\n        reverse_in_place(a, 1);\n        check(\"single\", a[0]==99, \"no-op on size 1\");\n    }\n    {\n        int a[1] = {7};\n        reverse_in_place(a, 0);          // n==0 must not underflow / touch memory\n        check(\"zero-n\", a[0]==7, \"untouched when n==0\");\n    }\n    {\n        int a[4] = {-2,-1,0,1};\n        const int want[4] = {1,0,-1,-2};\n        reverse_in_place(a, 4);\n        check(\"signed\", eq(a,want,4), \"negatives reversed\");\n    }\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "even-len"
+            },
+            {
+              "name": "odd-len"
+            },
+            {
+              "name": "single"
+            },
+            {
+              "name": "zero-n"
+            },
+            {
+              "name": "signed"
+            }
+          ],
+          "solution": "```cpp\n// C++17\n#include <cstddef>\n#include <utility>   // std::swap\n\nvoid reverse_in_place(int* a, std::size_t n) {\n    if (n == 0) return;                // guard: a + n - 1 would underflow for n==0\n    int* left  = a;                    // first element\n    int* right = a + n - 1;            // last element\n    while (left < right) {             // stop when the pointers meet/cross\n        std::swap(*left, *right);      // exchange the pair at the two ends\n        ++left;                        // walk inward from the front\n        --right;                       // walk inward from the back\n    }\n}\n```",
+          "discussion": "Two pointers converge from the ends, swapping pairs — O(n) time, O(1) extra space, with n/2 swaps. The `n == 0` guard matters: computing `a + n - 1` when `n == 0` would form an invalid pointer (before the array). Using `left < right` rather than `!=` keeps the loop correct for both even and odd `n`. This is the canonical in-place reversal pattern."
+        }
+      ]
+    },
+    "templates": {
+      "mcqs": [
+        {
+          "topic": "Type Deduction",
+          "q": "For `template <class T> void f(T&& p);`, what is `T` when called as `f(x)` where `x` is an lvalue `int`?",
+          "options": [
+            "`T` is deduced as `int&` (an lvalue reference), and reference collapsing makes the parameter `int&`",
+            "Deduction fails because `x` is not an rvalue",
+            "`T` is `const int` and the parameter is `const int&`",
+            "`T` is `int` and the parameter is `int&&`"
+          ],
+          "answer": 0,
+          "explanation": "`T&&` is a forwarding reference: for an lvalue argument, `T` is deduced as an lvalue reference (`int&`), then `int& &&` collapses to `int&`. For an rvalue, `T` would be `int` and the parameter `int&&`. This category-dependence is what makes `std::forward` work."
+        },
+        {
+          "topic": "Type Deduction",
+          "q": "What is the type of `x` in `auto x{42};` under C++17, and what was it before?",
+          "options": [
+            "`int` in both",
+            "`int` in C++17; `std::initializer_list<int>` before",
+            "`std::initializer_list<int>` in both",
+            "`std::initializer_list<int>` in C++17; `int` before"
+          ],
+          "answer": 1,
+          "explanation": "C++17 (via N3922) made `auto x{42};` deduce `int` for a single-element braced-init. Before, it deduced `std::initializer_list<int>`. Note `auto x = {42};` is *still* an `initializer_list` — the copy-list-init form."
+        },
+        {
+          "topic": "Type Deduction",
+          "q": "Given `int x = 0;`, what are `decltype(x)` and `decltype((x))`?",
+          "options": [
+            "`int` and `int` respectively",
+            "`int&` and `int&` respectively",
+            "`int` and `int&` respectively",
+            "`const int` and `int&`"
+          ],
+          "answer": 2,
+          "explanation": "`decltype` of a bare name yields the declared type `int`. But `(x)` is a parenthesized lvalue *expression* (not a name), and `decltype` adds an `&` for non-name lvalue expressions, giving `int&`. This is the famous extra `decltype` rule."
+        },
+        {
+          "topic": "constexpr functions",
+          "q": "Why is `int z = square(2);` NOT guaranteed to be evaluated at compile time, while `constexpr int z = square(2);` is?",
+          "options": [
+            "`constexpr` functions can only ever run at compile time",
+            "Plain `int` cannot hold a compile-time value",
+            "`square(2)` is too complex to evaluate at compile time",
+            "`constexpr` evaluation is forced only in a constant-evaluated context; a plain initializer is not one (though the optimizer may still fold it)"
+          ],
+          "answer": 3,
+          "explanation": "A `constexpr` function runs at compile time only in a constant-evaluated context (constexpr-var init, `static_assert`, array bound, template arg). `int z = square(2);` is not such a context, so the standard does not require it — though optimizers fold it at `-O1+`. Naming a `constexpr` variable forces it."
+        },
+        {
+          "topic": "constexpr functions",
+          "q": "Which one-sentence distinction is correct?",
+          "options": [
+            "`const` = read-only; `constexpr` = may be compile-time; `consteval` = must be compile-time; `constinit` = constant-initialized but mutable",
+            "`const` and `constexpr` are synonyms; `consteval` allows runtime calls; `constinit` makes objects immutable",
+            "`constexpr` = read-only; `const` = compile-time; `consteval` = optional compile-time; `constinit` = thread-local",
+            "All four guarantee compile-time evaluation"
+          ],
+          "answer": 0,
+          "explanation": "`const` means read-only (value may be runtime-computed). `constexpr` permits compile-time evaluation. `consteval` (immediate function) requires it on every call. `constinit` guarantees constant initialization (no dynamic-init fiasco) but the object stays mutable."
+        },
+        {
+          "topic": "Introduction to Templates",
+          "q": "Why does `typename T::value_type x;` require the `typename` keyword inside a template?",
+          "options": [
+            "`typename` forces a heap allocation of `x`",
+            "`T::value_type` is a dependent name and the compiler assumes it is a value unless `typename` says it is a type",
+            "Without it the variable would have static storage duration",
+            "`typename` is just a style alias for `class` and is optional here"
+          ],
+          "answer": 1,
+          "explanation": "In phase-1 of two-phase lookup, a dependent name like `T::value_type` could be a type or a value, and the compiler defaults to assuming a *value*. `typename` disambiguates it as a type. The same need motivates the `template` disambiguator for dependent member templates."
+        },
+        {
+          "topic": "Introduction to Templates",
+          "q": "How many distinct functions does `add(1, 2); add(1.0, 2.0);` put in the binary for `template <class T> T add(T a, T b);`, and why?",
+          "options": [
+            "Three — one for each call site plus the primary template",
+            "One — the compiler shares a single generic body",
+            "Two — templates are monomorphized: one full machine-code copy per distinct type argument",
+            "Zero — templates only generate code when explicitly instantiated"
+          ],
+          "answer": 2,
+          "explanation": "Templates are monomorphized: `add<int>` and `add<double>` are two separate functions (an integer add vs an FPU add). This is why templates are fast (everything concrete and inlinable) and why they bloat binary size and build time."
+        },
+        {
+          "topic": "Template Specialization",
+          "q": "Which can be *partially* specialized?",
+          "options": [
+            "All three: class, function, and variable templates",
+            "Only function templates and class templates",
+            "Function templates only",
+            "Class templates and variable templates, but NOT function templates"
+          ],
+          "answer": 3,
+          "explanation": "Partial specialization is allowed for class templates and variable templates but forbidden for function templates. To get partial-specialization-like behavior for functions you use overloading, which supports patterns and participates in overload resolution."
+        },
+        {
+          "topic": "Template Specialization",
+          "q": "What does SFINAE stand for, and how does `std::enable_if` exploit it?",
+          "options": [
+            "Substitution Failure Is Not An Error — if substituting a template argument makes a signature ill-formed, that overload is silently removed rather than causing a hard error",
+            "Substitution Forces Immediate Named Evaluation — it forces compile-time evaluation",
+            "Simple Function Interface Negotiation And Evaluation — it picks the fastest overload",
+            "Static Function Inlining And Name Erasure — it inlines templates aggressively"
+          ],
+          "answer": 0,
+          "explanation": "SFINAE = Substitution Failure Is Not An Error. When `enable_if_t<cond>` has no `::type` because the condition is false, substitution fails and that overload is quietly dropped from the overload set, letting another candidate win. `if constexpr` and concepts are the modern replacements for most uses."
+        },
+        {
+          "topic": "Lambdas",
+          "q": "Identify the bug:\n\n```cpp\nstd::function<void()> make_bad() {\n    int local = 42;\n    return [&]() { use(local); };\n}\n```",
+          "options": [
+            "`std::function` cannot hold a capturing lambda",
+            "`[&]` captures `local` by reference; `local` dies when `make_bad` returns, so the returned closure dangles (UB)",
+            "The lambda must be marked `mutable` to compile",
+            "`use(local)` copies `local`, so this is fine"
+          ],
+          "answer": 1,
+          "explanation": "`[&]` stores a reference to `local`, whose lifetime ends when `make_bad` returns. The escaping closure then references a destroyed object — a dangling-capture bug. Capture by value (`[local]`) or by init-capture/`*this` when a closure outlives its source."
+        },
+        {
+          "topic": "Lambdas",
+          "q": "Why must `[n = 0]() mutable { return ++n; }` be marked `mutable`?",
+          "options": [
+            "`mutable` is required for any init-capture",
+            "Without `mutable` the lambda would heap-allocate",
+            "A lambda's `operator()` is `const` by default, so modifying the by-value capture `n` requires `mutable`",
+            "`mutable` makes the capture by reference instead of by value"
+          ],
+          "answer": 2,
+          "explanation": "The closure's `operator()` is `const` unless declared `mutable`. Since `n` is a by-value capture (a data member of the closure), mutating it inside the call operator needs `mutable`. By-reference captures modify the referent regardless of `mutable`."
+        }
+      ],
+      "coding": [
+        {
+          "topic": "Introduction to Templates",
+          "lang": "cpp",
+          "prompt": "Write a single function template `T max3(const T& a, const T& b, const T& c)` that returns the largest of three values of the same type `T`, requiring only that `T` supports `operator<` (or `>`). It must work for any orderable type (the tests instantiate it with `int`, `double`, and `char`).",
+          "hints": [
+            "Deduce `T` from the arguments; no explicit template arguments needed.",
+            "Compute the max of the first two, then compare against the third."
+          ],
+          "starter": "template <class T>\nT max3(const T& a, const T& b, const T& c) {\n    // TODO: return the largest of a, b, c using only operator>/<\n    return a; // placeholder so the stub compiles\n}\n",
+          "harness": "#include <cstdio>\n\nstatic void check(const char* n, bool ok, const char* detail){\n    printf(\"__CASE__|%s|%s|%s\\n\", n, ok?\"PASS\":\"FAIL\", detail);\n}\nint main(){\n    {\n        int r = max3(1, 2, 3);\n        char d[32]; std::snprintf(d,sizeof d,\"got=%d want=3\", r);\n        check(\"int-ascending\", r==3, d);\n    }\n    {\n        int r = max3(7, 3, 1);\n        char d[32]; std::snprintf(d,sizeof d,\"got=%d want=7\", r);\n        check(\"int-first-biggest\", r==7, d);\n    }\n    {\n        int r = max3(-5, -2, -9);\n        char d[32]; std::snprintf(d,sizeof d,\"got=%d want=-2\", r);\n        check(\"int-negatives\", r==-2, d);\n    }\n    {\n        double r = max3(1.5, 0.5, 9.0);\n        char d[48]; std::snprintf(d,sizeof d,\"got=%g want=9\", r);\n        check(\"double\", r==9.0, d);\n    }\n    {\n        char r = max3('a','z','m');\n        char d[32]; std::snprintf(d,sizeof d,\"got=%c want=z\", r);\n        check(\"char\", r=='z', d);\n    }\n    {\n        int r = max3(4, 4, 4);\n        check(\"all-equal\", r==4, \"ties resolve to the value\");\n    }\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "int-ascending"
+            },
+            {
+              "name": "int-first-biggest"
+            },
+            {
+              "name": "int-negatives"
+            },
+            {
+              "name": "double"
+            },
+            {
+              "name": "char"
+            },
+            {
+              "name": "all-equal"
+            }
+          ],
+          "solution": "```cpp\n// C++17\ntemplate <class T>\nT max3(const T& a, const T& b, const T& c) {\n    // Pick the larger of the first two by reference (no copy yet)...\n    const T& m = (a > b) ? a : b;\n    // ...then compare that against the third and return the winner by value.\n    return (m > c) ? m : c;\n}\n\n// Each distinct T stamps out a separate function (monomorphization):\n//   max3(1, 2, 3)        -> max3<int>\n//   max3(1.5, 0.5, 9.0)  -> max3<double>   (a SEPARATE function in the binary)\n```",
+          "discussion": "The compiler deduces `T` from the arguments and stamps out one concrete function per distinct `T` (monomorphization), so `max3<int>` and `max3<double>` are two functions in the object file. Taking `const T&` avoids copying for expensive types; returning by value avoids dangling. The only requirement on `T` is a usable `>` — instantiate it with a type lacking that and you get an error only at the point of use (on-demand member instantiation)."
+        },
+        {
+          "topic": "constexpr functions",
+          "lang": "cpp",
+          "prompt": "Using C++14 `constexpr` features, write a `constexpr` function `unsigned long long factorial(unsigned n)` that uses a loop (not recursion). Add a `static_assert` proving `factorial(10) == 3628800` is computed at compile time. The tests check it both at compile time and at runtime.",
+          "hints": [
+            "C++14 allows loops and local mutation inside a `constexpr` function.",
+            "Use a `static_assert` to force constant evaluation."
+          ],
+          "starter": "constexpr unsigned long long factorial(unsigned n) {\n    // TODO: compute n! with a loop (no recursion)\n    (void)n;\n    return 1;\n}\n",
+          "harness": "#include <cstdio>\n\nstatic void check(const char* n, bool ok, const char* detail){\n    printf(\"__CASE__|%s|%s|%s\\n\", n, ok?\"PASS\":\"FAIL\", detail);\n}\nint main(){\n    // Compile-time evaluation: if these fail to be constant the program won't build.\n    constexpr unsigned long long f0  = factorial(0);\n    constexpr unsigned long long f1  = factorial(1);\n    constexpr unsigned long long f5  = factorial(5);\n    constexpr unsigned long long f10 = factorial(10);\n\n    char d[64];\n    std::snprintf(d,sizeof d,\"got=%llu want=1\", f0);  check(\"zero\", f0==1ULL, d);\n    std::snprintf(d,sizeof d,\"got=%llu want=1\", f1);  check(\"one\",  f1==1ULL, d);\n    std::snprintf(d,sizeof d,\"got=%llu want=120\", f5);check(\"five\", f5==120ULL, d);\n    std::snprintf(d,sizeof d,\"got=%llu want=3628800\", f10); check(\"ten\", f10==3628800ULL, d);\n\n    // Runtime call with a non-constant argument exercises the same body.\n    volatile unsigned v = 12;\n    unsigned long long fr = factorial((unsigned)v);\n    std::snprintf(d,sizeof d,\"got=%llu want=479001600\", fr);\n    check(\"runtime-12\", fr==479001600ULL, d);\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "zero"
+            },
+            {
+              "name": "one"
+            },
+            {
+              "name": "five"
+            },
+            {
+              "name": "ten"
+            },
+            {
+              "name": "runtime-12"
+            }
+          ],
+          "solution": "```cpp\n// C++14\nconstexpr unsigned long long factorial(unsigned n) {\n    unsigned long long r = 1;            // accumulator; mutating a local is legal in C++14 constexpr\n    for (unsigned i = 2; i <= n; ++i)    // loop: also a C++14 relaxation (C++11 forbade it)\n        r *= i;                          // multiply in each factor\n    return r;                            // 0! and 1! fall through with r == 1\n}\n\n// static_assert is a constant-evaluated context, so this runs in the compiler.\nstatic_assert(factorial(10) == 3628800ULL,\n              \"factorial(10) must be 3628800\");\n```",
+          "discussion": "C++11 `constexpr` was effectively a single `return` (no loops/local mutation); C++14 relaxed this to allow loops, multiple statements, and mutation of locals — which is why this body is legal. The `static_assert` is a constant-evaluated context, so the loop runs in the *compiler* and the result is baked in. The same definition still works as an ordinary runtime call when given a non-constant argument."
+        },
+        {
+          "topic": "Template Specialization",
+          "lang": "cpp",
+          "prompt": "Write a generic `template <class T> void serialize(std::byte* out, const T& v)` that uses **`if constexpr`** to pick a fast path for trivially-copyable types (a `std::memcpy`) and a slow path otherwise (calls `v.serialize(out)`). Explain why `if constexpr` is preferable to tag-dispatch or `enable_if` here. The tests call it with a trivial struct and with a class that provides its own `serialize`.",
+          "hints": [
+            "Include `<type_traits>`, `<cstddef>`, `<cstring>`.",
+            "`if constexpr (std::is_trivially_copyable_v<T>) { ... } else { ... }`"
+          ],
+          "starter": "#include <type_traits>\n#include <cstddef>\n#include <cstring>\n\ntemplate <class T>\nvoid serialize(std::byte* out, const T& v) {\n    // TODO: if T is trivially copyable, memcpy it; otherwise call v.serialize(out)\n    (void)out; (void)v;\n}\n",
+          "harness": "#include <cstdio>\n#include <cstdint>\n#include <cstddef>\n#include <cstring>\n#include <type_traits>\n\nstatic void check(const char* n, bool ok, const char* detail){\n    printf(\"__CASE__|%s|%s|%s\\n\", n, ok?\"PASS\":\"FAIL\", detail);\n}\n\n// A trivially-copyable POD -> should take the memcpy fast path.\nstruct Pod { std::int32_t a; std::int32_t b; };\n\n// A non-trivial type with its OWN serialize -> should take the slow path.\nstruct Custom {\n    std::int32_t v;\n    Custom(std::int32_t x) : v(x) {}\n    // A user-declared copy ctor makes Custom NOT trivially copyable.\n    Custom(const Custom& o) : v(o.v) {}\n    void serialize(std::byte* out) const {\n        // Write a tagged, byte-swapped form so we can tell the slow path ran.\n        out[0] = std::byte{0xCC};               // marker\n        std::int32_t flipped = -v;\n        std::memcpy(out + 1, &flipped, sizeof flipped);\n    }\n};\n\nint main(){\n    static_assert(std::is_trivially_copyable_v<Pod>, \"Pod should be trivial\");\n    static_assert(!std::is_trivially_copyable_v<Custom>, \"Custom should be non-trivial\");\n\n    {\n        Pod p{0x11111111, 0x22222222};\n        std::byte buf[sizeof(Pod)];\n        serialize(buf, p);\n        bool ok = std::memcmp(buf, &p, sizeof(Pod)) == 0;  // fast path == raw bytes\n        check(\"trivial-fastpath\", ok, ok?\"memcpy bytes match\":\"bytes differ\");\n    }\n    {\n        Custom c{5};\n        std::byte buf[8] = {};\n        serialize(buf, c);                                  // must dispatch to c.serialize\n        std::int32_t got; std::memcpy(&got, buf+1, sizeof got);\n        bool ok = (buf[0]==std::byte{0xCC}) && (got == -5);\n        char d[48]; std::snprintf(d,sizeof d,\"marker=%u got=%d want=-5\",(unsigned)buf[0],got);\n        check(\"custom-slowpath\", ok, d);\n    }\n    {\n        // Another trivial type: a fixed array wrapper.\n        struct Vec3 { double x,y,z; } v{1.0,2.0,3.0};\n        std::byte buf[sizeof(Vec3)];\n        serialize(buf, v);\n        bool ok = std::memcmp(buf, &v, sizeof(Vec3)) == 0;\n        check(\"trivial-doubles\", ok, ok?\"3 doubles copied\":\"mismatch\");\n    }\n    {\n        Custom c{-100};\n        std::byte buf[8] = {};\n        serialize(buf, c);\n        std::int32_t got; std::memcpy(&got, buf+1, sizeof got);\n        check(\"custom-negative\", got == 100, got==100?\"flipped -100 -> 100\":\"wrong\");\n    }\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "trivial-fastpath"
+            },
+            {
+              "name": "custom-slowpath"
+            },
+            {
+              "name": "trivial-doubles"
+            },
+            {
+              "name": "custom-negative"
+            }
+          ],
+          "solution": "```cpp\n// C++17\n#include <type_traits>\n#include <cstddef>\n#include <cstring>\n\ntemplate <class T>\nvoid serialize(std::byte* out, const T& v) {\n    if constexpr (std::is_trivially_copyable_v<T>) {\n        // Compiled ONLY when T is trivial: the value is its bytes, so memcpy is valid.\n        std::memcpy(out, &v, sizeof v);\n    } else {\n        // Compiled ONLY otherwise: defer to the type's own member serializer.\n        // (v has no usable raw byte image, so we must ask it how to flatten itself.)\n        v.serialize(out);\n    }\n}\n```",
+          "discussion": "`if constexpr` discards the untaken branch *before* it is type-checked for instantiation, so the `memcpy` branch never has to be valid for a non-trivial `T` and vice versa. Compared with tag dispatch (`std::true_type`/`std::false_type` overloads) or `enable_if`, this is one function, one place to read, with crisp errors and no overload-set surprises (notably the Sutter pitfall where a function-template specialization attaches to the wrong base). The chosen path is the only one emitted — zero runtime cost."
+        }
+      ]
+    },
+    "stl-containers-and-algorithms": {
+      "mcqs": [
+        {
+          "topic": "Auxiliary Data Types",
+          "q": "Why is `std::string_view sv = std::string(\"hi\");` a bug?",
+          "options": [
+            "`string_view` cannot be constructed from a `std::string`",
+            "It fails to compile because of an ambiguous conversion",
+            "`string_view` always copies, so this wastes an allocation",
+            "The temporary `std::string` is destroyed at the end of the statement, leaving `sv` viewing freed memory (use-after-free)"
+          ],
+          "answer": 3,
+          "explanation": "`string_view` is a non-owning {ptr, len}. The temporary `std::string` it points into dies at the semicolon, so `sv` dangles. Never store/return a `string_view` that outlives its source buffer."
+        },
+        {
+          "topic": "Auxiliary Data Types",
+          "q": "When would you choose `std::variant<Ts...>` + `std::visit` over a virtual base class?",
+          "options": [
+            "When the set of types is closed/known at compile time and you want stack storage, no heap, and compiler-checked exhaustive dispatch",
+            "When you need each object to be heap-allocated for stable addresses",
+            "When new types may be loaded at runtime as plugins",
+            "When you cannot enumerate the alternatives in advance"
+          ],
+          "answer": 0,
+          "explanation": "`variant` shines for a closed set known at compile time: it stores the value inline (no heap), needs no RTTI, and `std::visit` is exhaustively checked. An open, runtime-extensible set (plugins) is where inheritance/`std::any` earn their place."
+        },
+        {
+          "topic": "std::array: Fixed-Size Array Container",
+          "q": "What are the data members of `std::array<int, 4>`, and what is its `sizeof`?",
+          "options": [
+            "A pointer to a heap buffer; `sizeof` is 8",
+            "A single C array `int[4]` and nothing else; `sizeof` is 16",
+            "Four separate `int` fields plus a length; `sizeof` is 20",
+            "A pointer, size, and capacity; `sizeof` is 24"
+          ],
+          "answer": 1,
+          "explanation": "`std::array<T,N>` is a thin aggregate wrapping exactly a `T[N]` — no pointer, no size field, no capacity, no allocator. `sizeof(std::array<int,4>)` is `4 * sizeof(int)` = 16, identical to the C array."
+        },
+        {
+          "topic": "std::vector",
+          "q": "Why does a *non-`noexcept`* move constructor make `std::vector` growth slower?",
+          "options": [
+            "It forces the growth factor down from 2 to 1, making pushes O(n^2)",
+            "The vector cannot move at all without `noexcept`, so it leaks",
+            "To preserve its strong exception guarantee, the vector copies elements on reallocation unless the move constructor is `noexcept`",
+            "Non-`noexcept` moves disable inlining of the whole vector"
+          ],
+          "answer": 2,
+          "explanation": "On reallocation the vector uses `std::move_if_noexcept`: if `T`'s move could throw mid-transfer it cannot restore the strong guarantee, so it falls back to copying. Marking moves `noexcept` lets it move (cheap) instead of copy — a common hidden performance cliff."
+        },
+        {
+          "topic": "std::vector",
+          "q": "Predict the behavior:\n\n```cpp\nstd::vector<int> v{1,2,3};\nint* p = &v[0];\nv.push_back(4);\nuse(*p);\n```",
+          "options": [
+            "Always a use-after-free regardless of capacity",
+            "It is a compile error to take `&v[0]`",
+            "Always safe; `p` tracks the element across reallocation",
+            "If the `push_back` reallocates, `p` dangles and `use(*p)` is a use-after-free"
+          ],
+          "answer": 3,
+          "explanation": "A reallocating `push_back` moves all elements to a new buffer and frees the old one, invalidating every pointer/iterator/reference — so `p` dangles. The fix is to `reserve` enough capacity up front (so no reallocation happens) or store an index instead of a pointer."
+        },
+        {
+          "topic": "std::vector",
+          "q": "Why is `n` `push_back`s on an empty vector total O(n), not O(n^2)?",
+          "options": [
+            "The vector grows geometrically (e.g. x1.5 or x2), so total copy work is a geometric series that sums to O(n) — amortized O(1) per push",
+            "`push_back` reserves all memory on the first call",
+            "The compiler caches the vector's size, avoiding recomputation",
+            "Each `push_back` is always O(1) because the buffer never moves"
+          ],
+          "answer": 0,
+          "explanation": "Capacity grows by a constant factor on each reallocation, so the summed cost of all the move/copy work across n pushes is a geometric series equal to O(n). Hence each `push_back` is amortized O(1), even though an individual grow is O(size)."
+        },
+        {
+          "topic": "std::list",
+          "q": "Which single operation does `std::list` do in O(1) that `std::vector` genuinely cannot?",
+          "options": [
+            "Reserving capacity up front to avoid reallocation",
+            "`splice` — moving a range of nodes between lists by pointer relinking, with no element copies",
+            "Random access via `operator[]`",
+            "Contiguous `memcpy` of all elements to a C API"
+          ],
+          "answer": 1,
+          "explanation": "`splice` relinks node pointers to transplant elements between lists in O(1) without moving or copying them — unique to linked structures. `vector` has no equivalent. (Note even `list` insert/erase is O(1) only *given an iterator*; reaching position k is O(k).)"
+        },
+        {
+          "topic": "Hashing Containers",
+          "q": "On libstdc++/libc++, which integer-key distribution turns `std::unordered_map<int, V>` average O(1) into effectively O(n)?",
+          "options": [
+            "Keys that are negative",
+            "Keys that are all distinct large primes",
+            "Keys that collide into few buckets because `std::hash<int>` is the identity and `% bucket_count` maps them together",
+            "Keys inserted after calling `reserve`"
+          ],
+          "answer": 2,
+          "explanation": "`std::hash<int>` is the identity in libstdc++/libc++, so a poor key distribution (combined with `% bucket_count`) can pile keys into a handful of buckets, lengthening chains to O(n). Mixing the key bits or using a table that hashes internally avoids this."
+        },
+        {
+          "topic": "Hashing Containers",
+          "q": "What does `reserve(n)` on a `std::unordered_map` allocate?",
+          "options": [
+            "Nothing; `unordered_map` has no `reserve`",
+            "It allocates one contiguous block holding all n key/value pairs",
+            "It constructs n default value nodes immediately",
+            "It sizes the bucket array for n elements (avoiding rehash) but does NOT pre-allocate the per-element nodes"
+          ],
+          "answer": 3,
+          "explanation": "`reserve(n)` ensures the bucket array is large enough to hold n elements without rehashing, but the nodes are still allocated one-per-insert. It is the key call to avoid mid-burst rehash spikes (a rehash is an O(n) reallocation + redistribution)."
+        },
+        {
+          "topic": "Ordered Containers",
+          "q": "A colleague writes `bool operator()(int a, int b) const { return a <= b; }` as a `std::map` comparator. What goes wrong?",
+          "options": [
+            "`<=` is not irreflexive, so it violates strict weak ordering — undefined behavior (corrupted tree, crashes, infinite loops)",
+            "It only sorts descending instead of ascending",
+            "It makes lookups O(n) but is otherwise safe",
+            "Nothing; `<=` is a valid comparator"
+          ],
+          "answer": 0,
+          "explanation": "An ordered container's `Compare` must be a strict weak ordering: irreflexive (`comp(a,a)` is false), asymmetric, transitive. `<=` gives `comp(a,a) == true`, breaking irreflexivity — which is UB, not merely a wrong sort order."
+        },
+        {
+          "topic": "Ordered Containers",
+          "q": "Why does `std::map` guarantee O(log n) *worst case* while `std::unordered_map` only guarantees it *amortized average*?",
+          "options": [
+            "`std::map` caches all results, so it is always O(1)",
+            "`std::map` is a balanced (red-black) tree with bounded height; `unordered_map` degrades to O(n) under collisions and pays O(n) rehash spikes",
+            "Both guarantee the same complexity; the premise is false",
+            "`unordered_map` is always faster, so the guarantee does not matter"
+          ],
+          "answer": 1,
+          "explanation": "`std::map` uses a self-balancing BST whose height is bounded by ~2*log2(n+1), giving O(log n) worst case. A hash map is average O(1) but worst case O(n) (all keys collide) and suffers occasional O(n) rehashes, so only amortized-average bounds hold."
+        },
+        {
+          "topic": "std::deque",
+          "q": "Is `std::deque` contiguous, and does it have a `.data()` member?",
+          "options": [
+            "Yes and yes — like `std::vector` it is one contiguous block",
+            "It is contiguous but intentionally hides `.data()`",
+            "No and no — it stores elements in separately-allocated chunks linked by a map, so there is no single flat buffer",
+            "It is non-contiguous but still provides `.data()` for the first chunk"
+          ],
+          "answer": 2,
+          "explanation": "A deque is segmented: fixed-size chunks tracked by a map (array of chunk pointers). Elements are contiguous *within* a chunk but not across the whole container, so there is no `.data()` and you cannot hand it to a C API expecting a flat buffer."
+        },
+        {
+          "topic": "std::deque",
+          "q": "After `d.push_back(x)` on a `std::deque`, which stays valid?",
+          "options": [
+            "Both pointers/references and iterators are invalidated",
+            "Only iterators stay valid; pointers/references dangle",
+            "Both pointers/references and iterators stay valid",
+            "Pointers/references to existing elements stay valid, but all iterators are invalidated"
+          ],
+          "answer": 3,
+          "explanation": "End insertion on a deque keeps pointers/references stable (elements never move; a new chunk is linked in) but invalidates all iterators (which must track position in the map). This is the inverse of `std::vector`, where a reallocating `push_back` invalidates both."
+        },
+        {
+          "topic": "Adapter Containers",
+          "q": "Why can `std::stack` be backed by `std::vector` but `std::queue` cannot?",
+          "options": [
+            "`queue` needs `pop_front`, which `std::vector` lacks; `stack` only needs `back`/`push_back`/`pop_back`, which `vector` has",
+            "`stack` requires `pop_front`, which only `vector` provides",
+            "`vector` is too slow to back a queue",
+            "`queue` requires a node-based container by the standard"
+          ],
+          "answer": 0,
+          "explanation": "`std::queue` requires `front`, `back`, `push_back`, and `pop_front`; `std::vector` has no `pop_front`, so it won't compile as a queue's backing. `std::stack` needs only `back`/`push_back`/`pop_back`, all of which `vector` provides (and contiguity often makes it faster)."
+        },
+        {
+          "topic": "Adapter Containers",
+          "q": "You want a `std::priority_queue` that always yields the *smallest* element first. Which comparator do you pass, and why?",
+          "options": [
+            "No comparator works; `priority_queue` is always a max-heap",
+            "`std::greater` — top() is the element greatest under Compare, and under `greater` the smallest value is the greatest, giving a min-heap",
+            "`std::less` — it naturally produces a min-heap",
+            "`std::equal_to` — it orders by equality"
+          ],
+          "answer": 1,
+          "explanation": "`priority_queue` puts the element *greatest* under `Compare` on top. The default `std::less` makes the largest value greatest (a max-heap). Passing `std::greater` reverses the ordering so the smallest value is 'greatest', producing a min-heap — the usual choice for earliest-deadline-first scheduling."
+        }
+      ],
+      "coding": [
+        {
+          "topic": "std::vector",
+          "lang": "cpp",
+          "prompt": "Write `void remove_zeros(std::vector<int>& v)` that removes every element equal to `0` in a single O(n) pass using the **erase-remove idiom**. (The relative order of the surviving elements must be preserved.) The discussion shows the C++20 one-line equivalent.",
+          "hints": [
+            "`std::remove` shuffles kept elements to the front and returns the new logical end.",
+            "`v.erase(first, v.end())` drops the unspecified tail. C++20 has `std::erase`."
+          ],
+          "starter": "#include <vector>\n#include <algorithm>\n\nvoid remove_zeros(std::vector<int>& v) {\n    // TODO: erase every 0 using the erase-remove idiom\n    (void)v;\n}\n",
+          "harness": "#include <cstdio>\n#include <vector>\n#include <algorithm>\n\nstatic void check(const char* n, bool ok, const char* detail){\n    printf(\"__CASE__|%s|%s|%s\\n\", n, ok?\"PASS\":\"FAIL\", detail);\n}\nstatic bool same(const std::vector<int>& a, const std::vector<int>& b){ return a==b; }\nstatic void show(char* buf, std::size_t cap, const std::vector<int>& v){\n    int off=0; off+=std::snprintf(buf+off,cap-off,\"[\");\n    for(std::size_t i=0;i<v.size() && off<(int)cap;++i)\n        off+=std::snprintf(buf+off,cap-off,\"%s%d\",i?\",\":\"\",v[i]);\n    if(off<(int)cap) std::snprintf(buf+off,cap-off,\"]\");\n}\nint main(){\n    char d[128];\n    {\n        std::vector<int> v{0,1,0,2,0,3};\n        remove_zeros(v);\n        std::vector<int> want{1,2,3};\n        show(d,sizeof d,v);\n        check(\"interleaved\", same(v,want), d);\n    }\n    {\n        std::vector<int> v{1,2,3,4};\n        remove_zeros(v);\n        std::vector<int> want{1,2,3,4};\n        show(d,sizeof d,v);\n        check(\"no-zeros\", same(v,want), d);\n    }\n    {\n        std::vector<int> v{0,0,0};\n        remove_zeros(v);\n        check(\"all-zeros\", v.empty(), v.empty()?\"emptied\":\"not empty\");\n    }\n    {\n        std::vector<int> v;\n        remove_zeros(v);\n        check(\"empty-input\", v.empty(), \"stays empty\");\n    }\n    {\n        std::vector<int> v{0,0,5,0,6,7,0};\n        remove_zeros(v);\n        std::vector<int> want{5,6,7};\n        show(d,sizeof d,v);\n        check(\"order-preserved\", same(v,want), d);\n    }\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "interleaved"
+            },
+            {
+              "name": "no-zeros"
+            },
+            {
+              "name": "all-zeros"
+            },
+            {
+              "name": "empty-input"
+            },
+            {
+              "name": "order-preserved"
+            }
+          ],
+          "solution": "```cpp\n// C++17\n#include <vector>\n#include <algorithm>\n\nvoid remove_zeros(std::vector<int>& v) {\n    // std::remove moves the kept (non-zero) elements to the front, preserving order,\n    // and returns an iterator to the new logical end. vector::erase then drops the\n    // leftover tail in one shot -- a single O(n) pass, no per-element shifting.\n    v.erase(std::remove(v.begin(), v.end(), 0), v.end());\n}\n\n// C++20 one-liner that does the same thing:\n//   std::erase(v, 0);\n```",
+          "discussion": "`std::remove` does not actually erase — it moves the kept elements forward and returns an iterator to the new logical end, leaving the tail unspecified; `vector::erase` then drops that tail. The whole thing is one O(n) pass with no per-element shifting (unlike erasing in a loop, which is O(n^2)). C++20's free `std::erase`/`std::erase_if` collapse the two-iterator dance to one call."
+        },
+        {
+          "topic": "Adapter Containers",
+          "lang": "cpp",
+          "prompt": "Using `std::priority_queue` as a **min-heap**, write `std::vector<long> drain_sorted(std::vector<long> timestamps)` that pushes every timestamp onto the heap and then pops them into a result vector in **ascending** order (earliest first). Use `long` timestamps. Read `top()` before `pop()` since `pop()` returns `void`.",
+          "hints": [
+            "A min-heap is `std::priority_queue<long, std::vector<long>, std::greater<long>>`.",
+            "Read `top()` first, then `pop()` — `pop()` returns `void`."
+          ],
+          "starter": "#include <queue>\n#include <vector>\n#include <functional>\n\nstd::vector<long> drain_sorted(std::vector<long> timestamps) {\n    // TODO: push all timestamps into a min-heap, then pop them out ascending\n    (void)timestamps;\n    return {};\n}\n",
+          "harness": "#include <cstdio>\n#include <vector>\n\nstatic void check(const char* n, bool ok, const char* detail){\n    printf(\"__CASE__|%s|%s|%s\\n\", n, ok?\"PASS\":\"FAIL\", detail);\n}\nstatic bool sorted_asc(const std::vector<long>& v){\n    for(std::size_t i=1;i<v.size();++i) if(v[i-1]>v[i]) return false; return true;\n}\nint main(){\n    {\n        std::vector<long> in{1700000005,1700000001,1700000003};\n        auto out = drain_sorted(in);\n        std::vector<long> want{1700000001,1700000003,1700000005};\n        check(\"three-ts\", out==want, sorted_asc(out)?\"ascending\":\"NOT ascending\");\n    }\n    {\n        std::vector<long> in{};\n        auto out = drain_sorted(in);\n        check(\"empty\", out.empty(), \"empty in -> empty out\");\n    }\n    {\n        std::vector<long> in{42};\n        auto out = drain_sorted(in);\n        check(\"single\", (out.size()==1 && out[0]==42), \"one element\");\n    }\n    {\n        std::vector<long> in{5,5,1,5,1};\n        auto out = drain_sorted(in);\n        std::vector<long> want{1,1,5,5,5};\n        check(\"duplicates\", out==want, sorted_asc(out)?\"dups kept, ascending\":\"wrong\");\n    }\n    {\n        std::vector<long> in{-3,10,-3,0,7};\n        auto out = drain_sorted(in);\n        std::vector<long> want{-3,-3,0,7,10};\n        check(\"negatives\", out==want, sorted_asc(out)?\"ascending with negatives\":\"wrong\");\n    }\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "three-ts"
+            },
+            {
+              "name": "empty"
+            },
+            {
+              "name": "single"
+            },
+            {
+              "name": "duplicates"
+            },
+            {
+              "name": "negatives"
+            }
+          ],
+          "solution": "```cpp\n// C++17\n#include <queue>\n#include <vector>\n#include <functional>\n\nstd::vector<long> drain_sorted(std::vector<long> timestamps) {\n    // std::greater flips the comparison so the SMALLEST value is the heap's \"top\":\n    // this turns the default max-heap into a min-heap.\n    std::priority_queue<long, std::vector<long>, std::greater<long>> events;\n    for (long t : timestamps)\n        events.push(t);                  // O(log n) each\n\n    std::vector<long> out;\n    out.reserve(timestamps.size());\n    while (!events.empty()) {\n        out.push_back(events.top());     // smallest remaining (O(1) read)\n        events.pop();                    // pop() returns void, so read top() first\n    }\n    return out;                          // now in ascending order\n}\n```",
+          "discussion": "`std::greater` flips the ordering so the smallest timestamp is 'greatest' under Compare and lands on top — a min-heap, the standard discrete-event-scheduling structure. `push`/`pop` are O(log n), `top` is O(1). Note `pop()` returns `void` (you must read `top()` first), and a `priority_queue` exposes no iteration or search — only top/push/pop. For HFT you would often prefer a flat array/ring buffer, but a binary heap is the textbook scheduler."
+        },
+        {
+          "topic": "Ordered Containers",
+          "lang": "cpp",
+          "prompt": "Given a sorted `std::vector<std::pair<int,double>>` keyed ascending by `.first`, write `std::optional<double> find_price(const std::vector<std::pair<int,double>>& book, int key)` that returns the matching value using `std::lower_bound` (O(log n)), or `std::nullopt` if the key is absent. Explain why a sorted vector can beat `std::map` here.",
+          "hints": [
+            "Pass a comparator projecting the pair's `.first`.",
+            "Check the returned iterator is not `end()` and its key matches before returning the value."
+          ],
+          "starter": "#include <vector>\n#include <utility>\n#include <optional>\n#include <algorithm>\n\nstd::optional<double> find_price(const std::vector<std::pair<int,double>>& book, int key) {\n    // TODO: binary-search for key with std::lower_bound; return value or nullopt\n    (void)book; (void)key;\n    return std::nullopt;\n}\n",
+          "harness": "#include <cstdio>\n#include <vector>\n#include <utility>\n#include <optional>\n\nstatic void check(const char* n, bool ok, const char* detail){\n    printf(\"__CASE__|%s|%s|%s\\n\", n, ok?\"PASS\":\"FAIL\", detail);\n}\nint main(){\n    const std::vector<std::pair<int,double>> book{\n        {10, 1.5}, {20, 2.5}, {30, 3.5}, {40, 4.5}, {50, 5.5}\n    };\n    {\n        auto r = find_price(book, 30);\n        bool ok = r.has_value() && *r==3.5;\n        char d[48]; std::snprintf(d,sizeof d,\"found=%d val=%g\", (int)r.has_value(), r?*r:0.0);\n        check(\"hit-middle\", ok, d);\n    }\n    {\n        auto r = find_price(book, 10);\n        check(\"hit-first\", r.has_value() && *r==1.5, \"first key\");\n    }\n    {\n        auto r = find_price(book, 50);\n        check(\"hit-last\", r.has_value() && *r==5.5, \"last key\");\n    }\n    {\n        auto r = find_price(book, 25);     // between keys -> absent\n        check(\"miss-between\", !r.has_value(), r.has_value()?\"unexpected value\":\"nullopt\");\n    }\n    {\n        auto r = find_price(book, 5);      // below all keys\n        check(\"miss-below\", !r.has_value(), r.has_value()?\"unexpected value\":\"nullopt\");\n    }\n    {\n        auto r = find_price(book, 99);     // above all keys -> end()\n        check(\"miss-above\", !r.has_value(), r.has_value()?\"unexpected value\":\"nullopt\");\n    }\n    {\n        std::vector<std::pair<int,double>> empty;\n        auto r = find_price(empty, 1);\n        check(\"empty-book\", !r.has_value(), \"nullopt on empty\");\n    }\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "hit-middle"
+            },
+            {
+              "name": "hit-first"
+            },
+            {
+              "name": "hit-last"
+            },
+            {
+              "name": "miss-between"
+            },
+            {
+              "name": "miss-below"
+            },
+            {
+              "name": "miss-above"
+            },
+            {
+              "name": "empty-book"
+            }
+          ],
+          "solution": "```cpp\n// C++17\n#include <vector>\n#include <utility>\n#include <optional>\n#include <algorithm>\n\nstd::optional<double> find_price(const std::vector<std::pair<int,double>>& book, int key) {\n    // Comparator projects each pair down to its .first so lower_bound compares keys.\n    auto by_key = [](const std::pair<int,double>& e, int k){ return e.first < k; };\n    // lower_bound returns the first element whose key is NOT < key (i.e. >= key).\n    auto it = std::lower_bound(book.begin(), book.end(), key, by_key);\n    // It is a hit only if we landed on a real element AND its key matches exactly.\n    if (it != book.end() && it->first == key)\n        return it->second;\n    return std::nullopt;                 // not present\n}\n```",
+          "discussion": "`std::lower_bound` does an O(log n) binary search over contiguous memory, so the hot upper levels of the search stay cache-resident and each step walks one cache line — versus `std::map`, which scatters nodes across the heap so each of the log n hops is a fresh cache miss. The trade is that inserting into a sorted vector is O(n) (shift), so this wins for *read-mostly* data (build once, query often). C++23's `std::flat_map` standardizes exactly this idea."
+        }
+      ]
+    },
+    "object-oriented-programming": {
+      "mcqs": [
+        {
+          "topic": "Classes and Structs",
+          "q": "What is the ONLY language-level difference between `struct` and `class` in C++?",
+          "options": [
+            "`struct` cannot use inheritance or templates",
+            "`struct` cannot have member functions or constructors",
+            "Default member access (and default inheritance): `public` for `struct`, `private` for `class`",
+            "`class` generates faster code than `struct`"
+          ],
+          "answer": 2,
+          "explanation": "`struct` and `class` are the same feature; they differ only in defaults — members and base classes are `public` by default in a `struct`, `private` in a `class`. Anyone claiming `struct` is 'faster' is confused; the generated code is identical."
+        },
+        {
+          "topic": "Classes and Structs",
+          "q": "What is `sizeof` this struct on a typical x86-64 ABI?\n\n```cpp\nstruct S { char a; double b; int c; char d; };\n```",
+          "options": [
+            "16 — the compiler reorders fields automatically",
+            "32 — every member is padded to 8 bytes",
+            "14 — the exact sum of member sizes with no padding",
+            "24 — padding aligns `b` to 8 and the struct rounds up to a multiple of its 8-byte alignment"
+          ],
+          "answer": 3,
+          "explanation": "Members lay out in declaration order with padding to satisfy alignment: `a`(0), 7 pad, `b`(8), `c`(16), `d`(20), then 3 tail-pad to round to a multiple of 8 -> 24. Reordering to descending alignment (double, int, char, char) would shrink it to 16."
+        },
+        {
+          "topic": "Classes and Structs",
+          "q": "Why is `sizeof(EmptyClass) == 1` rather than 0?",
+          "options": [
+            "The standard requires distinct objects to have distinct addresses, which a zero-size object in an array could not provide",
+            "Alignment rounds 0 up to the nearest byte arbitrarily",
+            "An empty class secretly stores a vtable pointer",
+            "Every class carries a hidden 1-byte type tag"
+          ],
+          "answer": 0,
+          "explanation": "A most-derived object must have a unique address; a zero-size object couldn't be distinguished from its neighbor in an array, so the minimum is 1 byte. As a *base* class an empty type can occupy zero bytes (Empty Base Optimization / C++20 `[[no_unique_address]]`)."
+        },
+        {
+          "topic": "Constructor Initialization Lists",
+          "q": "Members are initialized in which order?",
+          "options": [
+            "Reverse declaration order",
+            "Declaration order in the class, regardless of the order written in the initializer list",
+            "The order written in the initializer list",
+            "Alphabetical by member name"
+          ],
+          "answer": 1,
+          "explanation": "Members always initialize in declaration order, not the order they appear in the initializer list. If a member's initializer reads another member and the orders disagree, you get a use-before-init bug — which `-Wreorder` warns about."
+        },
+        {
+          "topic": "Constructor Initialization Lists",
+          "q": "For a `std::string` member, what extra work does `name_ = n;` in the constructor body do compared to `: name_(n)` in the initializer list?",
+          "options": [
+            "Nothing; both forms generate identical code for all member types",
+            "It moves `n` instead of copying, which is faster",
+            "It default-constructs `name_` first, then copy-assigns over it — an extra construct/allocate the list avoids",
+            "It leaks the string's buffer"
+          ],
+          "answer": 2,
+          "explanation": "By the time the body runs, every member is already constructed. So `name_ = n;` runs the default constructor then copy-assignment (which may free the just-allocated empty buffer and allocate again). The initializer list runs a single copy constructor — one allocation instead of two operations."
+        },
+        {
+          "topic": "Inheritance Basics",
+          "q": "A function takes `Order` by value and a `std::vector<Order>` stores them. Passing an `IcebergOrder` (derived) loses its `hidden_qty`. What is this called and what is the fix?",
+          "options": [
+            "A double free; add a copy constructor",
+            "Type erasure; wrap it in `std::any`",
+            "A dangling reference; mark the destructor `virtual`",
+            "Object slicing; pass/store by reference or pointer (e.g. `std::vector<std::unique_ptr<Order>>`)"
+          ],
+          "answer": 3,
+          "explanation": "Copying a derived object into a base by value copies only the base subobject and silently drops the derived members — object slicing. Pass polymorphic types by reference/pointer and store them as `std::unique_ptr<Base>` (or use a variant) to avoid it."
+        },
+        {
+          "topic": "Inheritance Basics",
+          "q": "Why is `delete basePtr;` undefined behavior when `~Base` is non-virtual but the object is really a `Derived`?",
+          "options": [
+            "Without a virtual destructor the runtime calls only `~Base`, so `~Derived` never runs and the derived part leaks/corrupts",
+            "Deleting through a base pointer is always UB regardless of the destructor",
+            "It throws `std::bad_cast` at runtime",
+            "`delete` cannot be applied to base pointers at all"
+          ],
+          "answer": 0,
+          "explanation": "Deleting a derived object through a base pointer with a non-virtual destructor is UB; in practice `~Derived` is never invoked, leaking whatever it owned. A class meant to be deleted polymorphically needs a `virtual` destructor (if it's never deleted that way, non-virtual is fine and cheaper)."
+        },
+        {
+          "topic": "Inheritance Basics",
+          "q": "In a two-level hierarchy `D : B`, what is the construction/destruction order?",
+          "options": [
+            "Order is unspecified",
+            "Construct: base then derived members (declaration order) then derived body; destruction is the exact reverse",
+            "Construct: derived first, then base; destruction in the same order",
+            "Both construction and destruction go base-first"
+          ],
+          "answer": 1,
+          "explanation": "Construction is base subobject(s), then members in declaration order, then the derived constructor body. Destruction runs in the exact reverse: derived body, members (reverse declaration order), then the base destructor."
+        },
+        {
+          "topic": "Advanced Constructors",
+          "q": "You add a user-declared `~T()` to a class that previously declared none. What happens to its move constructor?",
+          "options": [
+            "The copy constructor is deleted instead",
+            "Nothing changes; moves are always generated",
+            "The move operations are NOT generated, so the type silently falls back to copying",
+            "The move constructor is deleted, causing a compile error on any move"
+          ],
+          "answer": 2,
+          "explanation": "Declaring a destructor (or any copy operation) suppresses implicit generation of the move operations. The type then *copies* where you expected a move — a silent performance bug. This motivates the Rule of Five: if you write one of dtor/copy/move, decide all five."
+        },
+        {
+          "topic": "Advanced Constructors",
+          "q": "Why is `explicit operator bool()` preferred over `operator int()` for a validity check?",
+          "options": [
+            "`operator int()` is illegal in modern C++",
+            "`operator bool()` cannot be called inside an `if` at all",
+            "`explicit` makes the conversion run at compile time",
+            "`explicit` blocks accidental implicit conversions to integers while still working in `if`/`while` via contextual conversion"
+          ],
+          "answer": 3,
+          "explanation": "An implicit `operator int()` invites bugs (the object silently becomes an int in arithmetic, comparisons, etc.). `explicit operator bool()` forbids those implicit conversions yet still participates in boolean contexts (`if (h)`) via contextual conversion."
+        },
+        {
+          "topic": "Operator Overloading",
+          "q": "Why should binary `operator+` be a free (non-member) function while `operator+=` is a member?",
+          "options": [
+            "A free `operator+` treats both operands symmetrically, allowing implicit conversions on the left operand too; `+=` mutates `*this` so its left operand must be the class",
+            "Free functions are always faster than members",
+            "Member `operator+` is illegal in C++",
+            "`+=` cannot be a member; it must be free"
+          ],
+          "answer": 0,
+          "explanation": "A member `operator+` can't apply a conversion to its left operand (you can't call a member on a non-class left side), so `5 + price` wouldn't work. A free function treats both operands equally. `+=` modifies the object, so its left operand is `*this` and it must be a member."
+        },
+        {
+          "topic": "Operator Overloading",
+          "q": "Which operators should you NOT overload, and why?",
+          "options": [
+            "`==` and `<` — they break with `std::sort`",
+            "`&&`, `||`, and `,` — overloading them silently destroys short-circuit (`&&`/`||`) and sequencing (`,`) guarantees",
+            "`[]` and `()` — they must be free functions",
+            "`+`, `-`, `*` — they change operator precedence"
+          ],
+          "answer": 1,
+          "explanation": "You technically *can* overload `&&`, `||`, and `,`, but you shouldn't: an overloaded operator is an ordinary function call that evaluates all its operands, so you lose short-circuit evaluation for `&&`/`||` and the sequencing guarantee for the comma operator."
+        }
+      ],
+      "coding": [
+        {
+          "topic": "Advanced Constructors",
+          "lang": "cpp",
+          "prompt": "Write a move-only resource type `Engine` that owns an `int* data_` of length `n_`. Provide `explicit Engine(std::size_t n)` (zero-initialized buffer), a destructor, a `noexcept` move constructor and move assignment, and explicitly `=delete` the copy operations. Also expose `std::size_t size() const`, `int& at(std::size_t)` / `int at(std::size_t) const`, and `bool moved_from() const` (true iff the internal pointer is null). Explain why `noexcept` on the moves matters.",
+          "hints": [
+            "Steal the source's pointer in the move, then null it so the source is destructible.",
+            "Copy ctor and copy assignment should be `= delete`."
+          ],
+          "starter": "#include <cstddef>\n#include <utility>\n\nclass Engine {\n    int*        data_ = nullptr;\n    std::size_t n_    = 0;\npublic:\n    explicit Engine(std::size_t n) {\n        // TODO: allocate a zero-initialized buffer of n ints\n        (void)n;\n    }\n    ~Engine() {\n        // TODO: free the buffer\n    }\n\n    Engine(const Engine&)            = delete;\n    Engine& operator=(const Engine&) = delete;\n\n    Engine(Engine&& o) noexcept {\n        // TODO: steal o's pointer/size, then null o out\n        (void)o;\n    }\n    Engine& operator=(Engine&& o) noexcept {\n        // TODO: release current, steal o's, null o out, guard self-move\n        (void)o;\n        return *this;\n    }\n\n    std::size_t size() const { return n_; }\n    int&       at(std::size_t i)       { return data_[i]; }\n    int        at(std::size_t i) const { return data_[i]; }\n    bool moved_from() const { return data_ == nullptr; }\n};\n",
+          "harness": "#include <cstdio>\n#include <cstddef>\n#include <utility>\n#include <type_traits>\n\nstatic void check(const char* n, bool ok, const char* detail){\n    printf(\"__CASE__|%s|%s|%s\\n\", n, ok?\"PASS\":\"FAIL\", detail);\n}\nint main(){\n    // Compile-time guarantees about the special members.\n    static_assert(!std::is_copy_constructible_v<Engine>, \"must not be copyable\");\n    static_assert(!std::is_copy_assignable_v<Engine>,    \"must not be copy-assignable\");\n    static_assert(std::is_nothrow_move_constructible_v<Engine>, \"move ctor must be noexcept\");\n    static_assert(std::is_nothrow_move_assignable_v<Engine>,    \"move assign must be noexcept\");\n    check(\"copy-deleted\", true, \"copy ops deleted (compile-time)\");\n    check(\"moves-noexcept\", true, \"moves are noexcept (compile-time)\");\n\n    {\n        Engine e(4);\n        bool zeroed = true;\n        for (std::size_t i=0;i<e.size();++i) if (e.at(i)!=0) zeroed=false;\n        char d[48]; std::snprintf(d,sizeof d,\"size=%zu zeroed=%d\", e.size(), (int)zeroed);\n        check(\"ctor-zeroed\", e.size()==4 && zeroed, d);\n    }\n    {\n        Engine a(3);\n        a.at(0)=10; a.at(1)=20; a.at(2)=30;\n        Engine b(std::move(a));               // move construct\n        bool ok = (b.size()==3 && b.at(0)==10 && b.at(2)==30 && a.moved_from());\n        char d[64]; std::snprintf(d,sizeof d,\"b[0]=%d b[2]=%d a.moved=%d\", b.at(0), b.at(2), (int)a.moved_from());\n        check(\"move-ctor\", ok, d);\n    }\n    {\n        Engine a(2); a.at(0)=7; a.at(1)=8;\n        Engine b(5);\n        b = std::move(a);                      // move assign (frees b's old buffer)\n        bool ok = (b.size()==2 && b.at(0)==7 && b.at(1)==8 && a.moved_from());\n        check(\"move-assign\", ok, ok?\"stole a's buffer\":\"failed\");\n    }\n    {\n        Engine a(2); a.at(0)=1; a.at(1)=2;\n        a = std::move(a);                      // self move-assign must not corrupt/double-free\n        bool ok = (a.size()==2 && a.at(0)==1 && a.at(1)==2);\n        check(\"self-move-safe\", ok, ok?\"survived self-move\":\"corrupted\");\n    }\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "copy-deleted"
+            },
+            {
+              "name": "moves-noexcept"
+            },
+            {
+              "name": "ctor-zeroed"
+            },
+            {
+              "name": "move-ctor"
+            },
+            {
+              "name": "move-assign"
+            },
+            {
+              "name": "self-move-safe"
+            }
+          ],
+          "solution": "```cpp\n// C++17\n#include <cstddef>\n#include <utility>\n\nclass Engine {\n    int*        data_ = nullptr;   // owned heap buffer\n    std::size_t n_    = 0;         // element count\npublic:\n    // Allocate n value-initialized (zeroed) ints. 'explicit' blocks Engine e = 4;\n    explicit Engine(std::size_t n) : data_(new int[n]{}), n_(n) {}\n    ~Engine() { delete[] data_; }  // delete[] on nullptr is a safe no-op\n\n    Engine(const Engine&)            = delete;   // forbid copying -> move-only\n    Engine& operator=(const Engine&) = delete;\n\n    // Move ctor: take ownership of o's buffer, then leave o empty but destructible.\n    Engine(Engine&& o) noexcept\n        : data_(o.data_), n_(o.n_) {\n        o.data_ = nullptr; o.n_ = 0;\n    }\n    // Move assign: release our buffer, steal o's, null o. Self-move guard avoids\n    // deleting the very buffer we are about to take.\n    Engine& operator=(Engine&& o) noexcept {\n        if (this != &o) {\n            delete[] data_;\n            data_ = o.data_; n_ = o.n_;\n            o.data_ = nullptr; o.n_ = 0;\n        }\n        return *this;\n    }\n\n    std::size_t size() const { return n_; }\n    int&       at(std::size_t i)       { return data_[i]; }\n    int        at(std::size_t i) const { return data_[i]; }\n    bool moved_from() const { return data_ == nullptr; }\n};\n```",
+          "discussion": "Declaring any move operation deletes the implicit copies, so this is move-only like `std::unique_ptr`; the explicit `=delete`s document intent. The `noexcept` on the moves is load-bearing: `std::vector<Engine>` calls `std::move_if_noexcept` on reallocation and will only *move* (an O(1) pointer steal) instead of falling back to copying if the move is `noexcept`. The move-assignment self-check and `delete[]` of the existing buffer prevent leaks and self-move corruption. A cleaner real-world design would hold the buffer in a `std::unique_ptr<int[]>` (Rule of Zero) and write none of these."
+        },
+        {
+          "topic": "Operator Overloading",
+          "lang": "cpp",
+          "prompt": "Define a cheap value type `struct Price { long ticks = 0; };`. Implement `operator+=` as a member and binary `operator+` as a free function defined in terms of `+=`. Add C++20 `operator<=>` and `operator==` (both `= default`) so `Price` works in `std::set`/`std::sort`. State the ordering category you get.",
+          "hints": [
+            "Binary `operator+` should take `lhs` by value, do `lhs += rhs`, and return `lhs`.",
+            "Include `<compare>` for `operator<=>`."
+          ],
+          "starter": "#include <compare>\n\nstruct Price {\n    long ticks = 0;\n\n    Price& operator+=(Price rhs) noexcept {\n        // TODO: add rhs.ticks into this->ticks\n        (void)rhs;\n        return *this;\n    }\n\n    auto operator<=>(const Price&) const = default;\n    bool operator==(const Price&) const = default;\n};\n\ninline Price operator+(Price lhs, Price rhs) noexcept {\n    // TODO: implement in terms of operator+=\n    (void)rhs;\n    return lhs;\n}\n",
+          "harness": "#include <cstdio>\n#include <set>\n#include <vector>\n#include <algorithm>\n#include <compare>\n\nstatic void check(const char* n, bool ok, const char* detail){\n    printf(\"__CASE__|%s|%s|%s\\n\", n, ok?\"PASS\":\"FAIL\", detail);\n}\nint main(){\n    {\n        Price a{100}, b{25};\n        Price c = a + b;\n        char d[48]; std::snprintf(d,sizeof d,\"got=%ld want=125\", c.ticks);\n        check(\"plus\", c.ticks==125, d);\n        // operator+ must NOT mutate its operands\n        check(\"plus-pure\", a.ticks==100 && b.ticks==25, \"operands unchanged\");\n    }\n    {\n        Price a{10};\n        a += Price{5};\n        check(\"plus-equals\", a.ticks==15, a.ticks==15?\"10+=5 -> 15\":\"wrong\");\n    }\n    {\n        Price x{7}, y{7}, z{8};\n        check(\"equality\", (x==y) && !(x==z), \"== compares ticks\");\n    }\n    {\n        check(\"ordering\", (Price{3} < Price{4}) && (Price{9} > Price{2}), \"<=> gives total order\");\n    }\n    {\n        std::set<Price> s{ Price{30}, Price{10}, Price{20}, Price{10} };\n        // set is ordered + deduped via <=>; expect 10,20,30\n        std::vector<long> got;\n        for (auto p : s) got.push_back(p.ticks);\n        bool ok = (got == std::vector<long>{10,20,30});\n        char d[64]; std::snprintf(d,sizeof d,\"set size=%zu first=%ld\", s.size(), got.empty()?-1:got.front());\n        check(\"works-in-set\", ok, d);\n    }\n    {\n        std::vector<Price> v{ Price{5}, Price{1}, Price{3} };\n        std::sort(v.begin(), v.end());\n        bool ok = v[0].ticks==1 && v[1].ticks==3 && v[2].ticks==5;\n        check(\"works-in-sort\", ok, ok?\"sorted ascending\":\"not sorted\");\n    }\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "plus"
+            },
+            {
+              "name": "plus-pure"
+            },
+            {
+              "name": "plus-equals"
+            },
+            {
+              "name": "equality"
+            },
+            {
+              "name": "ordering"
+            },
+            {
+              "name": "works-in-set"
+            },
+            {
+              "name": "works-in-sort"
+            }
+          ],
+          "solution": "```cpp\n// C++20\n#include <compare>\n\nstruct Price {\n    long ticks = 0;\n\n    // Compound assignment is the primitive; takes rhs by value (Price is cheap).\n    Price& operator+=(Price rhs) noexcept {\n        ticks += rhs.ticks;\n        return *this;            // returns *this so it composes like built-in +=\n    }\n\n    // Defaulted three-way compare over an integral member -> std::strong_ordering,\n    // a total order usable by std::set/std::map/std::sort.\n    auto operator<=>(const Price&) const = default;\n    bool operator==(const Price&) const = default;\n};\n\n// Binary + built ON TOP of += so the two can never disagree.\n// lhs is taken BY VALUE, so it is our own scratch copy to mutate and return.\ninline Price operator+(Price lhs, Price rhs) noexcept {\n    lhs += rhs;        // reuse the member\n    return lhs;        // return by value -> a fresh Price (never a reference)\n}\n```",
+          "discussion": "Implementing `+` in terms of `+=` guarantees `a + b` and `a += b` agree and avoids duplicated logic; taking `lhs` by value lets the function reuse that copy as the result with no extra temporary, and for a one-`long` type it inlines to a single `add`. Because `ticks` is an integer, the defaulted `operator<=>` yields `std::strong_ordering` — a total order suitable for `std::set`/`std::map`/`std::sort`. (If `Price` wrapped a `double`, you'd get `partial_ordering` because of `NaN`, which is *not* a strict weak ordering — a reason to keep prices as integer ticks.) Binary `+` must return by value, never by reference, to avoid dangling."
+        }
+      ]
+    },
+    "advanced-features": {
+      "mcqs": [
+        {
+          "topic": "Type Aliasing",
+          "q": "Given `using Price = std::int64_t; using Qty = std::int64_t;`, does `Price p = some_qty;` compile, and why is that significant?",
+          "options": [
+            "Yes, but only with an explicit cast",
+            "No, the compiler rejects mixing `Price` and `Qty`",
+            "Yes, it compiles silently — `Price` and `Qty` are the same type, so a plain alias gives no type safety",
+            "No, aliases cannot be assigned to each other"
+          ],
+          "answer": 2,
+          "explanation": "A type alias is a second *name* for the same type, not a new type. `Price` and `Qty` are both `int64_t`, so cross-assignment is legal and silent. For machine-enforced safety you need a distinct (strong) type — a tagged one-field struct."
+        },
+        {
+          "topic": "Type Aliasing",
+          "q": "Why can `using` express `template <class T> using Vec = std::vector<T>;` but `typedef` cannot?",
+          "options": [
+            "`typedef` only works inside classes",
+            "They are equivalent; the premise is false",
+            "`typedef` was removed in C++11",
+            "`using` supports alias templates (parameterized aliases); a `typedef` is a single fixed synonym with no way to bind template parameters"
+          ],
+          "answer": 3,
+          "explanation": "The decisive advantage of `using` is the alias template — a parameterized alias. A `typedef` introduces one fixed synonym for one fixed type with no syntax to take template parameters, so `Vec<T>` is impossible to express directly with `typedef`."
+        },
+        {
+          "topic": "Type Aliasing",
+          "q": "In the strong-type pattern `template <class T, class Tag> struct Strong;`, what is the `Tag` parameter for?",
+          "options": [
+            "It makes otherwise-identical instantiations distinct types (e.g. `Strong<int64_t, PriceTag>` != `Strong<int64_t, QtyTag>`) at zero runtime cost",
+            "It enables heap allocation of the value",
+            "It stores extra runtime metadata about the value",
+            "It forces the value to be `const`"
+          ],
+          "answer": 0,
+          "explanation": "Two instantiations differing only in `Tag` are different types even though they share the same layout (a single `int64_t`), so the compiler rejects mixing a price with a quantity. The wrapper stays standard-layout and trivially copyable — same size/alignment as the bare integer, zero runtime cost."
+        },
+        {
+          "topic": "Exception Handling",
+          "q": "In the zero-cost (Itanium) exception model, what is the runtime cost of *entering* a `try` block when nothing throws?",
+          "options": [
+            "A constant per-`try` setup that pushes a handler frame",
+            "Zero — no extra instructions are emitted on the no-throw path; the unwind info lives in static side tables",
+            "A heap allocation for the exception machinery",
+            "Proportional to the number of destructors in scope"
+          ],
+          "answer": 1,
+          "explanation": "The zero-cost model emits no per-`try` setup; the 'which destructors to run if an exception passes through' info lives in static tables (.gcc_except_table / LSDA). All the cost is moved onto the throw path, which is expensive and unpredictable — fine for rare errors, poison for control flow."
+        },
+        {
+          "topic": "Exception Handling",
+          "q": "What happens if an exception tries to escape a `noexcept` function?",
+          "options": [
+            "It propagates to the caller as usual",
+            "It is automatically rethrown as a `std::bad_exception`",
+            "`std::terminate` is called immediately — there is no unwinding past the boundary and no chance to catch it higher up",
+            "It is silently swallowed and the function returns normally"
+          ],
+          "answer": 2,
+          "explanation": "`noexcept` is a hard promise: an escaping exception calls `std::terminate` immediately, killing the process. `noexcept` does not mean 'no exceptions thrown inside' — it means none *escape*. It also shrinks caller code and enables move-on-grow in `std::vector`."
+        },
+        {
+          "topic": "Exception Handling",
+          "q": "Which is the correct exception-throwing/catching discipline?",
+          "options": [
+            "Throw by value, catch by value, rethrow with `throw e;`",
+            "Throw by reference, catch by pointer, never rethrow",
+            "Throw by pointer, catch by value, rethrow with `throw e;`",
+            "Throw by value, catch by `const&`, and rethrow with a bare `throw;`"
+          ],
+          "answer": 3,
+          "explanation": "Throw by value and catch by `const&` to avoid slicing polymorphic exception types. Use a bare `throw;` to rethrow the *same* object unchanged; `throw e;` would copy (and possibly slice) it. Destructors must be `noexcept` and never throw."
+        },
+        {
+          "topic": "Dynamic Casting",
+          "q": "Is `dynamic_cast<Derived*>(base)` an O(1) operation?",
+          "options": [
+            "No — it calls `__dynamic_cast`, which walks the base-class graph; cost grows with hierarchy depth/complexity",
+            "Yes — it is a single vtable index lookup",
+            "Yes — the compiler resolves it entirely at compile time",
+            "No — it is always exactly two memory loads"
+          ],
+          "answer": 0,
+          "explanation": "The common wrong answer is 'it's a vtable lookup, so O(1).' In fact `dynamic_cast` is an out-of-line call to `__dynamic_cast`, which structurally walks the recorded base-class metadata to prove the relationship — not constant time, and worse with multiple/virtual inheritance. Keep it off the hot path."
+        },
+        {
+          "topic": "Dynamic Casting",
+          "q": "How do the pointer and reference forms of `dynamic_cast` report a failed cast?",
+          "options": [
+            "Both return `nullptr`",
+            "Pointer form returns `nullptr`; reference form throws `std::bad_cast`",
+            "Pointer form throws; reference form returns a default object",
+            "Both throw `std::bad_cast`"
+          ],
+          "answer": 1,
+          "explanation": "The pointer form returns `nullptr` on failure (the idiomatic `if (auto* d = dynamic_cast<D*>(b))`). The reference form can't return a null reference, so it throws `std::bad_cast` — which drags in the exception machinery, making it doubly unsuitable for a hot path."
+        },
+        {
+          "topic": "Dynamic Casting",
+          "q": "Why does `dynamic_cast<Derived*>(base)` fail to compile if `Base` has no virtual functions?",
+          "options": [
+            "Non-virtual classes are always standard-layout, which `dynamic_cast` forbids",
+            "`dynamic_cast` only works on fundamental types",
+            "The down/cross-cast form requires a polymorphic source type (>=1 virtual function) so the object has a vtable carrying its `type_info`",
+            "It would compile but always return `nullptr`"
+          ],
+          "answer": 2,
+          "explanation": "`dynamic_cast`'s downcast/cross-cast form needs the source to be polymorphic (at least one virtual function, usually a virtual destructor). The virtual function gives the object a vtable, which is where the runtime finds the `type_info` it needs to navigate the hierarchy."
+        },
+        {
+          "topic": "RTTI, std::any, and std::variant",
+          "q": "Why can storing a large struct in `std::any` cause a heap allocation, and what sometimes avoids it?",
+          "options": [
+            "It allocates only when the type lacks a virtual destructor",
+            "`any` never allocates; it only stores a pointer to the original object",
+            "`any` always heap-allocates regardless of size",
+            "`any` keeps small/trivially-movable values inline via the Small Buffer Optimization but heap-allocates larger/non-trivial ones"
+          ],
+          "answer": 3,
+          "explanation": "`std::any` applies a Small Buffer Optimization: small, trivially-movable values live inline in the `any` object, but anything larger (or with a non-trivial move) is heap-allocated. Combined with RTTI type checks on every access, this makes `any` a poor fit for the hot path."
+        },
+        {
+          "topic": "RTTI, std::any, and std::variant",
+          "q": "How does `std::variant` track which alternative is active, and why does it never heap-allocate?",
+          "options": [
+            "It stores a small integer discriminant (the index) and keeps the value inline; its size is ~max(alternatives) + discriminant",
+            "It stores a vtable pointer and the active object on the heap",
+            "It uses RTTI `type_info` and stores each alternative on the heap",
+            "It hashes the type name to pick the active member"
+          ],
+          "answer": 0,
+          "explanation": "`std::variant` is a tagged union: a `union` of the alternatives plus a small integer index recording which one is active. The value lives inline (stack/array/member), so it never allocates; `sizeof` is roughly the largest alternative plus the discriminant, rounded for alignment."
+        },
+        {
+          "topic": "RTTI, std::any, and std::variant",
+          "q": "When is `typeid(expr)` evaluated at runtime versus compile time?",
+          "options": [
+            "Always at runtime",
+            "Runtime for a polymorphic lvalue (yields the dynamic type via the vtable); compile time for a type-id or a non-polymorphic expression",
+            "Runtime only when `-fno-rtti` is set",
+            "Always at compile time"
+          ],
+          "answer": 1,
+          "explanation": "For a polymorphic lvalue, `typeid` reads the object's actual most-derived type at runtime via the `type_info` in its vtable. For a type operand or a non-polymorphic expression it is resolved at compile time from the static type. `typeid(*p)` on a null polymorphic `p` throws `std::bad_typeid`."
+        }
+      ],
+      "coding": [
+        {
+          "topic": "RTTI, std::any, and std::variant",
+          "lang": "cpp",
+          "prompt": "Model a closed set of exchange messages `AddOrder`, `CancelOrder`, `Trade` as a `std::variant` `using Msg = std::variant<AddOrder, CancelOrder, Trade>;`. Write the C++17 `overloaded` helper (with its deduction guide) and `char on_message(const Msg& m)` that uses `std::visit` to dispatch and return a one-char tag: `'A'` for AddOrder, `'C'` for CancelOrder, `'T'` for Trade. Note what happens if a fourth message type is added. The struct fields are fixed as shown in the starter.",
+          "hints": [
+            "`template <class... Ts> struct overloaded : Ts... { using Ts::operator()...; };`",
+            "Provide the deduction guide `overloaded(Ts...) -> overloaded<Ts...>;` for C++17."
+          ],
+          "starter": "#include <variant>\n#include <cstdint>\n\nstruct AddOrder    { std::uint64_t id; std::int64_t px; std::uint32_t qty; };\nstruct CancelOrder { std::uint64_t id; };\nstruct Trade       { std::uint64_t id; std::uint32_t qty; };\n\nusing Msg = std::variant<AddOrder, CancelOrder, Trade>;\n\n// TODO: define the 'overloaded' helper struct and its C++17 deduction guide\n\nchar on_message(const Msg& m) {\n    // TODO: std::visit with an overloaded set; return 'A' / 'C' / 'T'\n    (void)m;\n    return '?';\n}\n",
+          "harness": "#include <cstdio>\n#include <variant>\n#include <cstdint>\n\nstatic void check(const char* n, bool ok, const char* detail){\n    printf(\"__CASE__|%s|%s|%s\\n\", n, ok?\"PASS\":\"FAIL\", detail);\n}\nint main(){\n    {\n        Msg m = AddOrder{1, 100, 10};\n        char t = on_message(m);\n        char d[24]; std::snprintf(d,sizeof d,\"got=%c want=A\", t);\n        check(\"add-order\", t=='A', d);\n    }\n    {\n        Msg m = CancelOrder{2};\n        char t = on_message(m);\n        char d[24]; std::snprintf(d,sizeof d,\"got=%c want=C\", t);\n        check(\"cancel-order\", t=='C', d);\n    }\n    {\n        Msg m = Trade{3, 5};\n        char t = on_message(m);\n        char d[24]; std::snprintf(d,sizeof d,\"got=%c want=T\", t);\n        check(\"trade\", t=='T', d);\n    }\n    {\n        // dispatch follows the active alternative, not declaration order\n        Msg m = Trade{7, 1};\n        m = CancelOrder{9};\n        check(\"reassigned\", on_message(m)=='C', \"active alternative dispatched\");\n    }\n    {\n        // index() and on_message must agree about which arm is active\n        Msg m = AddOrder{42, -1, 0};\n        check(\"matches-index\", on_message(m)=='A' && m.index()==0, \"AddOrder is index 0\");\n    }\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "add-order"
+            },
+            {
+              "name": "cancel-order"
+            },
+            {
+              "name": "trade"
+            },
+            {
+              "name": "reassigned"
+            },
+            {
+              "name": "matches-index"
+            }
+          ],
+          "solution": "```cpp\n// C++17\n#include <variant>\n#include <cstdint>\n\nstruct AddOrder    { std::uint64_t id; std::int64_t px; std::uint32_t qty; };\nstruct CancelOrder { std::uint64_t id; };\nstruct Trade       { std::uint64_t id; std::uint32_t qty; };\n\nusing Msg = std::variant<AddOrder, CancelOrder, Trade>;\n\n// 'overloaded' inherits operator() from every lambda it is built from.\n// The pack-expanded using-declaration brings each lambda's call operator into scope.\ntemplate <class... Ts> struct overloaded : Ts... { using Ts::operator()...; };\n// C++17 deduction guide so we can brace-construct overloaded{ lambdas... }.\ntemplate <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;\n\nchar on_message(const Msg& m) {\n    // std::visit picks the arm whose parameter matches the active alternative.\n    return std::visit(overloaded{\n        [](const AddOrder&)    { return 'A'; },\n        [](const CancelOrder&) { return 'C'; },\n        [](const Trade&)       { return 'T'; },\n    }, m);\n    // Add a 4th alternative to Msg and this visit fails to compile until handled.\n}\n```",
+          "discussion": "`overloaded` inherits `operator()` from each lambda (`using Ts::operator()...;` is a pack-expanded using-declaration), so the fused object is callable with any alternative and overload resolution picks the matching arm; the deduction guide lets you brace-construct it in C++17 (it's implicit in C++20). The `Msg` lives on the stack with no heap, no vtable, no RTTI, and `std::visit` is a jump table over the discriminant. Crucially, the dispatch is *exhaustive*: add a fourth alternative to `Msg` and the `std::visit` fails to compile until you handle it — exhaustiveness as a compile-time safety net. This is the HFT-preferred design over an inheritance hierarchy of heap-allocated message objects."
+        },
+        {
+          "topic": "Type Aliasing",
+          "lang": "cpp",
+          "prompt": "Implement the strong-type pattern: a `template <class T, class Tag> struct Strong` with an `explicit` constructor and an `explicit` conversion operator back to `T`. Use it to define distinct `Price` and `Qty` types over `std::int64_t` and add `static_assert`s proving `sizeof(Price) == sizeof(std::int64_t)` and that it is trivially copyable. Mixing `Price` and `Qty` must be a compile error (the harness verifies the wrapper's behaviour at runtime).",
+          "hints": [
+            "Empty tag structs make the instantiations distinct.",
+            "`explicit` on both the constructor and the conversion operator is essential."
+          ],
+          "starter": "#include <cstdint>\n#include <type_traits>\n\ntemplate <class T, class Tag>\nstruct Strong {\n    T value{};\n    // TODO: explicit constructor from T, and explicit conversion operator back to T\n    explicit Strong(T v) { (void)v; }\n    explicit operator T() const { return value; }\n};\n\nstruct PriceTag {};\nstruct QtyTag   {};\nusing Price = Strong<std::int64_t, PriceTag>;\nusing Qty   = Strong<std::int64_t, QtyTag>;\n",
+          "harness": "#include <cstdio>\n#include <cstdint>\n#include <type_traits>\n\nstatic void check(const char* n, bool ok, const char* detail){\n    printf(\"__CASE__|%s|%s|%s\\n\", n, ok?\"PASS\":\"FAIL\", detail);\n}\n\n// Type-system properties the prompt requires.\nstatic_assert(sizeof(Price) == sizeof(std::int64_t), \"Price must be just the int64\");\nstatic_assert(std::is_trivially_copyable_v<Price>,   \"Price must be trivially copyable\");\nstatic_assert(!std::is_same_v<Price, Qty>,           \"Price and Qty must be distinct types\");\n// Mixing must be impossible: no implicit conversion between Price and Qty, and no\n// implicit conversion from int64 either (constructor is explicit).\nstatic_assert(!std::is_convertible_v<Qty, Price>,        \"Qty must not convert to Price\");\nstatic_assert(!std::is_convertible_v<std::int64_t, Price>,\"int64 must not implicitly become Price\");\n\nint main(){\n    check(\"same-size\", true, \"sizeof(Price)==sizeof(int64) (compile-time)\");\n    check(\"trivially-copyable\", true, \"Price trivially copyable (compile-time)\");\n    check(\"distinct-types\", true, \"Price != Qty (compile-time)\");\n    check(\"no-implicit-mix\", true, \"no implicit Qty->Price / int->Price (compile-time)\");\n\n    {\n        Price p{100};\n        // explicit conversion back out\n        std::int64_t raw = static_cast<std::int64_t>(p);\n        char d[48]; std::snprintf(d,sizeof d,\"value=%lld\", (long long)raw);\n        check(\"wraps-value\", raw==100, d);\n    }\n    {\n        Qty q{5};\n        std::int64_t raw = static_cast<std::int64_t>(q);\n        check(\"qty-value\", raw==5, raw==5?\"Qty holds 5\":\"wrong\");\n    }\n    return 0;\n}\n",
+          "tests": [
+            {
+              "name": "same-size"
+            },
+            {
+              "name": "trivially-copyable"
+            },
+            {
+              "name": "distinct-types"
+            },
+            {
+              "name": "no-implicit-mix"
+            },
+            {
+              "name": "wraps-value"
+            },
+            {
+              "name": "qty-value"
+            }
+          ],
+          "solution": "```cpp\n// C++17\n#include <cstdint>\n#include <type_traits>\n\ntemplate <class T, class Tag>\nstruct Strong {\n    T value{};\n    // 'explicit' on the ctor blocks silent int64 -> Strong conversions.\n    explicit Strong(T v) : value(v) {}\n    // 'explicit' on the conversion blocks silent Strong -> int64 conversions.\n    explicit operator T() const { return value; }\n};\n\n// Empty tag types are what make the two instantiations DISTINCT despite identical layout.\nstruct PriceTag {};\nstruct QtyTag   {};\nusing Price = Strong<std::int64_t, PriceTag>;\nusing Qty   = Strong<std::int64_t, QtyTag>;\n\nstatic_assert(sizeof(Price) == sizeof(std::int64_t));\nstatic_assert(std::is_trivially_copyable_v<Price>);\n\n// void place(Price p, Qty q);\n//   place(Price{100}, Qty{5});  // OK\n//   place(Qty{5}, Price{100});  // ERROR: Qty is not Price -- caught at compile time\n//   Price bad = Qty{5};         // ERROR: no implicit conversion\n```",
+          "discussion": "The `Tag` parameter makes `Strong<int64_t, PriceTag>` and `Strong<int64_t, QtyTag>` distinct types despite identical layout, so passing a `Qty` where a `Price` is expected is a build failure rather than a production incident. The `explicit` keywords on both the constructor and the `operator T()` are mandatory — drop either and you re-open the silent-conversion hole the plain alias had. The struct stays standard-layout and trivially copyable with the same size/alignment as the bare integer, so the safety is a compile-time fiction with zero runtime cost (verify with `static_assert` and the asm). Libraries like NamedType/type_safe add opt-in operator mixins so you don't hand-write the arithmetic."
+        }
+      ]
+    }
+  }
+}

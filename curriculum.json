@@ -1,0 +1,99 @@
+{
+  "site": "bequant.dev (local reconstruction)",
+  "captured_from": "homework content.pdf (28 phone photos of the live site, Oct 2025 era)",
+  "difficulty_legend": { "E": "Easy", "M": "Medium", "H": "Hard" },
+  "notes": [
+    "Lesson article text was behind login and NOT in the PDF or web archive; article content will be authored fresh.",
+    "'Odd one out!' is a REAL bequant lesson (7th topic of CPU Architecture Basics, Medium).",
+    "bequant also had a 'Bitwise Operations' lesson (1st topic) that the original prompt.md omitted.",
+    "Numpy Essentials node topics were NOT captured in the PDF (~4 lessons) — inferred below, marked 'inferred'."
+  ],
+  "roadmaps": [
+    {
+      "id": "cppbasics",
+      "title": "C++ Basics",
+      "estimate": "1 month",
+      "topic_count": 33,
+      "nodes": [
+        { "title": "Syntax & Fundamentals", "topics": [
+          ["The C++ Compiler","E"], ["Types and Initialization","E"], ["Expressions and Casting","E"], ["Enums and Strong Enums","E"], ["Storage and Attributes","M"] ] },
+        { "title": "Pointers", "topics": [
+          ["Pointers and Free Store","E"], ["Pointers & Free Store II","E"], ["Array Copying with Pointers","E"], ["Array Reversal with Pointers","E"], ["Const and Pointers","M"], ["Function Pointers, Functors, and Lambdas","M"] ] },
+        { "title": "Templates", "topics": [
+          ["Type Deduction","E"], ["constexpr functions","E"], ["Introduction to Templates","E"], ["Template Specialization","M"], ["Lambdas","M"] ] },
+        { "title": "STL Containers and Algorithms", "topics": [
+          ["Auxiliary Data Types","E"], ["std::array: Fixed-Size Array Container","E"], ["std::vector","M"], ["std::list","M"], ["Hashing Containers","M"], ["Ordered Containers","M"], ["std::deque","M"], ["Adapter Containers","M"] ] },
+        { "title": "Object Oriented Programming", "topics": [
+          ["Classes and Structs","E"], ["Constructor Initialization Lists","E"], ["Inheritance Basics","E"], ["Advanced Constructors","M"], ["Operator Overloading","M"] ] },
+        { "title": "Advanced Features", "topics": [
+          ["Type Aliasing","M"], ["Exception Handling","M"], ["Dynamic Casting","M"], ["RTTI, std::any, and std::variant","H"] ] }
+      ]
+    },
+    {
+      "id": "csfundamentals",
+      "title": "CS for Quants",
+      "estimate": "1-2 months",
+      "topic_count": 42,
+      "nodes": [
+        { "title": "CPU Architecture Basics", "topics": [
+          ["Bitwise Operations","E"], ["Binary Representation of Types","E"], ["Byte Order and Endianness","E"], ["CPU Registers and Assembly Instructions","E"], ["CPU Cache Hierarchy and Prefetching","E"], ["Pipelined Processors and Instruction-Level Parallelism","E"], ["Odd one out!","M"] ] },
+        { "title": "CPU Architecture Advanced", "topics": [
+          ["Branch Prediction","E"], ["Advanced Cache Analysis and Optimization","M"], ["Instruction Reordering and Out-of-Order Execution","M"], ["Vectorization, SIMD, and AVX-512","H"], ["NUMA Architecture","H"] ] },
+        { "title": "Operating Systems", "topics": [
+          ["Process vs Threads","E"], ["Process Memory Model","E"], ["Virtual Memory Management","E"], ["Process Creation and Lifecycle","E"], ["Kernel and OS Architecture","E"], ["Context Switching and System Calls","E"], ["Process Scheduling","E"], ["OS-Level Synchronization Primitives","E"], ["Deadlocks, Starvation, and Livelock","E"] ] },
+        { "title": "Networking", "topics": [
+          ["TCP/IP Model Overview","E"], ["Network Access Layer","E"], ["Internet Layer","E"], ["Transport Layer","E"], ["UDP Protocol","E"], ["TCP Protocol","M"] ] },
+        { "title": "IPC", "topics": [
+          ["TCP/UDP System Calls","M"], ["Pipes and Message Queues","M"], ["Memory-Mapped Files (mmap)","M"], ["POSIX Shared Memory","M"], ["IPC Trade-offs and Performance","M"], ["Zero-Copy Techniques","H"], ["Lock-Free IPC Patterns","H"] ] },
+        { "title": "Userspace Networking", "topics": [
+          ["Zero-Copy Networking","M"], ["Polling vs Interrupts","M"], ["Kernel Bypass Techniques: DPDK","H"] ] },
+        { "title": "Programming Principles", "topics": [
+          ["Algorithmic Complexity","E"], ["Compiler Optimizations","E"], ["Memory Management Fundamentals","E"], ["Garbage Collection Techniques","M"], ["Object-Oriented Design Principles","M"] ] }
+      ]
+    },
+    {
+      "id": "lowlatency",
+      "title": "Low Latency C++",
+      "estimate": "1-2 months",
+      "topic_count": 44,
+      "nodes": [
+        { "title": "C++ Fundamentals", "topics": [
+          ["Virtual Functions and Inheritance","E"], ["L-values and R-values","E"], ["Copy-Move Elision","E"], ["RAII","E"], ["Smart Pointers","E"], ["Rule of Five","E"] ] },
+        { "title": "Multithreading", "topics": [
+          ["Launching Threads","E"], ["Race Conditions & Mutexes","E"], ["Condition Variables & Unique Locks","M"], ["Atomic Operations","M"], ["Memory Ordering","H"], ["Compare-Exchange & Lock-Free Programming","H"], ["Spinlock","H"], ["False Sharing & Cache Performance","H"] ] },
+        { "title": "STL & Algorithms", "topics": [
+          ["CPU Core Allocation Problem","E"], ["Variable-Length Integer Encoding","E"], ["Progressive Binary Search","E"], ["Efficient itoa Implementation","M"] ] },
+        { "title": "Templates Basics", "topics": [
+          ["Templates & Type Deduction","E"], ["Variadic Templates","E"], ["Perfect Forwarding","E"], ["Nth Argument Access","M"], ["Simple unique_ptr","M"], ["Simple Tuple Implementation","M"], ["shared_ptr with Custom Deleter","H"] ] },
+        { "title": "Queues", "topics": [
+          ["Linked List based Queue","E"], ["Memory-Pooled Linked List Queue","M"], ["Array based Queue","M"], ["Resizing Array based Queue","M"], ["Segmented Deque","H"] ] },
+        { "title": "Multithreaded Queues", "topics": [
+          ["Linked List Based SPSC Blocking Queue","M"], ["Linked List Based MPMC Blocking Queue","H"], ["Array-Based MPMC Blocking Queue","H"], ["SPSC Lock-Free Queue","M"], ["MPSC Lock-Free Queue","H"], ["Array-Based MPSC Lock-Free Queue","H"] ] },
+        { "title": "System Design Basics", "topics": [
+          ["Design LRU Cache","E"], ["Packed Struct Offset Lookup","M"], ["Design LFU Cache","H"] ] },
+        { "title": "System Design Advanced", "topics": [
+          ["Order Book Implementation","M"], ["Content Scheduler","M"] ] },
+        { "title": "Templates Advanced", "topics": [
+          ["Type Traits and Metafunctions","M"], ["constexpr, consteval, and if constexpr","M"], ["CRTP","H"] ] }
+      ]
+    },
+    {
+      "id": "python",
+      "title": "Python for Research",
+      "estimate": "1-2 months",
+      "topic_count": 23,
+      "nodes": [
+        { "title": "Foundations", "topics": [
+          ["Lists, Sets, and Dicts","E"], ["Functions and Decorators","E"], ["Pickling and Serialization","E"], ["Classes and Objects","E"], ["Generators and Iterators","E"], ["Context Managers","E"], ["Multiprocessing and Threading","M"] ] },
+        { "title": "Numpy Essentials", "inferred": true, "topics": [
+          ["The ndarray and dtypes","E"], ["Indexing, Slicing, and Views","E"], ["Broadcasting","M"], ["Universal Functions & Linear Algebra","M"] ] },
+        { "title": "Pandas", "topics": [
+          ["Introduction to Pandas","E"], ["Indexing, Selection, and Assignment","E"], ["GroupBy, Pivot, and Melt","M"], ["Time Series Operations","M"], ["Joins and Merges at Scale","M"] ] },
+        { "title": "Vectorization & Performance", "topics": [
+          ["CPython Interpreter & Loop Performance","E"], ["Vectorization Patterns","M"], ["Numba JIT Compilation","M"] ] },
+        { "title": "Analytics and ML Libraries", "topics": [
+          ["TA-Lib Technical Indicators","M"], ["Scikit-Learn","M"], ["TensorFlow Basics","M"], ["PyTorch Basics","M"] ] }
+      ]
+    }
+  ]
+}

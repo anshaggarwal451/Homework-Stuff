@@ -1,0 +1,30 @@
+{
+  "v": 2,
+  "progress": {
+    "cppbasics/syntax-and-fundamentals/the-cpp-compiler": 1781874897800,
+    "cppbasics/syntax-and-fundamentals/types-and-initialization": 1781874898692,
+    "cppbasics/syntax-and-fundamentals/expressions-and-casting": 1781874899356,
+    "cppbasics/templates/introduction-to-templates": 1781874901552,
+    "cppbasics/advanced-features/rtti-std-any-and-std-variant": 1781874904939
+  },
+  "assessments": [
+    {
+      "rid": "cppbasics",
+      "mslug": "pointers",
+      "label": "Pointers",
+      "date": 1781876713113,
+      "mcq": {
+        "correct": 11,
+        "total": 11
+      },
+      "coding": {
+        "got": 2,
+        "partial": 0,
+        "missed": 0,
+        "total": 2
+      },
+      "pct": 100
+    }
+  ],
+  "settings": {}
+}

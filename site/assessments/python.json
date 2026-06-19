@@ -1,0 +1,1106 @@
+{
+  "rid": "python",
+  "title": "Python for Research",
+  "modules": {
+    "foundations": {
+      "mcqs": [
+        {
+          "topic": "Lists, Sets, and Dicts",
+          "q": "Inside a hot backtest loop you repeatedly run `if ticker in universe`, where `universe` is a `list` of 5,000 names. What single change gives the biggest speedup and why?",
+          "options": [
+            "Convert `universe` to a `set` once before the loop, turning each O(n) membership test into O(1)",
+            "Sort `universe` and call `list.index`, which is O(1) on a sorted list",
+            "Wrap `universe` in a `tuple`, which makes membership tests O(1)",
+            "Replace the loop with `map`, which makes membership tests run in C"
+          ],
+          "answer": 0,
+          "explanation": "Membership (`x in lst`) on a `list` is O(n) — a linear scan. A `set` (a hash table) gives O(1) average membership. Converting once and testing many times drops a loop from O(n*m) to O(n). Tuples are still linear for `in`; sorting plus `index` is still O(n); `map` does not change membership complexity."
+        },
+        {
+          "topic": "Lists, Sets, and Dicts",
+          "q": "What does the following print?\n\n```python\nd = {\"a\": 1, \"b\": 2}\nks = d.keys()\nd[\"c\"] = 3\nprint(list(ks))\n```",
+          "options": [
+            "['c']",
+            "['a', 'b', 'c']",
+            "['a', 'b']",
+            "RuntimeError: dictionary changed size during iteration"
+          ],
+          "answer": 1,
+          "explanation": "`dict.keys()` returns a live **view**, not a snapshot. Mutating the dict after calling `.keys()` is reflected in the view, so it now contains 'c'. The RuntimeError only occurs if you mutate a dict *while iterating over it*, which is not happening here (the mutation precedes `list(ks)`)."
+        },
+        {
+          "topic": "Functions and Decorators",
+          "q": "What does this print, and why?\n\n```python\nfns = [lambda: i for i in range(3)]\nprint([f() for f in fns])\n```",
+          "options": [
+            "[0, 0, 0] — closures capture the initial value of `i`",
+            "TypeError — lambdas cannot be stored in a list",
+            "[2, 2, 2] — the closures capture the variable `i`, not its value, and all see the final value",
+            "[0, 1, 2] — each lambda captures its own copy of `i`"
+          ],
+          "answer": 2,
+          "explanation": "Closures capture the *variable* `i` by reference, not its value at definition time. By the time the lambdas run, the loop has finished and `i` is 2, so all three return 2. The fix is `lambda i=i: i` to bind the current value per iteration via a default argument."
+        },
+        {
+          "topic": "Functions and Decorators",
+          "q": "Why is `functools.wraps` used inside a decorator's wrapper?",
+          "options": [
+            "It makes the wrapper run in C for speed",
+            "It caches the wrapped function's return values automatically",
+            "It is required syntactically or the `@` decorator will not apply",
+            "It copies `__name__`, `__doc__`, the signature and sets `__wrapped__`, preserving introspection and tracebacks"
+          ],
+          "answer": 3,
+          "explanation": "Without `functools.wraps`, the wrapper's `__name__` becomes 'wrapper' and its docstring/signature are lost, breaking introspection, logging keyed on names, and clean tracebacks. It also sets `__wrapped__` so you can reach the original. It does not memoize or affect decorator application."
+        },
+        {
+          "topic": "Pickling and Serialization",
+          "q": "Why is calling `pickle.load` on untrusted bytes a security vulnerability?",
+          "options": [
+            "Unpickling executes a stack-machine opcode program that can call arbitrary constructors (e.g. via `__reduce__`), enabling code execution",
+            "Pickle decompresses the data with an unsafe zlib routine that overflows",
+            "Pickle always evaluates the bytes as Python source with `eval`",
+            "Pickle leaks the loading process's environment variables into the data"
+          ],
+          "answer": 0,
+          "explanation": "A pickle is a small program for a virtual machine; loading *runs* it. Because `__reduce__` can specify an arbitrary callable and arguments to invoke on load, a malicious pickle can execute any code. The rule: never unpickle data you did not produce. It is not eval of source nor a zlib bug."
+        },
+        {
+          "topic": "Pickling and Serialization",
+          "q": "Your object holds an open socket you do not want to persist. Which pair of methods customizes its pickling?",
+          "options": [
+            "`__getattr__` and `__setattr__`",
+            "`__getstate__` returns the state to save (drop the socket); `__setstate__` reconstructs from it (re-open the socket)",
+            "`__reduce__` and `__repr__`",
+            "`__enter__` and `__exit__`"
+          ],
+          "answer": 1,
+          "explanation": "`__getstate__` returns what to serialize (you delete the unpicklable `_conn` from the copied `__dict__`); `__setstate__` rebuilds the instance from that state and re-opens the resource. `__enter__`/`__exit__` are for context managers; `__reduce__` is lower-level."
+        },
+        {
+          "topic": "Classes and Objects",
+          "q": "You define `__eq__` on a class but not `__hash__`, then try to use instances as dict keys. What happens?",
+          "options": [
+            "Equal objects silently collide into one key with no error",
+            "A SyntaxError is raised at class definition",
+            "Instances become unhashable (Python sets `__hash__` to None), so using them as keys raises TypeError",
+            "They hash by `id()` as usual and work fine"
+          ],
+          "answer": 2,
+          "explanation": "Defining `__eq__` without `__hash__` makes the class unhashable: Python sets `__hash__` to None, so the instance cannot be a dict key or set member (TypeError). The rule: if you define `__eq__`, also define `__hash__` (or explicitly opt out)."
+        },
+        {
+          "topic": "Generators and Iterators",
+          "q": "Distinguish an iterable from an iterator. Which does `iter()` return, and which supports `next()`?",
+          "options": [
+            "They are synonyms; both support `next()` and `iter()` interchangeably",
+            "An iterator has `__iter__`; an iterable has `__next__`; `iter()` returns the iterable",
+            "Only lists are iterables; only generators are iterators",
+            "An iterable has `__iter__` (returns an iterator); an iterator has `__next__` (and `__iter__` returning self). `iter()` returns an iterator; `next()` works on the iterator"
+          ],
+          "answer": 3,
+          "explanation": "An iterable implements `__iter__`, which produces an iterator. An iterator implements `__next__` (yielding values or raising StopIteration) and an `__iter__` that returns itself. `iter(iterable)` gives an iterator; `next(iterator)` advances it. Lists are iterables (re-iterable); generators are iterators (single-use)."
+        },
+        {
+          "topic": "Context Managers",
+          "q": "In a `@contextmanager` generator-based context manager, why must `try/finally` wrap the `yield`?",
+          "options": [
+            "So teardown (the code after `yield`) runs even if the `with` body raises an exception",
+            "So the `yield` value is bound to the `as` variable",
+            "So the manager can suppress all exceptions automatically",
+            "So the generator can be re-entered multiple times"
+          ],
+          "answer": 0,
+          "explanation": "Everything before `yield` is setup and everything in the `finally` after it is teardown. Wrapping `yield` in `try/finally` guarantees the teardown runs whether the body exits normally or via an exception. The `as` binding comes from the yielded value regardless of try/finally."
+        },
+        {
+          "topic": "Multiprocessing and Threading",
+          "q": "Why does a tight numeric pure-Python loop across 8 threads not speed up, while 8 concurrent URL downloads across 8 threads do?",
+          "options": [
+            "NumPy is required for any threading speedup",
+            "The GIL serializes Python bytecode (CPU-bound work), but a thread releases the GIL while blocked on I/O, so downloads overlap",
+            "Threads cannot run CPU work at all, only I/O",
+            "The downloads run in separate processes automatically"
+          ],
+          "answer": 1,
+          "explanation": "CPython's Global Interpreter Lock allows only one thread to execute bytecode at a time, so CPU-bound pure-Python loops do not parallelize across threads. But a thread blocked on a socket read releases the GIL, letting other threads run — so I/O-bound work overlaps and benefits."
+        }
+      ],
+      "coding": [
+        {
+          "topic": "Lists, Sets, and Dicts",
+          "lang": "python",
+          "prompt": "Implement `aggregate(trades)`. Given a list of `(symbol, signed_qty)` trade tuples, return a tuple `(net_volume, counts)` of two plain dicts: net signed volume per symbol, and number of trades per symbol. Use the idiomatic `collections` tools (standard library only) rather than hand-rolling key-existence checks. Click Run to check against the test cases.",
+          "hints": [
+            "`collections.defaultdict(int)` lets you do `vol[sym] += qty` without checking membership.",
+            "`collections.Counter` is purpose-built for counting occurrences and runs its loop in C.",
+            "Iterate the trades once for the volume; a Counter over the symbols gives the counts."
+          ],
+          "starter": "from collections import defaultdict, Counter\n\ndef aggregate(trades):\n    # TODO: return (net_signed_volume_per_symbol, trade_count_per_symbol) as two dicts.\n    # Use defaultdict(int) for the volume and Counter for the counts.\n    return {}, {}\n",
+          "harness": "def _run_cases():\n    def check(name, got, want):\n        status = \"PASS\" if got == want else \"FAIL\"\n        print(f\"__CASE__|{name}|{status}|got={got!r} want={want!r}\")\n\n    # basic-aggregation\n    try:\n        trades = [(\"AAPL\", 100), (\"MSFT\", 50), (\"AAPL\", 75), (\"AAPL\", -25), (\"MSFT\", 30)]\n        vol, counts = aggregate(trades)\n        check(\"basic-vol\", vol, {\"AAPL\": 150, \"MSFT\": 80})\n        check(\"basic-counts\", counts, {\"AAPL\": 3, \"MSFT\": 2})\n    except Exception as e:\n        check(\"basic-vol\", f\"EXC:{e}\", {\"AAPL\": 150, \"MSFT\": 80})\n        check(\"basic-counts\", f\"EXC:{e}\", {\"AAPL\": 3, \"MSFT\": 2})\n\n    # net-to-zero: signed quantities can cancel out\n    try:\n        vol, counts = aggregate([(\"X\", 10), (\"X\", -10), (\"X\", 5)])\n        check(\"net-to-zero-vol\", vol, {\"X\": 5})\n        check(\"net-to-zero-counts\", counts, {\"X\": 3})\n    except Exception as e:\n        check(\"net-to-zero-vol\", f\"EXC:{e}\", {\"X\": 5})\n        check(\"net-to-zero-counts\", f\"EXC:{e}\", {\"X\": 3})\n\n    # empty-input: must not crash, returns two empty dicts\n    try:\n        vol, counts = aggregate([])\n        check(\"empty-vol\", vol, {})\n        check(\"empty-counts\", counts, {})\n    except Exception as e:\n        check(\"empty-vol\", f\"EXC:{e}\", {})\n        check(\"empty-counts\", f\"EXC:{e}\", {})\n\n    # single-symbol\n    try:\n        vol, counts = aggregate([(\"TSLA\", -40)])\n        check(\"single-vol\", vol, {\"TSLA\": -40})\n        check(\"single-counts\", counts, {\"TSLA\": 1})\n    except Exception as e:\n        check(\"single-vol\", f\"EXC:{e}\", {\"TSLA\": -40})\n        check(\"single-counts\", f\"EXC:{e}\", {\"TSLA\": 1})\n\n    # returns-plain-dict: the result types must be plain dict, not defaultdict/Counter\n    try:\n        vol, counts = aggregate([(\"A\", 1)])\n        ok = type(vol) is dict and type(counts) is dict\n        check(\"returns-plain-dict\", ok, True)\n    except Exception as e:\n        check(\"returns-plain-dict\", f\"EXC:{e}\", True)\n\n_run_cases()\n",
+          "tests": [
+            {
+              "name": "basic-vol"
+            },
+            {
+              "name": "basic-counts"
+            },
+            {
+              "name": "net-to-zero-vol"
+            },
+            {
+              "name": "net-to-zero-counts"
+            },
+            {
+              "name": "empty-vol"
+            },
+            {
+              "name": "empty-counts"
+            },
+            {
+              "name": "single-vol"
+            },
+            {
+              "name": "single-counts"
+            },
+            {
+              "name": "returns-plain-dict"
+            }
+          ],
+          "solution": "```python\nfrom collections import defaultdict, Counter\n\ndef aggregate(trades):\n    # defaultdict(int) creates a missing key with value 0 on first access,\n    # so we can do vol[sym] += qty without an `if sym in vol` guard.\n    vol = defaultdict(int)\n    for sym, qty in trades:          # single pass over the trades\n        vol[sym] += qty              # accumulate net signed volume per symbol\n    # Counter is the purpose-built tally tool; its counting loop runs in C.\n    # We feed it just the symbols (a generator avoids building an intermediate list).\n    counts = Counter(sym for sym, _ in trades)\n    # Return plain dicts so callers do not depend on the defaultdict/Counter types.\n    return dict(vol), dict(counts)\n```",
+          "discussion": "`defaultdict(int)` initializes missing keys to 0 on first access, removing the verbose `if sym in vol` branch and making the aggregation a clean single pass. `Counter` is the canonical tool for tallying and is implemented in C, so it beats a manual loop. Both preserve insertion order (dicts since 3.7). For a *membership* universe you would instead build a `set` once to get O(1) `in` tests; here we need aggregation, so hash maps are the right structure. If the symbols were millions of numeric IDs you would consider NumPy/pandas grouping instead, but for symbol-keyed bookkeeping these built-ins are idiomatic and fast."
+        },
+        {
+          "topic": "Functions and Decorators",
+          "lang": "python",
+          "prompt": "Write a `@timed` decorator. `timed(func)` returns a wrapper that prints `\"<name> took <ms> ms\"`, returns the wrapped function's result unchanged, and preserves the wrapped function's `__name__` and docstring. Standard library only. Click Run to check against the test cases.",
+          "hints": [
+            "Use `functools.wraps(func)` on the inner wrapper to copy metadata.",
+            "Time with `time.perf_counter()` (monotonic, high-resolution), not `time.time()`.",
+            "The wrapper should accept `*args, **kwargs` and return the original result."
+          ],
+          "starter": "import functools, time\n\ndef timed(func):\n    # TODO: return a wrapper that times `func`, prints \"<name> took <ms> ms\",\n    # returns func's result unchanged, and preserves func's metadata via functools.wraps.\n    def wrapper(*args, **kwargs):\n        return func(*args, **kwargs)\n    return wrapper\n",
+          "harness": "def _run_cases():\n    import io, contextlib\n    def check(name, got, want):\n        status = \"PASS\" if got == want else \"FAIL\"\n        print(f\"__CASE__|{name}|{status}|got={got!r} want={want!r}\")\n    def check_true(name, cond, detail=\"\"):\n        status = \"PASS\" if cond else \"FAIL\"\n        print(f\"__CASE__|{name}|{status}|{detail}\")\n\n    @timed\n    def add(a, b):\n        \"\"\"Add two numbers.\"\"\"\n        return a + b\n\n    # preserves-name: __name__ must be the original, not 'wrapper'\n    try:\n        check(\"preserves-name\", add.__name__, \"add\")\n    except Exception as e:\n        check(\"preserves-name\", f\"EXC:{e}\", \"add\")\n\n    # preserves-doc: docstring must survive\n    try:\n        check(\"preserves-doc\", add.__doc__, \"Add two numbers.\")\n    except Exception as e:\n        check(\"preserves-doc\", f\"EXC:{e}\", \"Add two numbers.\")\n\n    # returns-result-unchanged (positional)\n    try:\n        with contextlib.redirect_stdout(io.StringIO()):\n            r = add(2, 3)\n        check(\"returns-result\", r, 5)\n    except Exception as e:\n        check(\"returns-result\", f\"EXC:{e}\", 5)\n\n    # passes-kwargs: wrapper must forward **kwargs\n    try:\n        with contextlib.redirect_stdout(io.StringIO()):\n            r = add(a=10, b=7)\n        check(\"passes-kwargs\", r, 17)\n    except Exception as e:\n        check(\"passes-kwargs\", f\"EXC:{e}\", 17)\n\n    # prints-timing: a line containing the func name and 'ms' must be printed\n    try:\n        buf = io.StringIO()\n        with contextlib.redirect_stdout(buf):\n            add(1, 1)\n        out = buf.getvalue()\n        check_true(\"prints-timing\", (\"add\" in out and \"ms\" in out), detail=repr(out.strip()))\n    except Exception as e:\n        check_true(\"prints-timing\", False, detail=f\"EXC:{e}\")\n\n    # sets-wrapped: functools.wraps sets __wrapped__ to the original function\n    try:\n        check_true(\"sets-wrapped\", getattr(add, \"__wrapped__\", None) is not None,\n                   detail=\"has __wrapped__\")\n    except Exception as e:\n        check_true(\"sets-wrapped\", False, detail=f\"EXC:{e}\")\n\n_run_cases()\n",
+          "tests": [
+            {
+              "name": "preserves-name"
+            },
+            {
+              "name": "preserves-doc"
+            },
+            {
+              "name": "returns-result"
+            },
+            {
+              "name": "passes-kwargs"
+            },
+            {
+              "name": "prints-timing"
+            },
+            {
+              "name": "sets-wrapped"
+            }
+          ],
+          "solution": "```python\nimport functools, time\n\ndef timed(func):\n    # @functools.wraps copies func's __name__, __doc__, __module__, __qualname__\n    # and the signature onto the wrapper, and sets wrapper.__wrapped__ = func.\n    # Without it, introspection would report 'wrapper' and the docstring would be lost.\n    @functools.wraps(func)\n    def wrapper(*args, **kwargs):     # accept ANY signature transparently\n        t0 = time.perf_counter()      # monotonic, high-resolution clock (NOT time.time)\n        result = func(*args, **kwargs)\n        dt = time.perf_counter() - t0\n        print(f\"{func.__name__} took {dt*1e3:.3f} ms\")\n        return result                 # pass the original return value through unchanged\n    return wrapper                    # the decorated name now refers to this wrapper\n```",
+          "discussion": "A decorator is just `f = timed(f)`: it returns a replacement callable. `functools.wraps` is the load-bearing detail — without it the wrapper's `__name__` becomes 'wrapper', breaking tracebacks, logging, and tools that key off the function name; it also sets `__wrapped__` so the original is recoverable. `perf_counter` is monotonic and high-resolution, the right clock for measuring elapsed time. The wrapper adds one extra Python call per invocation (a few hundred nanoseconds) — negligible for coarse work, but you would not decorate a function called in a million-iteration inner loop; you would time the loop as a whole instead."
+        },
+        {
+          "topic": "Multiprocessing and Threading",
+          "lang": "python",
+          "prompt": "Implement `run_grid(grid)` and a top-level worker `run_backtest(params)`. `run_backtest((fast, slow))` does deterministic CPU-bound work and returns `(fast, slow, result)`; `run_grid` runs it across a `concurrent.futures.ProcessPoolExecutor` (NOT threads) and returns the results in input order. Guard the pool with `if __name__ == '__main__'` for the spawn start method, and explain in a comment why threads would not help. Standard library only. Click Run to check against the test cases.",
+          "hints": [
+            "Use `concurrent.futures.ProcessPoolExecutor` with `pool.map`, which preserves input order.",
+            "The worker must be a top-level (picklable) function, not a lambda or closure.",
+            "Make the worker deterministic so its results can be checked exactly."
+          ],
+          "starter": "from concurrent.futures import ProcessPoolExecutor\n\ndef run_backtest(params):\n    # TODO: deterministic CPU-bound work; return (fast, slow, result).\n    # Must be a TOP-LEVEL (picklable) function -- not a lambda or closure.\n    fast, slow = params\n    return fast, slow, 0\n\ndef run_grid(grid):\n    # TODO: run run_backtest over `grid` on a ProcessPoolExecutor and return the\n    # results in input order. (Threads would not help: CPU-bound work + GIL.)\n    return []\n",
+          "harness": "def _run_cases():\n    def check(name, got, want):\n        status = \"PASS\" if got == want else \"FAIL\"\n        print(f\"__CASE__|{name}|{status}|got={got!r} want={want!r}\")\n    def check_true(name, cond, detail=\"\"):\n        status = \"PASS\" if cond else \"FAIL\"\n        print(f\"__CASE__|{name}|{status}|{detail}\")\n\n    # Reference implementation computed in-process for comparison.\n    def ref(params):\n        fast, slow = params\n        total = 0\n        for i in range(fast * slow):\n            total += (i * i) % 7\n        return fast, slow, total\n\n    # length-matches-input\n    try:\n        grid = [(f, s) for f in range(2, 6) for s in range(3, 7)]\n        results = run_grid(grid)\n        check(\"length-matches-input\", len(results), len(grid))\n    except Exception as e:\n        check(\"length-matches-input\", f\"EXC:{e}\", len(grid))\n\n    # order-preserved: pool.map keeps input order\n    try:\n        keys = [(r[0], r[1]) for r in results]\n        check(\"order-preserved\", keys, grid)\n    except Exception as e:\n        check(\"order-preserved\", f\"EXC:{e}\", grid)\n\n    # values-correct: results match the in-process reference\n    try:\n        check(\"values-correct\", results, [ref(p) for p in grid])\n    except Exception as e:\n        check(\"values-correct\", f\"EXC:{e}\", [ref(p) for p in grid])\n\n    # single-element-grid\n    try:\n        r1 = run_grid([(5, 4)])\n        check(\"single-element\", r1, [ref((5, 4))])\n    except Exception as e:\n        check(\"single-element\", f\"EXC:{e}\", [ref((5, 4))])\n\n    # worker-is-picklable: a closure/lambda would fail; this must be a real module function\n    try:\n        import pickle\n        pickle.dumps(run_backtest)\n        check_true(\"worker-picklable\", True, \"run_backtest pickles\")\n    except Exception as e:\n        check_true(\"worker-picklable\", False, f\"EXC:{e}\")\n\n# REQUIRED under the spawn start method (macOS/Windows): each worker process\n# re-imports this module, so the pool-driving code must be guarded or it recurses.\nif __name__ == \"__main__\":\n    _run_cases()\n",
+          "tests": [
+            {
+              "name": "length-matches-input"
+            },
+            {
+              "name": "order-preserved"
+            },
+            {
+              "name": "values-correct"
+            },
+            {
+              "name": "single-element"
+            },
+            {
+              "name": "worker-picklable"
+            }
+          ],
+          "solution": "```python\nfrom concurrent.futures import ProcessPoolExecutor\n\ndef run_backtest(params):\n    # A top-level (module-level) function so it is PICKLABLE: process pools send\n    # the function by reference and the arguments by value across the boundary.\n    # Lambdas/closures are NOT picklable and fail under the spawn start method.\n    fast, slow = params\n    # Deterministic CPU-bound stand-in for an expensive backtest.\n    total = 0\n    for i in range(fast * slow):\n        total += (i * i) % 7\n    return fast, slow, total\n\ndef run_grid(grid):\n    # Threads would NOT help here: this is CPU-bound pure-Python work and the GIL\n    # serializes bytecode, so 8 threads still run one at a time. Separate PROCESSES\n    # each have their own interpreter + GIL, giving real multicore parallelism.\n    with ProcessPoolExecutor() as pool:\n        # pool.map preserves input order in its results.\n        return list(pool.map(run_backtest, grid))\n```",
+          "discussion": "CPU-bound pure-Python work cannot be parallelized with threads because the GIL serializes bytecode execution; processes sidestep it by giving each worker its own interpreter and GIL. The costs are pickling arguments/results across the process boundary and heavier startup, so the worker must be a top-level, picklable function (lambdas and closures fail under spawn). The `__main__` guard is mandatory on spawn because each worker re-imports the module. Two refinements for production: seed each worker's RNG independently for reproducibility (done here via the params), and watch for BLAS oversubscription by setting OMP_NUM_THREADS=1 if each task also calls multithreaded NumPy. If the per-task work were vectorizable, vectorizing in NumPy first would often beat the process pool and be simpler."
+        }
+      ]
+    },
+    "numpy-essentials": {
+      "mcqs": [
+        {
+          "topic": "The ndarray and dtypes",
+          "q": "Why does a NumPy `float64` array of 1,000,000 elements use ~8 MB while a Python list of the same floats uses far more?",
+          "options": [
+            "NumPy stores floats as 4-byte values, halving the memory",
+            "The list stores 8 bytes per element too, but adds a 100% safety margin",
+            "The array is one contiguous typed buffer (8 bytes/element, type stored once); the list is an array of pointers to individually boxed float objects",
+            "The list compresses its values, but decompresses to 8 MB when read"
+          ],
+          "answer": 2,
+          "explanation": "An ndarray is a single contiguous block of raw IEEE-754 doubles with the dtype stored once. A Python list holds a pointer per element, each pointing to a separately heap-allocated, boxed float object (with type info and refcount). That density and single-dtype design is the whole performance/memory story. float64 is 8 bytes, not 4."
+        },
+        {
+          "topic": "The ndarray and dtypes",
+          "q": "What does this print?\n\n```python\nimport numpy as np\nprint(np.array([2**31 - 1], dtype=np.int32) + 1)\n```",
+          "options": [
+            "[2147483648] — NumPy promotes to int64 automatically",
+            "OverflowError is raised",
+            "[2147483647] — the value saturates at the maximum",
+            "[-2147483648] — int32 overflow wraps around silently"
+          ],
+          "answer": 3,
+          "explanation": "Fixed-width NumPy integers wrap around on overflow with no warning. 2**31 - 1 is the max int32; adding 1 wraps to the minimum, -2147483648. There is no automatic promotion to int64 and no saturation. This is a real hazard when summing large volumes/notional; use int64 or float64."
+        },
+        {
+          "topic": "The ndarray and dtypes",
+          "q": "You build `np.array([1, 2, None])`. What dtype results and why is it a performance trap?",
+          "options": [
+            "`object` — NumPy stores pointers to Python objects, so every operation loops in Python and loses vectorization",
+            "`float64` — None becomes NaN, fully vectorized",
+            "`int64` — None is treated as 0",
+            "It raises a ValueError because None is not numeric"
+          ],
+          "answer": 0,
+          "explanation": "With a `None` mixed in, NumPy finds no common numeric dtype and falls back to `object`: an array of pointers to Python objects. You lose the contiguous typed buffer and all C-level vectorization — every op runs in Python. For missing numeric data, use float64 with `np.nan` instead. Always sanity-check `arr.dtype`."
+        },
+        {
+          "topic": "Indexing, Slicing, and Views",
+          "q": "What does this print, and why?\n\n```python\nimport numpy as np\na = np.arange(10)\ns = a[2:8]\ns[0] = 999\nprint(a[2])\n```",
+          "options": [
+            "IndexError",
+            "999 — a basic slice is a view sharing a's buffer, so writing through it mutates a",
+            "2 — a slice always copies, so a is untouched",
+            "0 — slicing resets values"
+          ],
+          "answer": 1,
+          "explanation": "Basic slicing returns a *view*: a second array object over the same memory, expressed via new offset/strides. Writing `s[0] = 999` writes element index 2 of `a`. The rule: basic slicing (`:`, integers, ellipsis) -> view; fancy indexing -> copy."
+        },
+        {
+          "topic": "Indexing, Slicing, and Views",
+          "q": "Which indexing operation returns a COPY rather than a view?",
+          "options": [
+            "`a[::2]` — a strided slice",
+            "`a[..., -1]` — ellipsis indexing",
+            "`a[np.array([0, 2, 4])]` — integer-array (fancy) indexing",
+            "`a[2:8]` — a basic slice"
+          ],
+          "answer": 2,
+          "explanation": "Fancy indexing with an integer array (or a boolean mask) generally cannot be expressed as strides over the original buffer, so NumPy allocates a new array — a copy. Basic slices (contiguous, strided, or via ellipsis) are views over the same buffer. You can verify with `np.shares_memory`."
+        },
+        {
+          "topic": "Indexing, Slicing, and Views",
+          "q": "Why can `np.where(x > 0, np.log(x), 0.0)` still emit a 'log of non-positive' warning?",
+          "options": [
+            "`np.where` runs the false branch first, always",
+            "`np.log` ignores the condition and logs the whole array twice",
+            "The warning is a bug in NumPy's where implementation",
+            "`np.where` evaluates BOTH array branches fully before selecting, so `np.log(x)` is computed for the non-positive entries too"
+          ],
+          "answer": 3,
+          "explanation": "Unlike a short-circuiting `if`, `np.where(cond, A, B)` computes the full arrays A and B and then selects elementwise. So `np.log(x)` runs on every element, including the non-positive ones, emitting a domain warning. Mask the input first or use `np.errstate` to control it."
+        },
+        {
+          "topic": "Broadcasting",
+          "q": "Why is `np.zeros((3, 4)) - np.zeros(3)` an error while `np.zeros((3, 4)) - np.zeros(4)` works?",
+          "options": [
+            "Broadcasting aligns from the trailing axis: (3,4) vs (4,) matches (4==4); (3,4) vs (3,) mismatches (4 vs 3)",
+            "Subtraction requires identical shapes in all cases",
+            "The (3,) array is too short to broadcast at all",
+            "NumPy aligns from the leading axis, so (3,) matches the 3 rows"
+          ],
+          "answer": 0,
+          "explanation": "Broadcasting aligns shapes from the rightmost dimension. A (4,) trailing-aligns against the 4 columns and broadcasts across the 3 rows. A (3,) trailing-aligns 3 against 4 — incompatible — and errors. To subtract a per-row vector you must reshape it to (3,1) so it aligns on the leading axis."
+        },
+        {
+          "topic": "Broadcasting",
+          "q": "You have returns `R` of shape `(days, assets)`. Which expression removes each DAY's cross-sectional mean (one mean per row)?",
+          "options": [
+            "`R - R.mean(axis=1)`",
+            "`R - R.mean(axis=1, keepdims=True)`",
+            "`R - R.mean(axis=0)`",
+            "`R - R.mean()`"
+          ],
+          "answer": 1,
+          "explanation": "Each day's cross-sectional mean is a per-row value: `R.mean(axis=1)` has shape (days,). To broadcast it down the columns it must be a column vector (days,1), which `keepdims=True` provides. `R.mean(axis=0)` is the per-asset (column) mean. `R - R.mean(axis=1)` (shape (days,)) would trailing-align against `assets` and error or mis-broadcast."
+        },
+        {
+          "topic": "Broadcasting",
+          "q": "The pairwise-distance idiom `((X[:, None, :] - X[None, :, :]) ** 2).sum(axis=-1)` for `X` of shape (N, D) risks running out of memory. Why?",
+          "options": [
+            "`sum(axis=-1)` recomputes the array N times",
+            "Broadcasting always duplicates both operands in memory",
+            "It materializes an (N, N, D) intermediate array; operand stretching is free but the intermediate is full-size",
+            "It copies X once per row, using N copies of X"
+          ],
+          "answer": 2,
+          "explanation": "Broadcasting copies no data for the *operands* (0-stride trick), but the *intermediate* `X[:,None,:] - X[None,:,:]` is a full (N,N,D) array. For large N that is the memory bomb (e.g. 100000^2 * D). The fix is the identity ||x-y||^2 = |x|^2 + |y|^2 - 2 x.y (a matrix multiply, no 3-D temporary) or `scipy.spatial.distance.cdist`."
+        },
+        {
+          "topic": "Universal Functions & Linear Algebra",
+          "q": "What is the difference between `A * B` and `A @ B`, and which computes a covariance/Gram matrix?",
+          "options": [
+            "`*` is matrix multiplication; `@` is elementwise",
+            "Both are matrix multiplication; `@` is just newer syntax",
+            "`*` computes the dot product; `@` computes the cross product",
+            "`*` is elementwise; `@` is matrix multiplication. The Gram/covariance form uses `@` (e.g. `X.T @ X`)"
+          ],
+          "answer": 3,
+          "explanation": "`*` multiplies elementwise (shapes must broadcast); `@` (np.matmul) does matrix multiplication and routes to BLAS GEMM. A Gram/covariance matrix is `X.T @ X` (optionally / n). Confusing the two silently produces nonsense — a classic interview trap."
+        }
+      ],
+      "coding": [
+        {
+          "topic": "Universal Functions & Linear Algebra",
+          "lang": "python",
+          "prompt": "Implement `equity_and_drawdown(returns)`. Given a 1-D array of daily simple returns, return `(equity, drawdown)` with NO Python loop: the compounded equity curve (starting wealth 1.0) and the running drawdown series (equity over running peak, minus 1). Requires NumPy. Click Run to check against the test cases.",
+          "hints": [
+            "Compounded value = `np.cumprod(1 + returns)`.",
+            "Running peak = `np.maximum.accumulate(equity)`.",
+            "Drawdown = equity / peak - 1, fully vectorized."
+          ],
+          "starter": "import numpy as np\n\ndef equity_and_drawdown(returns):\n    # TODO: return (equity_curve, drawdown_series) with no Python loop.\n    # equity = cumprod(1+returns); drawdown = equity / running_peak - 1.\n    return None, None\n",
+          "harness": "def _run_cases():\n    import numpy as np\n    def check_close(name, got, want, atol=1e-9):\n        try:\n            got = np.asarray(got, dtype=float)\n            want = np.asarray(want, dtype=float)\n            ok = got.shape == want.shape and np.allclose(got, want, atol=atol)\n        except Exception as e:\n            print(f\"__CASE__|{name}|FAIL|EXC:{e}\")\n            return\n        status = \"PASS\" if ok else \"FAIL\"\n        print(f\"__CASE__|{name}|{status}|got={np.round(got,6).tolist()} want={np.round(want,6).tolist()}\")\n\n    # known-small: hand-checkable equity/drawdown\n    try:\n        r = np.array([0.01, -0.02, 0.03, -0.05])\n        eq, dd = equity_and_drawdown(r)\n        exp_eq = np.cumprod(1.0 + r)\n        exp_dd = exp_eq / np.maximum.accumulate(exp_eq) - 1.0\n        check_close(\"equity-known\", eq, exp_eq)\n        check_close(\"drawdown-known\", dd, exp_dd)\n    except Exception as e:\n        print(f\"__CASE__|equity-known|FAIL|EXC:{e}\")\n        print(f\"__CASE__|drawdown-known|FAIL|EXC:{e}\")\n\n    # monotonic-up: with all positive returns, drawdown is everywhere ~0\n    try:\n        r = np.array([0.01, 0.02, 0.03])\n        eq, dd = equity_and_drawdown(r)\n        check_close(\"up-only-drawdown-zero\", dd, np.zeros(3))\n    except Exception as e:\n        print(f\"__CASE__|up-only-drawdown-zero|FAIL|EXC:{e}\")\n\n    # integer-input-not-truncated: list of ints must compound as floats\n    try:\n        eq, dd = equity_and_drawdown([0, 0, 0])\n        check_close(\"integer-input\", eq, np.array([1.0, 1.0, 1.0]))\n    except Exception as e:\n        print(f\"__CASE__|integer-input|FAIL|EXC:{e}\")\n\n    # drawdown-nonpositive: drawdown must never exceed 0\n    try:\n        rng = np.random.default_rng(0)\n        r = rng.standard_normal(200) * 0.01\n        eq, dd = equity_and_drawdown(r)\n        print(f\"__CASE__|drawdown-nonpositive|{'PASS' if np.all(dd <= 1e-12) else 'FAIL'}|max_dd={dd.max():.2e}\")\n    except Exception as e:\n        print(f\"__CASE__|drawdown-nonpositive|FAIL|EXC:{e}\")\n\n    # single-return\n    try:\n        eq, dd = equity_and_drawdown([0.05])\n        check_close(\"single-return\", eq, np.array([1.05]))\n        check_close(\"single-drawdown\", dd, np.array([0.0]))\n    except Exception as e:\n        print(f\"__CASE__|single-return|FAIL|EXC:{e}\")\n        print(f\"__CASE__|single-drawdown|FAIL|EXC:{e}\")\n\n_run_cases()\n",
+          "tests": [
+            {
+              "name": "equity-known"
+            },
+            {
+              "name": "drawdown-known"
+            },
+            {
+              "name": "up-only-drawdown-zero"
+            },
+            {
+              "name": "integer-input"
+            },
+            {
+              "name": "drawdown-nonpositive"
+            },
+            {
+              "name": "single-return"
+            },
+            {
+              "name": "single-drawdown"
+            }
+          ],
+          "solution": "```python\nimport numpy as np\n\ndef equity_and_drawdown(returns):\n    # Cast to float64 so an accidental integer input cannot truncate the compounding.\n    returns = np.asarray(returns, dtype=np.float64)\n    # cumprod of (1 + r) is the compounded wealth path starting from 1.0.\n    equity = np.cumprod(1.0 + returns)\n    # maximum.accumulate is the running high-water mark (running max), no Python loop.\n    peak = np.maximum.accumulate(equity)\n    # Drawdown = current wealth / running peak - 1; a <= 0 series (0 at new highs).\n    drawdown = equity / peak - 1.0\n    return equity, drawdown\n```",
+          "discussion": "Both quantities look stateful but are accumulations in disguise, so they vectorize cleanly. `np.cumprod(1 + r)` is the ufunc accumulation behind an equity curve; for many small returns `np.exp(np.cumsum(np.log1p(r)))` is the precision-friendlier equivalent (log1p avoids losing significant digits on small x). `np.maximum.accumulate` is the running-max pattern worth memorizing — it replaces a Python loop that tracks the high-water mark. Casting to float64 guards against an accidental integer input that would truncate. The whole computation runs in C over contiguous buffers, orders of magnitude faster than the equivalent Python loop, and uses no Python-level branching."
+        },
+        {
+          "topic": "Universal Functions & Linear Algebra",
+          "lang": "python",
+          "prompt": "Implement `cov_and_beta(R)` for a returns matrix `R` of shape `(n_days, n_assets)`. Return `(cov, beta)`: the asset-asset covariance matrix, and the OLS betas `[intercept, slope]` of asset 1's returns on a constant plus asset 0's returns. Use the numerically stable tools (`np.cov(..., rowvar=False)` and `np.linalg.lstsq`), not a matrix inverse. Requires NumPy. Click Run to check against the test cases.",
+          "hints": [
+            "`np.cov(R, rowvar=False)` treats columns as variables.",
+            "Build the design matrix with a column of ones via `np.column_stack`.",
+            "Use `np.linalg.lstsq(X, y, rcond=None)` rather than the normal-equations inverse."
+          ],
+          "starter": "import numpy as np\n\ndef cov_and_beta(R):\n    # TODO: return (cov, beta) where cov = asset-asset covariance (rowvar=False) and\n    # beta = OLS [intercept, slope] of asset 1 on a constant + asset 0, via np.linalg.lstsq.\n    return None, None\n",
+          "harness": "def _run_cases():\n    import numpy as np\n    def check_true(name, cond, detail=\"\"):\n        print(f\"__CASE__|{name}|{'PASS' if cond else 'FAIL'}|{detail}\")\n    def check_close(name, got, want, atol=1e-6):\n        try:\n            ok = np.allclose(np.asarray(got, float), np.asarray(want, float), atol=atol)\n            print(f\"__CASE__|{name}|{'PASS' if ok else 'FAIL'}|got={np.round(np.asarray(got,float),6).tolist()} want={np.round(np.asarray(want,float),6).tolist()}\")\n        except Exception as e:\n            print(f\"__CASE__|{name}|FAIL|EXC:{e}\")\n\n    # cov-shape: covariance is (n_assets, n_assets)\n    try:\n        rng = np.random.default_rng(0)\n        R = rng.standard_normal((250, 5))\n        cov, beta = cov_and_beta(R)\n        check_true(\"cov-shape\", cov.shape == (5, 5), detail=f\"shape={cov.shape}\")\n        check_true(\"beta-shape\", beta.shape == (2,), detail=f\"shape={beta.shape}\")\n    except Exception as e:\n        check_true(\"cov-shape\", False, f\"EXC:{e}\")\n        check_true(\"beta-shape\", False, f\"EXC:{e}\")\n\n    # cov-matches-numpy: must equal np.cov(rowvar=False)\n    try:\n        check_close(\"cov-correct\", cov, np.cov(R, rowvar=False))\n    except Exception as e:\n        check_true(\"cov-correct\", False, f\"EXC:{e}\")\n\n    # cov-symmetric\n    try:\n        check_true(\"cov-symmetric\", np.allclose(cov, cov.T), detail=\"cov == cov.T\")\n    except Exception as e:\n        check_true(\"cov-symmetric\", False, f\"EXC:{e}\")\n\n    # beta-recovers-known-relationship: y = 2 + 3*x + tiny noise -> intercept~2, slope~3\n    try:\n        x = rng.standard_normal(500)\n        y = 2.0 + 3.0 * x + 1e-9 * rng.standard_normal(500)\n        R2 = np.column_stack([x, y])     # asset0 = x (factor), asset1 = y\n        _, beta2 = cov_and_beta(R2)\n        check_close(\"beta-intercept\", beta2[0], 2.0, atol=1e-3)\n        check_close(\"beta-slope\", beta2[1], 3.0, atol=1e-3)\n    except Exception as e:\n        check_true(\"beta-intercept\", False, f\"EXC:{e}\")\n        check_true(\"beta-slope\", False, f\"EXC:{e}\")\n\n_run_cases()\n",
+          "tests": [
+            {
+              "name": "cov-shape"
+            },
+            {
+              "name": "beta-shape"
+            },
+            {
+              "name": "cov-correct"
+            },
+            {
+              "name": "cov-symmetric"
+            },
+            {
+              "name": "beta-intercept"
+            },
+            {
+              "name": "beta-slope"
+            }
+          ],
+          "solution": "```python\nimport numpy as np\n\ndef cov_and_beta(R):\n    R = np.asarray(R, dtype=np.float64)\n    # rowvar=False: columns are the variables (assets), rows are observations (days).\n    # The default rowvar=True would wrongly compute a (days, days) matrix.\n    cov = np.cov(R, rowvar=False)\n    # Design matrix = intercept column of ones + asset 0's returns as the single factor.\n    X = np.column_stack([np.ones(len(R)), R[:, 0]])\n    y = R[:, 1]                                   # regress asset 1 on the factor\n    # lstsq uses a stable SVD/QR routine instead of the normal-equations inverse,\n    # which is faster and avoids amplifying conditioning errors. It returns\n    # (coeffs, residuals, rank, singular_values); we keep only the coefficients.\n    beta, *_ = np.linalg.lstsq(X, y, rcond=None)  # [intercept, slope]\n    return cov, beta\n```",
+          "discussion": "Passing `rowvar=False` is essential: a (days, assets) panel has assets as columns, and the default `rowvar=True` would compute a (days, days) matrix with the wrong meaning. For OLS, `np.linalg.lstsq` solves the least-squares problem with a stable SVD/QR-based routine, avoiding the normal-equations inverse `(X'X)^{-1} X'y` which is slower and amplifies conditioning errors when factors are collinear. `lstsq` returns betas, residuals, rank, and singular values; we unpack only the coefficients. Under the hood `@`/`cov`/`lstsq` call multithreaded BLAS/LAPACK, so this is fast — but mind thread oversubscription if you also run a process pool."
+        },
+        {
+          "topic": "Indexing, Slicing, and Views",
+          "lang": "python",
+          "prompt": "Implement `last_rows_isolated(panel, k)`. Given a 2-D price panel and a row count `k`, return a COPY of the last `k` rows that can be mutated WITHOUT affecting the original `panel`. (A bare `panel[-k:]` slice is a view that shares memory and would corrupt the parent.) Requires NumPy. Click Run to check against the test cases.",
+          "hints": [
+            "A basic slice `panel[-k:]` is a view that shares memory with `panel`.",
+            "Add `.copy()` to force an independent buffer.",
+            "Use `np.shares_memory` to prove whether the result aliases the parent."
+          ],
+          "starter": "import numpy as np\n\ndef last_rows_isolated(panel, k):\n    # TODO: return the last k rows as an INDEPENDENT copy that can be mutated\n    # without affecting `panel` (a bare slice would be a view -> aliasing bug).\n    return None\n",
+          "harness": "def _run_cases():\n    import numpy as np\n    def check_true(name, cond, detail=\"\"):\n        print(f\"__CASE__|{name}|{'PASS' if cond else 'FAIL'}|{detail}\")\n\n    # correct-rows: returns exactly the last k rows\n    try:\n        panel = np.arange(20.0).reshape(5, 4)\n        out = last_rows_isolated(panel, 2)\n        check_true(\"correct-rows\", np.array_equal(out, panel[-2:]), detail=f\"shape={out.shape}\")\n    except Exception as e:\n        check_true(\"correct-rows\", False, f\"EXC:{e}\")\n\n    # is-a-copy: result must NOT share memory with the parent\n    try:\n        panel = np.arange(20.0).reshape(5, 4)\n        out = last_rows_isolated(panel, 2)\n        check_true(\"is-a-copy\", not np.shares_memory(out, panel), detail=\"no shared memory\")\n    except Exception as e:\n        check_true(\"is-a-copy\", False, f\"EXC:{e}\")\n\n    # mutation-isolated: zeroing the result must leave the parent untouched\n    try:\n        panel = np.arange(20.0).reshape(5, 4)\n        before = panel.copy()\n        out = last_rows_isolated(panel, 2)\n        out[:] = 0.0\n        check_true(\"mutation-isolated\", np.array_equal(panel, before), detail=\"parent unchanged\")\n    except Exception as e:\n        check_true(\"mutation-isolated\", False, f\"EXC:{e}\")\n\n    # k-equals-all-rows\n    try:\n        panel = np.arange(12.0).reshape(3, 4)\n        out = last_rows_isolated(panel, 3)\n        check_true(\"k-equals-nrows\", out.shape == (3, 4) and np.array_equal(out, panel),\n                   detail=f\"shape={out.shape}\")\n    except Exception as e:\n        check_true(\"k-equals-nrows\", False, f\"EXC:{e}\")\n\n    # k-equals-one\n    try:\n        panel = np.arange(20.0).reshape(5, 4)\n        out = last_rows_isolated(panel, 1)\n        check_true(\"k-equals-one\", np.array_equal(out, panel[-1:]) and out.shape == (1, 4),\n                   detail=f\"shape={out.shape}\")\n    except Exception as e:\n        check_true(\"k-equals-one\", False, f\"EXC:{e}\")\n\n_run_cases()\n",
+          "tests": [
+            {
+              "name": "correct-rows"
+            },
+            {
+              "name": "is-a-copy"
+            },
+            {
+              "name": "mutation-isolated"
+            },
+            {
+              "name": "k-equals-nrows"
+            },
+            {
+              "name": "k-equals-one"
+            }
+          ],
+          "solution": "```python\nimport numpy as np\n\ndef last_rows_isolated(panel, k):\n    # panel[-k:] is a basic slice -> a VIEW sharing the parent's buffer.\n    # .copy() allocates an independent buffer so mutating the result cannot\n    # reach back and corrupt the original panel (action-at-a-distance).\n    return panel[-k:].copy()\n```",
+          "discussion": "Basic slicing returns a view that shares the parent's buffer, so `panel[-2:][:] = 0` performs action-at-a-distance and zeroes the original's last rows — a classic, silent corruption bug in research code. Calling `.copy()` allocates an independent buffer, decoupling the sub-array. `np.shares_memory` (or checking `.base`) verifies aliasing. The discipline: slice-and-assign when you *intend* to mutate the parent, and slice-then-`.copy()` when you need an isolated working array. This same view/copy ambiguity is the root cause of pandas' SettingWithCopyWarning."
+        }
+      ]
+    },
+    "pandas": {
+      "mcqs": [
+        {
+          "topic": "Introduction to Pandas",
+          "q": "Why does `a + b` for two Series with only partially overlapping indices produce NaN where labels do not match?",
+          "options": [
+            "pandas aligns on index LABELS (not position) before the operation, inserting NaN for labels present in only one Series",
+            "Addition of Series is undefined and always returns NaN",
+            "The Series are aligned by position, and extra positions become NaN",
+            "NaN appears only when dtypes differ"
+          ],
+          "answer": 0,
+          "explanation": "pandas performs automatic *label* alignment: it matches index labels across operands and fills non-overlapping labels with NaN. This is what makes adding two strategies' PnL align dates automatically — and is the #1 source of mysterious all-NaN results when indices (or timezones) do not match."
+        },
+        {
+          "topic": "Introduction to Pandas",
+          "q": "An `int64` count column gets one missing value. What dtype does the column become, and why?",
+          "options": [
+            "`bool` — missing values are coerced to False",
+            "`float64` — NumPy int64 has no NaN, so missing data forces promotion to float (NaN is a float)",
+            "`int64` — pandas stores a sentinel -1 for missing ints",
+            "`object` — the column becomes Python ints plus None"
+          ],
+          "answer": 1,
+          "explanation": "NumPy's int64 has no representation for missing data, so introducing a NaN promotes the whole column to float64. This surprises later `==` comparisons. pandas' nullable `Int64` (capital I) extension dtype supports integer-with-NA if you need it."
+        },
+        {
+          "topic": "Indexing, Selection, and Assignment",
+          "q": "Why does `df.loc['2024-01-02':'2024-01-04']` return 3 rows (inclusive) while `df.iloc[0:3]` excludes position 3?",
+          "options": [
+            ".loc is exclusive and .iloc is inclusive",
+            "Inclusivity depends on whether the index is sorted",
+            ".loc label slices are inclusive of the endpoint; .iloc position slices follow Python's half-open (exclusive-end) convention",
+            "Both are exclusive; the example is wrong"
+          ],
+          "answer": 2,
+          "explanation": "`.loc` is label-based and its slices INCLUDE the end label (labels need not be contiguous integers, so half-open semantics would be ambiguous). `.iloc` is position-based and follows NumPy/Python half-open slicing (end excluded). Mixing these up is a classic off-by-one gotcha."
+        },
+        {
+          "topic": "Indexing, Selection, and Assignment",
+          "q": "Why might `df[df['close'] < 100]['close'] = np.nan` silently fail to modify `df`?",
+          "options": [
+            "The boolean mask is the wrong length and is ignored",
+            "`np.nan` cannot be assigned to a float column",
+            "It always works; the warning is purely cosmetic",
+            "It is chained indexing: the first `[]` may return a copy, so the assignment writes to a throwaway and the original is unchanged; use `df.loc[df['close'] < 100, 'close'] = np.nan`"
+          ],
+          "answer": 3,
+          "explanation": "Chained indexing (`df[...][...] = ...`) selects twice; the first selection may produce a copy (the NumPy view/copy ambiguity surfacing in pandas), so the write lands on a temporary and the original frame is untouched — hence SettingWithCopyWarning. Collapse to a single `.loc` so pandas knows the assignment target and writes in place."
+        },
+        {
+          "topic": "GroupBy, Pivot, and Melt",
+          "q": "When do you use `transform` instead of `agg`, and what is different about the output?",
+          "options": [
+            "`transform` returns a result the SAME shape as the input (aligned back to original rows), so you can assign it as a column; `agg` collapses each group to one row",
+            "`transform` is faster but returns one row per group like agg",
+            "`transform` only works on a single column; agg works on many",
+            "There is no difference; they are aliases"
+          ],
+          "answer": 0,
+          "explanation": "`agg` collapses each group to a single summary row. `transform` broadcasts the per-group result back to every original row, preserving shape and index alignment — so demean/zscore/rank-within-group results can be written straight back as a column. Using `agg` where you needed `transform` breaks the row alignment on assignment."
+        },
+        {
+          "topic": "GroupBy, Pivot, and Melt",
+          "q": "Why is `groupby(...).apply(lambda g: ...)` usually the slow path, and what is the fast alternative for a per-group mean?",
+          "options": [
+            "`.apply` is fine; the slowdown is from `groupby` itself",
+            "`.apply` calls a Python function per group (re-boxing data); use a built-in like `.agg('mean')`/`.transform('mean')` which runs in optimized Cython",
+            "`.apply` is fast; the lambda is the only correct way to compute a mean",
+            "`.apply` runs on the GPU and is slow only without CUDA"
+          ],
+          "answer": 1,
+          "explanation": "`.apply` with a Python lambda invokes that function once per group, boxing data and incurring interpreter overhead — orders of magnitude slower than built-in reducers. Built-ins like `.mean()`, `.sum()`, `.std()`, `.rank()` run in C-level Cython over the whole frame. Reserve `.apply` for genuinely custom logic."
+        },
+        {
+          "topic": "Time Series Operations",
+          "q": "You compute a momentum signal from today's close. What single operation makes a backtest of it free of lookahead, and why?",
+          "options": [
+            "`signal.diff()` — differencing removes lookahead",
+            "`signal.cumsum()` — accumulation removes lookahead",
+            "`position = signal.shift(1)` — you act on day t's signal only from day t+1, multiplying by next-period returns",
+            "`signal.rolling(2).mean()` — smoothing removes lookahead"
+          ],
+          "answer": 2,
+          "explanation": "A signal computed from information up to time t may only be acted on at t+1 or later. Lagging the signal with `shift(1)` ensures `position` at t+1 reflects the t signal, and PnL = position * next-period return. Forgetting the `shift(1)` is the single most common way backtests 'discover' alpha that does not exist."
+        },
+        {
+          "topic": "Time Series Operations",
+          "q": "Why is `ret.rolling(20).std()` point-in-time but `ret.rolling(20, center=True).std()` is not?",
+          "options": [
+            "`center=True` is slower but equally point-in-time",
+            "Both peek into the future; rolling is never point-in-time",
+            "`center=True` shifts the result back one period, fixing lookahead",
+            "The default rolling window is trailing (ends at the current row, uses only past/present); `center=True` centers the window on the current row, incorporating FUTURE observations"
+          ],
+          "answer": 3,
+          "explanation": "A trailing rolling window ending at row t uses rows t-19..t — only past and present, so it is point-in-time by construction. `center=True` places the current row in the middle of the window, so it includes future rows. Never use `center=True` for a tradable/live signal."
+        },
+        {
+          "topic": "Joins and Merges at Scale",
+          "q": "You `left`-join a prices table to a sector table on `ticker` and your row count GROWS. What happened, and which argument would have caught it?",
+          "options": [
+            "A duplicated key on the sector (lookup) side made it one-to-many, multiplying rows; `validate='m:1'` would have raised",
+            "The join type should have been inner; `how='inner'` would have caught it",
+            "The indexes were unsorted; `sort_index()` would have caught it",
+            "The key dtypes mismatched; `astype(str)` would have caught it"
+          ],
+          "answer": 0,
+          "explanation": "An unintended one-to-many join — caused by a duplicated key on the lookup side — multiplies rows and silently inflates counts, sums, and PnL. Passing `validate='m:1'` asserts the expected many-to-one relationship and raises if a duplicate breaks it. Combine with `indicator=True` to audit what matched."
+        },
+        {
+          "topic": "Joins and Merges at Scale",
+          "q": "Why is `pd.merge_asof(trades, quotes, on='time', direction='backward')` the correct way to attach the prevailing quote to each trade, and what does `direction='forward'` risk?",
+          "options": [
+            "'forward' is correct for trades; 'backward' is for fundamentals",
+            "'backward' takes the last quote at/before each trade time (point-in-time correct); 'forward' takes a future quote, leaking information you could not have had",
+            "'backward' and 'forward' are equivalent; the default just runs faster",
+            "'backward' requires unsorted inputs; 'forward' requires sorted inputs"
+          ],
+          "answer": 1,
+          "explanation": "`merge_asof(direction='backward')` matches each left row to the most recent right row at or before its key — the last KNOWN quote, which is point-in-time correct. `direction='forward'` matches a future quote, leaking information the trader could not have observed yet. Use `by=` to match within symbol and `tolerance=` to reject stale matches; both sides must be sorted on the key."
+        }
+      ],
+      "coding": [
+        {
+          "topic": "GroupBy, Pivot, and Melt",
+          "lang": "python",
+          "prompt": "Implement `add_cross_sectional(df)` for a long-format DataFrame with columns `date`, `ticker`, `sector`, `ret`. Return a COPY with two new columns: `z` (the cross-sectional z-score of `ret` within each date) and `resid` (ret minus the mean ret within each `(date, sector)`). Use vectorized GroupBy `transform`, not loops or `apply`. Requires pandas. Click Run to check against the test cases.",
+          "hints": [
+            "z-score within date: subtract the group mean and divide by the group std, both via `transform`.",
+            "Sector-neutral residual: subtract `groupby(['date','sector'])['ret'].transform('mean')`.",
+            "`transform` keeps the result aligned to the original rows so you can assign it directly."
+          ],
+          "starter": "import pandas as pd\nimport numpy as np\n\ndef add_cross_sectional(df):\n    # TODO: return a copy of df with two new columns:\n    #   \"z\"     = cross-sectional z-score of ret within each date\n    #   \"resid\" = ret minus the mean ret within each (date, sector)\n    # Use vectorized GroupBy transforms (no loops, no apply).\n    return df.copy()\n",
+          "harness": "def _run_cases():\n    import pandas as pd, numpy as np\n    def check_true(name, cond, detail=\"\"):\n        print(f\"__CASE__|{name}|{'PASS' if cond else 'FAIL'}|{detail}\")\n\n    df = pd.DataFrame({\n        \"date\": pd.to_datetime([\"2024-01-02\"]*3 + [\"2024-01-03\"]*3),\n        \"ticker\": [\"AAPL\", \"MSFT\", \"XOM\"] * 2,\n        \"sector\": [\"Tech\", \"Tech\", \"Energy\"] * 2,\n        \"ret\": [0.01, 0.02, -0.01, 0.00, -0.02, 0.03],\n    })\n\n    # columns-added: z and resid columns exist, original rows preserved\n    try:\n        out = add_cross_sectional(df)\n        check_true(\"columns-added\", {\"z\", \"resid\"}.issubset(out.columns) and len(out) == len(df),\n                   detail=f\"cols={list(out.columns)}\")\n    except Exception as e:\n        check_true(\"columns-added\", False, f\"EXC:{e}\")\n\n    # does-not-mutate-input: input frame must be unchanged\n    try:\n        cols_before = set(df.columns)\n        _ = add_cross_sectional(df)\n        check_true(\"no-mutate-input\", set(df.columns) == cols_before, detail=f\"input cols={list(df.columns)}\")\n    except Exception as e:\n        check_true(\"no-mutate-input\", False, f\"EXC:{e}\")\n\n    # z-matches-manual: z within date equals (ret-mean)/std computed by hand\n    try:\n        out = add_cross_sectional(df)\n        g = df.groupby(\"date\")[\"ret\"]\n        expected_z = (df[\"ret\"] - g.transform(\"mean\")) / g.transform(\"std\")\n        check_true(\"z-correct\", np.allclose(out[\"z\"].to_numpy(), expected_z.to_numpy(), equal_nan=True),\n                   detail=f\"z={out['z'].round(4).tolist()}\")\n    except Exception as e:\n        check_true(\"z-correct\", False, f\"EXC:{e}\")\n\n    # z-mean-zero-within-date: cross-sectional z must average ~0 per date\n    try:\n        out = add_cross_sectional(df)\n        means = out.groupby(\"date\")[\"z\"].mean()\n        check_true(\"z-mean-zero\", np.allclose(means.to_numpy(), 0.0, atol=1e-9),\n                   detail=f\"per-date z means={means.round(6).tolist()}\")\n    except Exception as e:\n        check_true(\"z-mean-zero\", False, f\"EXC:{e}\")\n\n    # resid-sums-zero-within-group: residuals within (date,sector) sum to ~0\n    try:\n        out = add_cross_sectional(df)\n        sums = out.groupby([\"date\", \"sector\"])[\"resid\"].sum()\n        check_true(\"resid-group-sum-zero\", np.allclose(sums.to_numpy(), 0.0, atol=1e-12),\n                   detail=f\"group resid sums={sums.round(8).tolist()}\")\n    except Exception as e:\n        check_true(\"resid-group-sum-zero\", False, f\"EXC:{e}\")\n\n    # singleton-sector-resid-zero: Energy has one name per date -> resid is exactly 0\n    try:\n        out = add_cross_sectional(df)\n        energy = out[out[\"sector\"] == \"Energy\"][\"resid\"]\n        check_true(\"singleton-resid-zero\", np.allclose(energy.to_numpy(), 0.0, atol=1e-12),\n                   detail=f\"energy resid={energy.round(8).tolist()}\")\n    except Exception as e:\n        check_true(\"singleton-resid-zero\", False, f\"EXC:{e}\")\n\n_run_cases()\n",
+          "tests": [
+            {
+              "name": "columns-added"
+            },
+            {
+              "name": "no-mutate-input"
+            },
+            {
+              "name": "z-correct"
+            },
+            {
+              "name": "z-mean-zero"
+            },
+            {
+              "name": "resid-group-sum-zero"
+            },
+            {
+              "name": "singleton-resid-zero"
+            }
+          ],
+          "solution": "```python\nimport pandas as pd\nimport numpy as np\n\ndef add_cross_sectional(df):\n    df = df.copy()                       # do not mutate the caller's frame\n    g = df.groupby(\"date\")[\"ret\"]\n    # transform broadcasts the per-DATE statistic back to every original row, so the\n    # result aligns to the frame's index and can be assigned straight as a column.\n    # z-score within each date = (ret - cross-sectional mean) / cross-sectional std.\n    df[\"z\"] = (df[\"ret\"] - g.transform(\"mean\")) / g.transform(\"std\")\n    # Sector-neutral residual = ret minus the mean ret within each (date, sector) group.\n    df[\"resid\"] = df[\"ret\"] - df.groupby([\"date\", \"sector\"])[\"ret\"].transform(\"mean\")\n    return df\n```",
+          "discussion": "`transform` is the cross-sectional workhorse: it computes a per-group statistic and broadcasts it back to every original row, so the result aligns to the frame's index and can be assigned straight as a column — exactly what aggregation (`agg`) cannot do, since it collapses groups. Grouping by `date` operates across names *within* a day (cross-sectional), the right axis for neutralization and z-scoring; grouping by `ticker` would instead operate down time per name and produce a different, wrong signal. The built-in `'mean'`/`'std'` reducers run in Cython, far faster than `apply(lambda g: ...)`. One caveat: a plain `transform('mean')` uses the whole within-group series — fine for same-day cross-sectional means (all from time t), but for any *time-series* statistic you would need an expanding/rolling form to stay point-in-time."
+        },
+        {
+          "topic": "Joins and Merges at Scale",
+          "lang": "python",
+          "prompt": "Implement `attach_prevailing_quote(trades, quotes)`. `trades` has columns `time, price`; `quotes` has `time, bid, ask` (one symbol). Attach to each trade the prevailing (most recent at-or-before) quote without lookahead, rejecting quotes older than 1 second (those become NaN). Use `pd.merge_asof` with `direction='backward'` and `tolerance=pd.Timedelta('1s')` on time-sorted inputs. Requires pandas. Click Run to check against the test cases.",
+          "hints": [
+            "Use `pd.merge_asof` with `direction='backward'`.",
+            "Both inputs must be sorted on the `time` key.",
+            "Pass `tolerance=pd.Timedelta('1s')` to drop stale matches."
+          ],
+          "starter": "import pandas as pd\n\ndef attach_prevailing_quote(trades, quotes):\n    # TODO: attach to each trade the most recent quote at/before its time, rejecting\n    # quotes older than 1 second. Use pd.merge_asof(direction=\"backward\",\n    # tolerance=pd.Timedelta(\"1s\")) on time-sorted inputs.\n    return trades\n",
+          "harness": "def _run_cases():\n    import pandas as pd, numpy as np\n    def check_true(name, cond, detail=\"\"):\n        print(f\"__CASE__|{name}|{'PASS' if cond else 'FAIL'}|{detail}\")\n\n    trades = pd.DataFrame({\n        \"time\": pd.to_datetime([\"2024-01-02 09:30:01\", \"2024-01-02 09:30:05\", \"2024-01-02 09:31:00\"]),\n        \"price\": [100.0, 100.2, 100.5],\n    })\n    quotes = pd.DataFrame({\n        \"time\": pd.to_datetime([\"2024-01-02 09:30:00\", \"2024-01-02 09:30:04\", \"2024-01-02 09:30:30\"]),\n        \"bid\": [99.9, 100.0, 100.3], \"ask\": [100.1, 100.2, 100.5],\n    })\n\n    # row-count-preserved: one row per trade (asof never multiplies the left side)\n    try:\n        out = attach_prevailing_quote(trades, quotes)\n        check_true(\"row-count-preserved\", len(out) == len(trades), detail=f\"len={len(out)}\")\n    except Exception as e:\n        check_true(\"row-count-preserved\", False, f\"EXC:{e}\")\n\n    # first-trade-backward: 09:30:01 trade gets the 09:30:00 quote (last at/before)\n    try:\n        out = attach_prevailing_quote(trades, quotes).set_index(\"time\")\n        r = out.loc[pd.Timestamp(\"2024-01-02 09:30:01\")]\n        check_true(\"first-trade-prevailing\", (r[\"bid\"] == 99.9 and r[\"ask\"] == 100.1),\n                   detail=f\"bid={r['bid']} ask={r['ask']}\")\n    except Exception as e:\n        check_true(\"first-trade-prevailing\", False, f\"EXC:{e}\")\n\n    # second-trade-backward: 09:30:05 gets 09:30:04 (1s old, within tolerance)\n    try:\n        out = attach_prevailing_quote(trades, quotes).set_index(\"time\")\n        r = out.loc[pd.Timestamp(\"2024-01-02 09:30:05\")]\n        check_true(\"second-trade-prevailing\", (r[\"bid\"] == 100.0 and r[\"ask\"] == 100.2),\n                   detail=f\"bid={r['bid']} ask={r['ask']}\")\n    except Exception as e:\n        check_true(\"second-trade-prevailing\", False, f\"EXC:{e}\")\n\n    # stale-rejected: 09:31:00 nearest prior quote is 30s old -> bid/ask NaN\n    try:\n        out = attach_prevailing_quote(trades, quotes).set_index(\"time\")\n        r = out.loc[pd.Timestamp(\"2024-01-02 09:31:00\")]\n        check_true(\"stale-quote-rejected\", (pd.isna(r[\"bid\"]) and pd.isna(r[\"ask\"])),\n                   detail=f\"bid={r['bid']} ask={r['ask']}\")\n    except Exception as e:\n        check_true(\"stale-quote-rejected\", False, f\"EXC:{e}\")\n\n    # no-lookahead: every attached quote time must be <= its trade time\n    try:\n        q2 = quotes.rename(columns={\"time\": \"qtime\"})\n        merged = pd.merge_asof(trades.sort_values(\"time\"), q2.sort_values(\"qtime\"),\n                               left_on=\"time\", right_on=\"qtime\", direction=\"backward\")\n        ok = (merged[\"qtime\"].dropna() <= merged.loc[merged[\"qtime\"].notna(), \"time\"]).all()\n        check_true(\"no-lookahead\", bool(ok), detail=\"all quote times <= trade time\")\n    except Exception as e:\n        check_true(\"no-lookahead\", False, f\"EXC:{e}\")\n\n    # handles-unsorted-input: function sorts defensively, so shuffled input still works\n    try:\n        out = attach_prevailing_quote(trades.iloc[::-1].copy(), quotes.iloc[::-1].copy()).set_index(\"time\")\n        r = out.loc[pd.Timestamp(\"2024-01-02 09:30:01\")]\n        check_true(\"handles-unsorted\", (r[\"bid\"] == 99.9 and r[\"ask\"] == 100.1),\n                   detail=f\"bid={r['bid']} ask={r['ask']}\")\n    except Exception as e:\n        check_true(\"handles-unsorted\", False, f\"EXC:{e}\")\n\n_run_cases()\n",
+          "tests": [
+            {
+              "name": "row-count-preserved"
+            },
+            {
+              "name": "first-trade-prevailing"
+            },
+            {
+              "name": "second-trade-prevailing"
+            },
+            {
+              "name": "stale-quote-rejected"
+            },
+            {
+              "name": "no-lookahead"
+            },
+            {
+              "name": "handles-unsorted"
+            }
+          ],
+          "solution": "```python\nimport pandas as pd\n\ndef attach_prevailing_quote(trades, quotes):\n    # merge_asof requires BOTH inputs sorted on the key; sort defensively.\n    trades = trades.sort_values(\"time\")\n    quotes = quotes.sort_values(\"time\")\n    return pd.merge_asof(\n        trades, quotes, on=\"time\",\n        direction=\"backward\",                 # take the last quote AT/BEFORE each trade\n        tolerance=pd.Timedelta(\"1s\"),         # reject matches > 1s stale -> bid/ask NaN\n    )\n```",
+          "discussion": "`merge_asof(direction='backward')` is the point-in-time join: for each trade it finds the most recent quote at or before the trade timestamp — the last value the trader could actually have seen. A plain `pd.merge` on `time` would only match *exact* timestamps (mostly producing NaN), and `direction='forward'`/`'nearest'` would attach a quote from the future, a textbook lookahead bug. The naive alternative — for each trade, scan all quotes for the latest preceding one — is O(n*m); `merge_asof` is an O(n+m) merge-style sweep on pre-sorted inputs. `tolerance` rejects matches older than the limit (here the 09:31:00 trade's nearest prior quote is 30s old, so it is dropped to NaN), preventing a stale quote from being attached. For many symbols, add `by='ticker'` to match within each symbol. Both inputs must be sorted on the key or `merge_asof` misbehaves."
+        },
+        {
+          "topic": "Time Series Operations",
+          "lang": "python",
+          "prompt": "Implement `momentum_backtest(close)` for a Series of daily closes indexed by a DatetimeIndex. Build a +1/-1 momentum signal (long when price is above its 20-day MA, else short), backtest it WITHOUT lookahead, and return `(pnl, sharpe)`: the daily strategy PnL Series and the annualized Sharpe ratio. Mask the MA warm-up to NaN so it does not fabricate positions, and lag the signal with `shift(1)`. Requires pandas + NumPy. Click Run to check against the test cases.",
+          "hints": [
+            "Compute the signal from the close, mask it where the 20-day MA is still NaN (warm-up), then lag it with `shift(1)` so it is tradable.",
+            "Strategy return = lagged position * same-row simple return (`pct_change`); then `dropna()`.",
+            "Annualized Sharpe = mean(daily) / std(daily) * sqrt(252)."
+          ],
+          "starter": "import pandas as pd\nimport numpy as np\n\ndef momentum_backtest(close):\n    # TODO: build a +1/-1 signal from close vs its 20-day MA, LAG it with shift(1)\n    # to avoid lookahead, compute daily PnL = lagged_position * pct_change, then\n    # return (pnl_series, annualized_sharpe) where sharpe = mean/std * sqrt(252).\n    return pd.Series(dtype=float), 0.0\n",
+          "harness": "def _run_cases():\n    import pandas as pd, numpy as np\n    def check_true(name, cond, detail=\"\"):\n        print(f\"__CASE__|{name}|{'PASS' if cond else 'FAIL'}|{detail}\")\n\n    idx = pd.date_range(\"2024-01-01\", periods=300, freq=\"B\")\n    rng = np.random.default_rng(0)\n    close = pd.Series(100 + rng.standard_normal(300).cumsum(), index=idx)\n\n    # returns-types: pnl is a Series, sharpe is a finite float\n    try:\n        pnl, sharpe = momentum_backtest(close)\n        check_true(\"returns-types\", isinstance(pnl, pd.Series) and np.isfinite(float(sharpe)),\n                   detail=f\"sharpe={float(sharpe):.4f}\")\n    except Exception as e:\n        check_true(\"returns-types\", False, f\"EXC:{e}\")\n\n    # warmup-dropped: signal valid from index 19 (20-day MA), then shift(1) -> 20,\n    # so the honest backtest produces 300 - 20 = 280 PnL observations.\n    try:\n        pnl, _ = momentum_backtest(close)\n        check_true(\"warmup-dropped\", len(pnl) == len(close) - 20,\n                   detail=f\"len(pnl)={len(pnl)} expected={len(close)-20}\")\n    except Exception as e:\n        check_true(\"warmup-dropped\", False, f\"EXC:{e}\")\n\n    # no-nans-in-pnl\n    try:\n        pnl, _ = momentum_backtest(close)\n        check_true(\"no-nans\", not pnl.isna().any(), detail=\"pnl has no NaNs\")\n    except Exception as e:\n        check_true(\"no-nans\", False, f\"EXC:{e}\")\n\n    # no-lookahead: pnl[t] must equal lagged_signal[t] * ret[t], where the signal is\n    # built from close up to t-1 only. We recompute the expected pnl independently.\n    try:\n        pnl, _ = momentum_backtest(close)\n        ret = close.pct_change()\n        ma20 = close.rolling(20, min_periods=20).mean()\n        sig = ((close > ma20).astype(float) * 2 - 1).where(ma20.notna())\n        expected = (sig.shift(1) * ret).dropna()\n        check_true(\"no-lookahead\", np.allclose(pnl.to_numpy(), expected.to_numpy()),\n                   detail=\"pnl == shift(1)-signal * return\")\n    except Exception as e:\n        check_true(\"no-lookahead\", False, f\"EXC:{e}\")\n\n    # sharpe-formula: matches mean/std*sqrt(252) on the returned pnl\n    try:\n        pnl, sharpe = momentum_backtest(close)\n        expected_sharpe = pnl.mean() / pnl.std() * np.sqrt(252)\n        check_true(\"sharpe-formula\", np.isclose(float(sharpe), float(expected_sharpe)),\n                   detail=f\"sharpe={float(sharpe):.4f}\")\n    except Exception as e:\n        check_true(\"sharpe-formula\", False, f\"EXC:{e}\")\n\n    # position-only-pm-one: a long/short momentum signal here is +/-1 (post warm-up)\n    try:\n        ma20 = close.rolling(20, min_periods=20).mean()\n        sig = ((close > ma20).astype(float) * 2 - 1).where(ma20.notna())\n        check_true(\"signal-pm-one\", set(np.unique(sig.dropna().to_numpy())).issubset({-1.0, 1.0}),\n                   detail=\"signal in {-1, +1}\")\n    except Exception as e:\n        check_true(\"signal-pm-one\", False, f\"EXC:{e}\")\n\n_run_cases()\n",
+          "tests": [
+            {
+              "name": "returns-types"
+            },
+            {
+              "name": "warmup-dropped"
+            },
+            {
+              "name": "no-nans"
+            },
+            {
+              "name": "no-lookahead"
+            },
+            {
+              "name": "sharpe-formula"
+            },
+            {
+              "name": "signal-pm-one"
+            }
+          ],
+          "solution": "```python\nimport pandas as pd\nimport numpy as np\n\ndef momentum_backtest(close):\n    ret = close.pct_change()                                # simple daily returns\n    ma20 = close.rolling(20, min_periods=20).mean()         # full-window trailing MA\n    signal = (close > ma20).astype(float) * 2 - 1           # +1 long / -1 short\n    # During the MA warm-up, ma20 is NaN and `close > NaN` is False (not NaN), which\n    # would silently mark those bars short. Mask them back to NaN so the warm-up does\n    # not fabricate positions before the indicator is even defined (honest warm-up).\n    signal = signal.where(ma20.notna())\n    # The load-bearing line: lag the signal by one bar. The signal uses close[t],\n    # so it can only be acted on starting at t+1 -> shift(1) makes it tradable.\n    position = signal.shift(1)\n    pnl = position * ret                                    # t-position * t-return, aligned\n    pnl = pnl.dropna()                                      # drop warm-up / shift NaNs\n    sharpe = pnl.mean() / pnl.std() * np.sqrt(252)          # annualized (sqrt-of-time)\n    return pnl, sharpe\n```",
+          "discussion": "The load-bearing line is `position = signal.shift(1)`: the signal is computed from the close at day t, so it can only be traded starting day t+1. Multiplying the lagged position by the same-row `pct_change` aligns a t-signal with a t+1 return — no lookahead. Omitting the shift would multiply a same-bar signal by the same-bar return, letting the strategy 'trade' on a price it could not have known, which fabricates alpha. `rolling(20, min_periods=20)` forces a full window so early values are not produced from partial data (honest warm-up). The Sharpe annualization uses sqrt(252) because volatility scales with the square root of periods per year; for minute bars the factor would be sqrt(252*6.5*60). Everything here is vectorized pandas/NumPy — no Python loop over bars."
+        }
+      ]
+    },
+    "vectorization-and-performance": {
+      "mcqs": [
+        {
+          "topic": "CPython Interpreter & Loop Performance",
+          "q": "Which set best describes the per-iteration overhead of a pure-Python numeric loop like `total += x`?",
+          "options": [
+            "JIT recompilation and garbage-collection pauses on every iteration",
+            "GPU kernel launch overhead per element",
+            "Bytecode dispatch, object boxing (heap-allocated ints), dynamic type dispatch for `+`, new-object allocation, and reference counting",
+            "Disk I/O, network latency, and TLB misses"
+          ],
+          "answer": 2,
+          "explanation": "Each iteration interprets several bytecodes (fetch/decode/dispatch), works with boxed PyObject ints (not raw machine integers), looks up `__add__` dynamically, allocates a new int object (ints are immutable), and churns reference counts under the GIL. This per-element cost is why a pure-Python loop is ~10-100x slower than C and why the gap scales with N."
+        },
+        {
+          "topic": "CPython Interpreter & Loop Performance",
+          "q": "Why is `for x in numpy_array: ...` often slower than vectorized NumPy AND sometimes slower than iterating a plain list?",
+          "options": [
+            "NumPy arrays are stored on disk and paged in per element",
+            "NumPy arrays cannot be iterated, so it falls back to a copy",
+            "The GIL is released per element, adding lock churn",
+            "Each access boxes a NumPy scalar into a fresh Python object, adding unboxing cost on top of the usual loop overhead"
+          ],
+          "answer": 3,
+          "explanation": "Iterating a NumPy array in Python is the worst of both worlds: every element access creates a boxed NumPy scalar (a Python object), adding allocation/unboxing cost beyond a list's already-boxed elements. The win comes only from staying in vectorized C; never write `for x in np_array` for numeric work."
+        },
+        {
+          "topic": "CPython Interpreter & Loop Performance",
+          "q": "Which tool pair is appropriate for (a) micro-benchmarking a small expression and (b) finding the hot function in a slow backtest?",
+          "options": [
+            "(a) %timeit / timeit; (b) cProfile (or py-spy / line_profiler)",
+            "(a) cProfile; (b) timeit",
+            "(a) dis; (b) sys.getsizeof",
+            "(a) print statements; (b) the GIL"
+          ],
+          "answer": 0,
+          "explanation": "`%timeit`/`timeit` give robust micro-benchmarks of a small snippet by running it many times. `cProfile` (deterministic, per-function cumulative time), `py-spy` (sampling a live process), and `line_profiler` (line-by-line) locate the hot function. Optimize what the profiler flags, not what you guess."
+        },
+        {
+          "topic": "Vectorization Patterns",
+          "q": "What is the difference between `arr[idx] += vals` and `np.add.at(arr, idx, vals)` when `idx` contains repeated indices?",
+          "options": [
+            "`np.add.at` raises on repeated indices",
+            "`np.add.at` is unbuffered and applies every update (correct scatter-add); `arr[idx] += vals` can silently drop duplicate-index updates, keeping only one",
+            "They are identical in all cases",
+            "`arr[idx] += vals` is unbuffered; `np.add.at` drops duplicates"
+          ],
+          "answer": 1,
+          "explanation": "`arr[idx] += vals` is buffered fancy-indexing assignment: with repeated indices it reads-modifies-writes once, so duplicate-index contributions are lost. `np.add.at` performs an unbuffered scatter-add that accumulates every contribution, giving the correct grouped sum — a subtle but real correctness bug if you use the wrong one."
+        },
+        {
+          "topic": "Vectorization Patterns",
+          "q": "When is a vectorized solution actually WORSE than a Numba loop?",
+          "options": [
+            "Only when the array has fewer than 10 elements",
+            "Only on Windows",
+            "When the vectorized expression materializes a huge intermediate (e.g. an N x N x D temporary) or the logic is path-dependent and cannot be expressed without computing the whole array",
+            "Never — vectorized is always faster and leaner"
+          ],
+          "answer": 2,
+          "explanation": "Vectorization can blow up memory by allocating large intermediates (the broadcasting memory bomb), and path-dependent/early-exit logic forces it to compute the entire array even when a loop would stop early or carry state. In those cases a Numba-compiled explicit loop (C speed, no big temporary) wins. A vectorized op that OOMs is worse than a loop."
+        },
+        {
+          "topic": "Vectorization Patterns",
+          "q": "Name two ways to reduce intermediate-array allocations in a long chain of vectorized operations.",
+          "options": [
+            "Convert everything to Python lists; or add more threads",
+            "Call `.copy()` after each step; or cast to object dtype",
+            "Increase the array dtype to float128; or disable the GIL",
+            "Use in-place augmented assignment (`+=`, `*=`) and the `out=` argument; or fuse expressions with numexpr / pandas eval/query"
+          ],
+          "answer": 3,
+          "explanation": "In-place ops (`a *= 2.0`) and `out=` reuse an existing buffer instead of allocating a throwaway. Expression fusers like `numexpr` (and pandas `eval`/`query`) evaluate a whole expression without materializing each intermediate, cutting both temporaries and memory traffic. Lists, copies, object dtype, and float128 all make it worse."
+        },
+        {
+          "topic": "Numba JIT Compilation",
+          "q": "Why can a Numba `@njit(nogil=True)` function give true multicore parallelism from threads while pure Python cannot?",
+          "options": [
+            "Compiled Numba code operates on raw unboxed memory with no Python objects, so it can release the GIL and run on multiple cores simultaneously",
+            "Numba runs every function on the GPU by default",
+            "Numba disables reference counting process-wide",
+            "Numba converts threads into separate processes"
+          ],
+          "answer": 0,
+          "explanation": "Because `@njit` compiles to machine code touching no CPython objects, it can release the GIL during execution; multiple threads then run the compiled kernel in genuine parallel. Pure-Python bytecode must hold the GIL. `prange`/`parallel=True` automate splitting independent loop iterations across cores."
+        },
+        {
+          "topic": "Numba JIT Compilation",
+          "q": "What does `nopython` mode mean, and why prefer `@njit` over bare `@jit`?",
+          "options": [
+            "It runs the function in the interpreter; `@jit` compiles it",
+            "It compiles with no CPython objects (pure machine code on unboxed types); `@njit` forces it and errors if it cannot, instead of silently falling back to slow object mode",
+            "It means the function cannot use Python syntax at all; `@njit` relaxes that",
+            "It disables type checking; `@njit` re-enables it"
+          ],
+          "answer": 1,
+          "explanation": "nopython mode generates machine code that uses no Python objects — that is where the speedup lives. `@njit` is `@jit(nopython=True)`: it forces nopython and raises a compile error if it cannot, which is a feature (it tells you what to fix). Bare `@jit` can silently fall back to object mode, running through the interpreter with no speedup."
+        },
+        {
+          "topic": "Numba JIT Compilation",
+          "q": "Why might a naive Numba benchmark look slow on the FIRST call, and how do you report fair numbers?",
+          "options": [
+            "The first call runs in object mode, the rest in nopython mode at random",
+            "The GIL is acquired only on the first call",
+            "The first call pays JIT compilation latency (often 0.1-1s); warm it up first or time the second call, and use cache=True to persist compiled code across runs",
+            "Numba is genuinely slow and never improves"
+          ],
+          "answer": 2,
+          "explanation": "Numba compiles per argument-type on first call, so that call includes compilation latency. Report steady-state speed by warming up (one throwaway call) or timing the second call. `cache=True` persists the compiled artifact to disk so subsequent runs/processes skip recompilation."
+        }
+      ],
+      "coding": [
+        {
+          "topic": "Vectorization Patterns",
+          "lang": "python",
+          "prompt": "Rewrite a slow per-element loop as a single vectorized NumPy expression. Implement `returns_vec(prices)` that computes daily simple returns from a price array using the offset-slice trick (`prices[1:]` and `prices[:-1]`), with no Python loop. The result has length `n-1`. Requires NumPy. Click Run to check against the test cases.\n\n```python\ndef returns_loop(prices):\n    out = []\n    for i in range(1, len(prices)):\n        out.append(prices[i] / prices[i-1] - 1)\n    return out\n```",
+          "hints": [
+            "Use offset slices: `prices[1:]` (from the 2nd element) and `prices[:-1]` (up to the 2nd-last).",
+            "Elementwise divide the two slices and subtract 1.",
+            "Both slices are views, so no data is copied to form the operands."
+          ],
+          "starter": "import numpy as np\n\ndef returns_vec(prices):\n    # TODO: return daily simple returns as a single vectorized expression\n    # using offset slices prices[1:] and prices[:-1] (no Python loop).\n    return None\n",
+          "harness": "def _run_cases():\n    import numpy as np\n    def check_close(name, got, want, atol=1e-9):\n        try:\n            got = np.asarray(got, dtype=float); want = np.asarray(want, dtype=float)\n            ok = got.shape == want.shape and np.allclose(got, want, atol=atol)\n            n=got.size\n            head=np.round(got.ravel()[:4],6).tolist()\n            print(f\"__CASE__|{name}|{'PASS' if ok else 'FAIL'}|n={n} head={head}{'...' if n>4 else ''}\")\n        except Exception as e:\n            print(f\"__CASE__|{name}|FAIL|EXC:{e}\")\n    def check_true(name, cond, detail=\"\"):\n        print(f\"__CASE__|{name}|{'PASS' if cond else 'FAIL'}|{detail}\")\n\n    # reference loop (the thing we are vectorizing)\n    def ref(prices):\n        out = []\n        for i in range(1, len(prices)):\n            out.append(prices[i] / prices[i-1] - 1)\n        return out\n\n    # known-values\n    try:\n        prices = np.array([100., 101., 99., 103.])\n        check_close(\"known-values\", returns_vec(prices), [0.01, -0.01980198019802, 0.04040404040404])\n    except Exception as e:\n        check_true(\"known-values\", False, f\"EXC:{e}\")\n\n    # matches-loop on a random series\n    try:\n        rng = np.random.default_rng(1)\n        prices = 100 + rng.standard_normal(50).cumsum() * 0.1 + 50  # stay well positive\n        check_close(\"matches-loop\", returns_vec(prices), ref(prices))\n    except Exception as e:\n        check_true(\"matches-loop\", False, f\"EXC:{e}\")\n\n    # length-n-minus-1\n    try:\n        out = returns_vec(np.arange(1.0, 11.0))\n        check_true(\"length-n-minus-1\", len(out) == 9, detail=f\"len={len(out)}\")\n    except Exception as e:\n        check_true(\"length-n-minus-1\", False, f\"EXC:{e}\")\n\n    # two-element-input\n    try:\n        check_close(\"two-element\", returns_vec([10.0, 12.0]), [0.2])\n    except Exception as e:\n        check_true(\"two-element\", False, f\"EXC:{e}\")\n\n    # accepts-python-list (asarray handles it)\n    try:\n        check_close(\"accepts-list\", returns_vec([100, 110, 99]), [0.1, -0.1])\n    except Exception as e:\n        check_true(\"accepts-list\", False, f\"EXC:{e}\")\n\n_run_cases()\n",
+          "tests": [
+            {
+              "name": "known-values"
+            },
+            {
+              "name": "matches-loop"
+            },
+            {
+              "name": "length-n-minus-1"
+            },
+            {
+              "name": "two-element"
+            },
+            {
+              "name": "accepts-list"
+            }
+          ],
+          "solution": "```python\nimport numpy as np\n\ndef returns_vec(prices):\n    prices = np.asarray(prices, dtype=np.float64)\n    # Offset slices line up each element with its predecessor:\n    #   prices[1:]  starts at index 1 (the \"current\" price)\n    #   prices[:-1] ends one short (the \"previous\" price)\n    # Both are VIEWS (no copy); the elementwise divide-and-subtract runs once in C.\n    # Result has length n-1, exactly like the original loop.\n    return prices[1:] / prices[:-1] - 1.0\n```",
+          "discussion": "The offset-slice idiom expresses 'compare each element to its predecessor' without a loop: `prices[1:]` is the array shifted to start at index 1, `prices[:-1]` is the array ending one short, and they line up so element i of the result is prices[i]/prices[i-1] - 1. Both slices are *views* (no copy), and the division/subtraction runs once in C over contiguous memory, so this is 10-100x faster than the Python loop, which paid bytecode dispatch, boxing, and per-append overhead every iteration. The result has length n-1, mirroring the loop. In pandas the same thing is `series.pct_change()`. If you later turn this into a tradable strategy return, remember to lag the position with `shift(1)` to avoid lookahead — vectorizing does not excuse point-in-time discipline."
+        },
+        {
+          "topic": "Numba JIT Compilation",
+          "lang": "python",
+          "prompt": "Implement an exponentially-weighted moving average: `ewma(x, alpha)` over a 1-D array, where `out[0] = x[0]` and `out[i] = alpha*x[i] + (1-alpha)*out[i-1]`. Explain in a comment why this is a path-dependent recurrence that does NOT vectorize cleanly (so it needs an explicit sequential loop), and how you would call it from a pandas column. Standard library + NumPy only (no Numba required here). Click Run to check against the test cases.",
+          "hints": [
+            "The recurrence is sequential: out[i] depends on out[i-1], so offset slices and cumulative ufuncs do not express it.",
+            "Seed out[0] = x[0], then loop i = 1..n-1 carrying the previous output.",
+            "From pandas, pass `df['col'].to_numpy()` in and assign the returned array back; this matches `Series.ewm(alpha=..., adjust=False).mean()`."
+          ],
+          "starter": "import numpy as np\n\ndef ewma(x, alpha):\n    # TODO: return the EWMA where out[0] = x[0] and\n    # out[i] = alpha*x[i] + (1-alpha)*out[i-1].\n    # This recurrence is path-dependent -> use an explicit sequential loop.\n    return None\n",
+          "harness": "def _run_cases():\n    import numpy as np\n    def check_close(name, got, want, atol=1e-9):\n        try:\n            got = np.asarray(got, dtype=float); want = np.asarray(want, dtype=float)\n            ok = got.shape == want.shape and np.allclose(got, want, atol=atol)\n            n=got.size\n            head=np.round(got.ravel()[:4],6).tolist()\n            print(f\"__CASE__|{name}|{'PASS' if ok else 'FAIL'}|n={n} head={head}{'...' if n>4 else ''}\")\n        except Exception as e:\n            print(f\"__CASE__|{name}|FAIL|EXC:{e}\")\n    def check_true(name, cond, detail=\"\"):\n        print(f\"__CASE__|{name}|{'PASS' if cond else 'FAIL'}|{detail}\")\n\n    # reference recurrence\n    def ref(x, alpha):\n        x = np.asarray(x, float); o = np.empty_like(x); o[0] = x[0]\n        for i in range(1, len(x)):\n            o[i] = alpha * x[i] + (1 - alpha) * o[i - 1]\n        return o\n\n    # seed-is-first-value\n    try:\n        out = ewma(np.array([5.0, 1.0, 2.0]), 0.5)\n        check_true(\"seed-first-value\", np.isclose(out[0], 5.0), detail=f\"out[0]={out[0]}\")\n    except Exception as e:\n        check_true(\"seed-first-value\", False, f\"EXC:{e}\")\n\n    # known-recurrence\n    try:\n        check_close(\"known-recurrence\", ewma([1., 2., 3., 4., 5.], 0.3),\n                    [1.0, 1.3, 1.81, 2.467, 3.2269])\n    except Exception as e:\n        check_true(\"known-recurrence\", False, f\"EXC:{e}\")\n\n    # matches-reference on random data\n    try:\n        rng = np.random.default_rng(0)\n        x = rng.standard_normal(1000)\n        check_close(\"matches-reference\", ewma(x, 0.1), ref(x, 0.1))\n    except Exception as e:\n        check_true(\"matches-reference\", False, f\"EXC:{e}\")\n\n    # alpha-one-is-identity: alpha=1 means out == x\n    try:\n        x = np.array([3.0, 7.0, 2.0, 9.0])\n        check_close(\"alpha-one-identity\", ewma(x, 1.0), x)\n    except Exception as e:\n        check_true(\"alpha-one-identity\", False, f\"EXC:{e}\")\n\n    # alpha-zero-holds-seed: alpha=0 means every value stays at the seed\n    try:\n        x = np.array([4.0, 8.0, 1.0])\n        check_close(\"alpha-zero-holds\", ewma(x, 0.0), [4.0, 4.0, 4.0])\n    except Exception as e:\n        check_true(\"alpha-zero-holds\", False, f\"EXC:{e}\")\n\n    # length-preserved\n    try:\n        out = ewma(np.arange(50.0), 0.2)\n        check_true(\"length-preserved\", len(out) == 50, detail=f\"len={len(out)}\")\n    except Exception as e:\n        check_true(\"length-preserved\", False, f\"EXC:{e}\")\n\n_run_cases()\n",
+          "tests": [
+            {
+              "name": "seed-first-value"
+            },
+            {
+              "name": "known-recurrence"
+            },
+            {
+              "name": "matches-reference"
+            },
+            {
+              "name": "alpha-one-identity"
+            },
+            {
+              "name": "alpha-zero-holds"
+            },
+            {
+              "name": "length-preserved"
+            }
+          ],
+          "solution": "```python\nimport numpy as np\n\ndef ewma(x, alpha):\n    x = np.asarray(x, dtype=np.float64)\n    out = np.empty_like(x)\n    out[0] = x[0]                                    # seed with the first observation\n    # This is a genuine path-dependent recurrence: out[i] depends on out[i-1], so it\n    # CANNOT be expressed with offset slices or a single cumulative ufunc. We carry the\n    # state in an explicit sequential loop. (In production this exact loop is the\n    # canonical @njit Numba target -- compiled to machine code it runs ~10-100x faster\n    # than this pure-Python version, but the algorithm is identical.)\n    for i in range(1, len(x)):\n        out[i] = alpha * x[i] + (1.0 - alpha) * out[i - 1]\n    return out\n```",
+          "discussion": "EWMA is a genuine path-dependent recurrence -- each output depends on the previous output -- so there is no clean whole-array NumPy expression for it (you cannot express the carried state with offset slices or cumulative ufuncs in general). The honest implementation is an explicit sequential loop carrying the previous value; seeding `out[0] = x[0]` matches pandas' `Series.ewm(alpha=..., adjust=False).mean()`. In production this exact loop is the canonical Numba `@njit` target: compiled to machine code via LLVM it removes the interpreter/boxing overhead and runs within a small factor of hand-written C, typically 10-100x faster than this pure-Python version, while the algorithm is identical (and `cache=True` persists the compiled artifact so you skip the ~0.1-1s first-call compile; when benchmarking, time the warmed-up second call). The cardinal rule when bridging to pandas is to pass NumPy arrays, not Series/DataFrames: numerical kernels operate on the raw `.to_numpy()` buffer and you assign the result back to a column. Note pandas' built-in `Series.ewm(...).mean()` covers the standard definition; the explicit-loop (and, in production, Numba) route is the pattern for *custom* recursive estimators (Kalman filters, path-dependent stops) that have no built-in."
+        },
+        {
+          "topic": "Vectorization Patterns",
+          "lang": "python",
+          "prompt": "Implement `grouped_sum(groups, vals, n_groups)` where `groups` is an integer array of group ids and `vals` a float array of the same length. Return `(a, b)`: the per-group sums computed two correct ways -- `a` via `np.bincount(..., weights=...)` and `b` via an unbuffered `np.add.at` scatter-add. Both must handle repeated group ids (which `result[groups] += vals` would silently get wrong). Requires NumPy. Click Run to check against the test cases.",
+          "hints": [
+            "`np.bincount(groups, weights=vals)` gives grouped sums for non-negative integer ids.",
+            "`np.add.at(result, groups, vals)` is the general unbuffered scatter-add.",
+            "Buffered fancy assignment (`result[groups] += vals`) drops duplicate-index updates."
+          ],
+          "starter": "import numpy as np\n\ndef grouped_sum(groups, vals, n_groups):\n    # TODO: return (a, b) -- both length-n_groups grouped sums of vals by group id.\n    #   a via np.bincount(groups, weights=vals, minlength=n_groups)\n    #   b via an unbuffered np.add.at scatter-add into a zeros array\n    # (result[groups] += vals would drop duplicate-index contributions).\n    return None, None\n",
+          "harness": "def _run_cases():\n    import numpy as np\n    def check_close(name, got, want, atol=1e-9):\n        try:\n            got = np.asarray(got, dtype=float); want = np.asarray(want, dtype=float)\n            ok = got.shape == want.shape and np.allclose(got, want, atol=atol)\n            n=got.size\n            head=np.round(got.ravel()[:4],6).tolist()\n            print(f\"__CASE__|{name}|{'PASS' if ok else 'FAIL'}|n={n} head={head}{'...' if n>4 else ''}\")\n        except Exception as e:\n            print(f\"__CASE__|{name}|FAIL|EXC:{e}\")\n    def check_true(name, cond, detail=\"\"):\n        print(f\"__CASE__|{name}|{'PASS' if cond else 'FAIL'}|{detail}\")\n\n    # repeated-ids: the core correctness case (group 0 and 1 appear twice)\n    try:\n        groups = np.array([0, 0, 1, 1, 2]); vals = np.array([10., 20., 30., 40., 50.])\n        a, b = grouped_sum(groups, vals, 3)\n        check_close(\"bincount-repeated\", a, [30., 70., 50.])\n        check_close(\"addat-repeated\", b, [30., 70., 50.])\n    except Exception as e:\n        check_true(\"bincount-repeated\", False, f\"EXC:{e}\")\n        check_true(\"addat-repeated\", False, f\"EXC:{e}\")\n\n    # two-methods-agree\n    try:\n        rng = np.random.default_rng(0)\n        groups = rng.integers(0, 8, size=1000); vals = rng.standard_normal(1000)\n        a, b = grouped_sum(groups, vals, 8)\n        check_close(\"methods-agree\", a, b)\n    except Exception as e:\n        check_true(\"methods-agree\", False, f\"EXC:{e}\")\n\n    # matches-reference (python dict accumulation)\n    try:\n        ref = np.zeros(8)\n        for g, v in zip(groups, vals):\n            ref[g] += v\n        check_close(\"matches-reference\", a, ref)\n    except Exception as e:\n        check_true(\"matches-reference\", False, f\"EXC:{e}\")\n\n    # empty-groups-are-zero: a group id that never appears must be 0, length stays n_groups\n    try:\n        a, b = grouped_sum(np.array([0, 2]), np.array([5.0, 7.0]), 4)\n        check_close(\"empty-group-zero\", a, [5.0, 0.0, 7.0, 0.0])\n        check_true(\"output-length\", len(a) == 4 and len(b) == 4, detail=f\"len={len(a)}\")\n    except Exception as e:\n        check_true(\"empty-group-zero\", False, f\"EXC:{e}\")\n        check_true(\"output-length\", False, f\"EXC:{e}\")\n\n    # total-conserved: sum over groups == sum of all vals\n    try:\n        groups = np.array([3, 3, 3, 1]); vals = np.array([1., 2., 3., 4.])\n        a, b = grouped_sum(groups, vals, 5)\n        check_true(\"total-conserved\", np.isclose(a.sum(), vals.sum()), detail=f\"sum={a.sum()}\")\n    except Exception as e:\n        check_true(\"total-conserved\", False, f\"EXC:{e}\")\n\n_run_cases()\n",
+          "tests": [
+            {
+              "name": "bincount-repeated"
+            },
+            {
+              "name": "addat-repeated"
+            },
+            {
+              "name": "methods-agree"
+            },
+            {
+              "name": "matches-reference"
+            },
+            {
+              "name": "empty-group-zero"
+            },
+            {
+              "name": "output-length"
+            },
+            {
+              "name": "total-conserved"
+            }
+          ],
+          "solution": "```python\nimport numpy as np\n\ndef grouped_sum(groups, vals, n_groups):\n    groups = np.asarray(groups)\n    vals = np.asarray(vals, dtype=np.float64)\n    # Option A: bincount with weights -- the fast primitive for non-negative int ids.\n    # minlength guarantees the output has exactly n_groups slots even if some are empty.\n    a = np.bincount(groups, weights=vals, minlength=n_groups)\n    # Option B: explicit UNBUFFERED scatter-add. np.add.at accumulates EVERY\n    # contribution, so repeated group ids are summed correctly (unlike b[groups] += vals,\n    # which is buffered and keeps only the last write per repeated index).\n    b = np.zeros(n_groups)\n    np.add.at(b, groups, vals)\n    return a, b\n```",
+          "discussion": "Grouped reduction is a scatter-add: accumulate each value into the slot named by its group id. `np.bincount` with `weights` is the fast primitive for non-negative integer ids; `np.add.at` is the general unbuffered form that correctly accumulates *every* contribution even when indices repeat. The trap is `result[groups] += vals`: fancy-indexed augmented assignment is buffered — it computes `result[groups] + vals` against the original values and writes back once, so for a repeated index only the last write survives and earlier contributions are silently lost (group 0 ends up 20, the last value written, instead of the correct 10+20=30). These NumPy primitives are exactly what pandas `groupby(...).sum()` wraps in a labeled, Cython-accelerated form; reach for `groupby` when you have labels, and these primitives when you are working in raw NumPy."
+        }
+      ]
+    },
+    "analytics-and-ml-libraries": {
+      "mcqs": [
+        {
+          "topic": "TA-Lib Technical Indicators",
+          "q": "Why does `talib.SMA(close, timeperiod=20)` return an array with 19 leading NaNs?",
+          "options": [
+            "TA-Lib drops the first 19 prices as outliers",
+            "The NaNs indicate missing input data, not a warm-up",
+            "It is a bug; SMA should have no NaNs",
+            "A 20-period window needs a 19-bar warm-up before the first full value; TA-Lib NaN-pads the lookback so output[i] aligns with close[i]"
+          ],
+          "answer": 3,
+          "explanation": "Every windowed indicator needs a warm-up: a 20-period SMA cannot be computed until 20 observations exist, so the first valid value is at index 19, and indices 0..18 are NaN. TA-Lib returns a same-length array NaN-padded at the front so output[i] corresponds to close[i]. You can query the warm-up length with SMA_Lookback(20) == 19."
+        },
+        {
+          "topic": "TA-Lib Technical Indicators",
+          "q": "TA-Lib indicator outputs are trailing/right-aligned. Why must you STILL `shift(1)` a signal derived from them before backtesting?",
+          "options": [
+            "Because indicator[t] uses close[t]; to act on it at time t you would need close[t] before it exists — trade on indicator.shift(1) like any signal",
+            "Because TA-Lib outputs are actually centered and peek into the future",
+            "Because shift(1) removes the warm-up NaNs",
+            "You do not need to shift; right-aligned outputs are already tradable at t"
+          ],
+          "answer": 0,
+          "explanation": "Right-alignment makes the indicator point-in-time (it uses only past/present prices), but indicator[t] depends on close[t]. To trade at time t on indicator[t] you would need close[t] before t ends — impossible. So you lag the signal: act on indicator.shift(1), exactly as for any signal, to avoid lookahead. The warm-up NaNs are a separate issue."
+        },
+        {
+          "topic": "TA-Lib Technical Indicators",
+          "q": "In a from-scratch Wilder RSI, which part is path-dependent and thus a candidate for Numba?",
+          "options": [
+            "The final `100 - 100/(1+rs)` transform",
+            "The recursive smoothing of average gains/losses: avg[i] = (avg[i-1]*(n-1) + x[i]) / n",
+            "Computing `np.diff(close)` of price changes",
+            "Splitting changes into gains and losses with np.where"
+          ],
+          "answer": 1,
+          "explanation": "Wilder's smoothing is a recurrence: each smoothed average depends on the previous smoothed average, so it cannot be expressed as a clean whole-array operation and is the path-dependent loop. `np.diff`, the gain/loss split via `np.where`, and the final algebraic transform are all elementwise/vectorizable. The recursive loop is the Numba (or C) candidate."
+        },
+        {
+          "topic": "TA-Lib Technical Indicators",
+          "q": "Why is sweeping an indicator's `timeperiod` until the backtest PnL looks good a methodological red flag?",
+          "options": [
+            "It is a red flag only if the timeperiod exceeds 200",
+            "It causes lookahead bias by definition",
+            "It is data-snooping/overfitting to the in-sample path; guard with out-of-sample testing and multiple-testing correction",
+            "It is fine as long as you use TA-Lib's C implementation"
+          ],
+          "answer": 2,
+          "explanation": "Tuning a parameter on the same data you evaluate on is classic data-snooping: you fit the noise, and the result will not generalize. Defend against it with out-of-sample/walk-forward validation and corrections for testing many parameter combinations. It is not inherently lookahead (that is a separate alignment issue)."
+        },
+        {
+          "topic": "Scikit-Learn",
+          "q": "Why does `StandardScaler().fit_transform(X)` on the FULL dataset before cross-validation cause leakage, and how does a Pipeline prevent it?",
+          "options": [
+            "fit_transform is simply slower; a Pipeline parallelizes it",
+            "StandardScaler corrupts the dtype; a Pipeline casts it back",
+            "There is no leakage; scaling is deterministic",
+            "Fitting the scaler on all data lets test/future statistics (mean/std) leak into training; a Pipeline refits the scaler on each training fold only and transforms the validation fold"
+          ],
+          "answer": 3,
+          "explanation": "Computing the mean/std over the whole sample uses information from the test set (and the future), inflating CV scores — data leakage. A `Pipeline` binds the scaler to the model so that during CV the scaler is `fit` only on each training fold and merely `transform`-ed on the validation fold. Any data-derived transform must be fit inside the CV loop."
+        },
+        {
+          "topic": "Scikit-Learn",
+          "q": "Why is shuffled k-fold cross-validation wrong for a price-based time series, and what do you use instead?",
+          "options": [
+            "Shuffling lets the model train on future rows to predict past rows (lookahead); use TimeSeriesSplit (train always precedes validation), or purged/embargoed CV",
+            "Shuffling is fine; financial data is i.i.d.",
+            "Shuffling is too slow; use a single train/test split with shuffle=True",
+            "Shuffling changes the dtype of the target"
+          ],
+          "answer": 0,
+          "explanation": "Standard k-fold shuffles rows, so a fold can train on future observations to predict past ones — a lookahead that inflates scores. `TimeSeriesSplit` only ever trains on data before the validation window. With overlapping labels (multi-day forward returns) even that leaks at the boundary; López de Prado's purged/embargoed CV removes samples near the split."
+        },
+        {
+          "topic": "Scikit-Learn",
+          "q": "You get an out-of-sample R^2 of 0.6 on next-day return prediction. What is your first hypothesis?",
+          "options": [
+            "R^2 above 0.5 is normal for daily returns",
+            "Data leakage — financial signal-to-noise is tiny, so a 0.6 R^2 almost certainly means future information leaked into the features/labels/CV",
+            "The model is excellent and ready for production",
+            "The target needs to be scaled to improve it further"
+          ],
+          "answer": 1,
+          "explanation": "Daily return prediction has extremely low signal-to-noise; an honest R^2 of 0.01 can be economically meaningful, while 0.6 is a giant red flag for leakage (full-sample scaling/feature selection/PCA, a label that incorporates the future, or a future-dated merge). Audit the pipeline and CV before believing the score."
+        },
+        {
+          "topic": "TensorFlow Basics",
+          "q": "What two capabilities distinguish a TensorFlow tensor from a NumPy array?",
+          "options": [
+            "It is stored on disk and lazily loaded",
+            "It cannot interoperate with NumPy at all",
+            "It can live on an accelerator device (GPU/TPU) and it is tracked for automatic differentiation (gradients)",
+            "It is always integer-typed and immutable"
+          ],
+          "answer": 2,
+          "explanation": "Beyond being an n-D array, a TF tensor lives on a chosen device (CPU/GPU/TPU) and can be recorded for reverse-mode autodiff so the framework computes exact gradients (backpropagation). It interoperates with NumPy (zero-copy on CPU) and defaults to float32, not int."
+        },
+        {
+          "topic": "PyTorch Basics",
+          "q": "What happens if you omit `optimizer.zero_grad()` in a PyTorch training loop, and why?",
+          "options": [
+            "Nothing — PyTorch zeroes gradients automatically each step",
+            "The model trains faster because gradients are reused",
+            "It raises an error on the second backward call",
+            "Gradients ACCUMULATE across iterations because `.backward()` adds into `.grad`, so training diverges or stalls"
+          ],
+          "answer": 3,
+          "explanation": "`.backward()` accumulates gradients into each parameter's `.grad` rather than overwriting them, so without `optimizer.zero_grad()` each step sums the new gradient onto stale ones from previous steps, corrupting the update — the single most common PyTorch bug. Zero the gradients at the start of every iteration."
+        },
+        {
+          "topic": "PyTorch Basics",
+          "q": "What do `model.eval()` and `torch.no_grad()` each do at inference, and what breaks if you forget them?",
+          "options": [
+            "`model.eval()` switches Dropout/BatchNorm to inference mode (forgetting it gives noisy, wrong predictions); `torch.no_grad()` stops graph-building (forgetting it wastes memory/time but is not incorrect)",
+            "Both disable gradients; they are interchangeable",
+            "`model.eval()` moves the model to the GPU; `no_grad()` moves it back",
+            "Both are optional and change nothing about predictions"
+          ],
+          "answer": 0,
+          "explanation": "`model.eval()` puts layers like Dropout and BatchNorm into inference behaviour; leaving the model in train mode keeps Dropout active, corrupting predictions. `torch.no_grad()` disables autograd graph construction for the block, roughly halving memory and speeding inference; forgetting it is wasteful but not numerically wrong. They are complementary, not interchangeable."
+        }
+      ],
+      "coding": [
+        {
+          "topic": "Scikit-Learn",
+          "lang": "python",
+          "prompt": "Build a leakage-free, time-aware cross-validation of a Ridge factor model. Implement `time_aware_cv(X, y, alpha=1.0, n_splits=5)` that uses `make_pipeline(StandardScaler(), Ridge(alpha))` with `TimeSeriesSplit(n_splits)` and returns the per-fold R^2 array from `cross_val_score(..., scoring='r2')`. Explain in comments why the Pipeline and the splitter together prevent leakage. Requires scikit-learn. Click Run to check against the test cases.",
+          "hints": [
+            "Use `make_pipeline(StandardScaler(), Ridge(alpha=...))` so scaling is fit per fold.",
+            "Use `TimeSeriesSplit(n_splits=...)` so each train set precedes its validation set.",
+            "`cross_val_score(pipe, X, y, cv=cv, scoring='r2')` runs it correctly."
+          ],
+          "starter": "import numpy as np\nfrom sklearn.linear_model import Ridge\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.model_selection import cross_val_score, TimeSeriesSplit\n\ndef time_aware_cv(X, y, alpha=1.0, n_splits=5):\n    # TODO: build make_pipeline(StandardScaler(), Ridge(alpha=alpha)), evaluate it with\n    # cross_val_score using TimeSeriesSplit(n_splits=n_splits) and scoring=\"r2\";\n    # return the per-fold score array. The Pipeline+splitter together prevent leakage.\n    return np.array([])\n",
+          "harness": "def _run_cases():\n    import numpy as np\n    def check_true(name, cond, detail=\"\"):\n        print(f\"__CASE__|{name}|{'PASS' if cond else 'FAIL'}|{detail}\")\n\n    rng = np.random.default_rng(0)\n    X = rng.standard_normal((500, 4))\n    y = X @ np.array([0.2, -0.1, 0.05, 0.0]) + 0.5 * rng.standard_normal(500)\n\n    # returns-n-scores: one score per split\n    try:\n        scores = time_aware_cv(X, y, n_splits=5)\n        check_true(\"returns-n-scores\", len(scores) == 5, detail=f\"n={len(scores)}\")\n    except Exception as e:\n        check_true(\"returns-n-scores\", False, f\"EXC:{e}\")\n\n    # scores-are-finite\n    try:\n        scores = time_aware_cv(X, y, n_splits=5)\n        check_true(\"scores-finite\", bool(np.all(np.isfinite(scores))),\n                   detail=f\"scores={np.round(scores,3).tolist()}\")\n    except Exception as e:\n        check_true(\"scores-finite\", False, f\"EXC:{e}\")\n\n    # learns-signal: mean R^2 should be clearly positive on this linear DGP\n    try:\n        scores = time_aware_cv(X, y, n_splits=5)\n        check_true(\"learns-signal\", float(np.mean(scores)) > 0.1,\n                   detail=f\"mean_r2={float(np.mean(scores)):.3f}\")\n    except Exception as e:\n        check_true(\"learns-signal\", False, f\"EXC:{e}\")\n\n    # n-splits-respected: requesting 3 splits returns 3 scores\n    try:\n        scores3 = time_aware_cv(X, y, n_splits=3)\n        check_true(\"n-splits-3\", len(scores3) == 3, detail=f\"n={len(scores3)}\")\n    except Exception as e:\n        check_true(\"n-splits-3\", False, f\"EXC:{e}\")\n\n    # alpha-effect: a huge ridge penalty shrinks coefficients -> lower mean R^2 here\n    try:\n        weak = float(np.mean(time_aware_cv(X, y, alpha=1.0)))\n        strong = float(np.mean(time_aware_cv(X, y, alpha=1e6)))\n        check_true(\"alpha-shrinks\", strong < weak, detail=f\"alpha=1->{weak:.3f}, alpha=1e6->{strong:.3f}\")\n    except Exception as e:\n        check_true(\"alpha-shrinks\", False, f\"EXC:{e}\")\n\n    # pure-noise-not-high: on label with no signal, mean OOS R^2 must NOT be high\n    try:\n        y_noise = rng.standard_normal(500)\n        s = float(np.mean(time_aware_cv(X, y_noise)))\n        check_true(\"noise-low-r2\", s < 0.2, detail=f\"noise mean_r2={s:.3f}\")\n    except Exception as e:\n        check_true(\"noise-low-r2\", False, f\"EXC:{e}\")\n\n_run_cases()\n",
+          "tests": [
+            {
+              "name": "returns-n-scores"
+            },
+            {
+              "name": "scores-finite"
+            },
+            {
+              "name": "learns-signal"
+            },
+            {
+              "name": "n-splits-3"
+            },
+            {
+              "name": "alpha-shrinks"
+            },
+            {
+              "name": "noise-low-r2"
+            }
+          ],
+          "solution": "```python\nimport numpy as np\nfrom sklearn.linear_model import Ridge\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.pipeline import make_pipeline\nfrom sklearn.model_selection import cross_val_score, TimeSeriesSplit\n\ndef time_aware_cv(X, y, alpha=1.0, n_splits=5):\n    # Pipeline: StandardScaler is fit ONLY on each training fold and merely transforms\n    # the validation fold -> no full-sample (future) mean/std leaks into training.\n    pipe = make_pipeline(StandardScaler(), Ridge(alpha=alpha))\n    # TimeSeriesSplit: every train index PRECEDES its validation index -> no lookahead,\n    # unlike shuffled k-fold which could train on the future to predict the past.\n    cv = TimeSeriesSplit(n_splits=n_splits)\n    # cross_val_score re-fits the WHOLE pipeline per fold, so scaling stays leak-free.\n    return cross_val_score(pipe, X, y, cv=cv, scoring=\"r2\")\n```",
+          "discussion": "Two mechanisms together prevent the cardinal quant-ML sin, leakage. The `Pipeline` binds preprocessing to the estimator so that, inside each CV fold, `StandardScaler` is fit on the training rows only and merely transforms the validation rows — it never sees the validation/future mean and std. Fitting a scaler (or PCA, feature selector, or target encoder) on the full sample before splitting would leak future information and inflate scores. `TimeSeriesSplit` ensures every training window precedes its validation window, so the model is never trained on the future to predict the past, unlike shuffled k-fold. A caveat the lesson stresses: with overlapping labels (e.g. multi-day forward returns) even `TimeSeriesSplit` leaks at the fold boundary, where López de Prado's purged/embargoed CV is required. If you see a suspiciously high out-of-sample R^2 on returns, suspect leakage first — daily-return signal-to-noise is tiny. For tuning, wrap this in `GridSearchCV(..., cv=TimeSeriesSplit(...))` and address the hyperparameter as `ridge__alpha`."
+        },
+        {
+          "topic": "PyTorch Basics",
+          "lang": "python",
+          "prompt": "Implement the canonical mini-batch gradient-descent training loop from scratch (NumPy only), mirroring the five steps a PyTorch loop uses. `train_linreg(X, y, epochs, lr, batch_size, shuffle=False)` fits weights `w` and bias `b` for linear regression on MSE; per batch do, IN ORDER: (1) zero/fresh grads, (2) forward `X@w+b`, (3) MSE loss, (4) backward (MSE gradients), (5) step (`w -= lr*gw`). Also write `predict((w, b), X)` as a pure forward pass. Use `shuffle=False` for time-series data and explain in comments how each step maps to PyTorch (`optimizer.zero_grad`, `.backward()`, `optimizer.step()`, `model.eval()`/`torch.no_grad()`, `DataLoader(shuffle=False)`). NumPy only (no PyTorch required here). Click Run to check against the test cases.",
+          "hints": [
+            "The five steps in order: zero/fresh grads -> forward (X@w+b) -> MSE loss -> backward (gradients) -> step (subtract lr*grad).",
+            "MSE gradient wrt w is (2/m) * X.T @ (pred - y); wrt b is (2/m) * sum(pred - y).",
+            "For a financial time series keep shuffle=False so future and past samples are not mixed across batches (anti-lookahead, like DataLoader(shuffle=False))."
+          ],
+          "starter": "import numpy as np\n\ndef train_linreg(X, y, epochs=200, lr=0.1, batch_size=64, shuffle=False):\n    # TODO: fit weights w (shape (d,)) and bias b by mini-batch gradient descent on MSE.\n    # Per batch, do the canonical 5 steps in order: zero grads -> forward (X@w+b) ->\n    # loss (MSE) -> backward (MSE gradients) -> step (w -= lr*gw; b -= lr*gb).\n    # For time series keep shuffle=False (shuffling leaks the future). Return (w, b).\n    X = np.asarray(X, dtype=np.float64)\n    d = X.shape[1]\n    return np.zeros(d), 0.0\n\ndef predict(params, X):\n    # TODO: pure forward pass w@x + b (the analogue of model.eval() + torch.no_grad()).\n    return None\n",
+          "harness": "def _run_cases():\n    import numpy as np\n    def check_true(name, cond, detail=\"\"):\n        print(f\"__CASE__|{name}|{'PASS' if cond else 'FAIL'}|{detail}\")\n\n    rng = np.random.default_rng(0)\n    n, d = 800, 3\n    X = rng.standard_normal((n, d))\n    true_w = np.array([1.5, -2.0, 0.5])\n    true_b = 0.7\n    y = X @ true_w + true_b + 0.01 * rng.standard_normal(n)\n\n    # recovers-weights: trained weights approximate the true linear relationship\n    try:\n        w, b = train_linreg(X, y, epochs=300, lr=0.1, batch_size=64)\n        check_true(\"recovers-weights\", np.allclose(w, true_w, atol=0.05),\n                   detail=f\"w={np.round(w,3).tolist()} true={true_w.tolist()}\")\n    except Exception as e:\n        check_true(\"recovers-weights\", False, f\"EXC:{e}\")\n\n    # recovers-bias\n    try:\n        w, b = train_linreg(X, y, epochs=300, lr=0.1, batch_size=64)\n        check_true(\"recovers-bias\", abs(b - true_b) < 0.05, detail=f\"b={b:.4f} true={true_b}\")\n    except Exception as e:\n        check_true(\"recovers-bias\", False, f\"EXC:{e}\")\n\n    # predict-shape: one prediction per row\n    try:\n        w, b = train_linreg(X, y, epochs=50)\n        p = predict((w, b), X)\n        check_true(\"predict-shape\", np.asarray(p).shape == (n,), detail=f\"shape={np.asarray(p).shape}\")\n    except Exception as e:\n        check_true(\"predict-shape\", False, f\"EXC:{e}\")\n\n    # loss-decreases: more training -> lower MSE (gradient descent is actually working)\n    try:\n        w1, b1 = train_linreg(X, y, epochs=1, lr=0.01)\n        w2, b2 = train_linreg(X, y, epochs=300, lr=0.1)\n        mse1 = np.mean((predict((w1, b1), X) - y) ** 2)\n        mse2 = np.mean((predict((w2, b2), X) - y) ** 2)\n        check_true(\"loss-decreases\", mse2 < mse1, detail=f\"mse@5={mse1:.4f} mse@300={mse2:.4f}\")\n    except Exception as e:\n        check_true(\"loss-decreases\", False, f\"EXC:{e}\")\n\n    # grads-do-not-accumulate: a fresh-grad step must converge; if grads accumulated\n    # across steps (the classic missing-zero_grad bug) the fit would blow up to non-finite.\n    try:\n        w, b = train_linreg(X, y, epochs=300, lr=0.1, batch_size=64)\n        check_true(\"grads-not-accumulated\", np.all(np.isfinite(w)) and np.isfinite(b),\n                   detail=\"weights finite (no runaway accumulation)\")\n    except Exception as e:\n        check_true(\"grads-not-accumulated\", False, f\"EXC:{e}\")\n\n    # converges-to-ols: trained fit should be close to the closed-form least squares\n    try:\n        Xa = np.column_stack([X, np.ones(n)])\n        ols, *_ = np.linalg.lstsq(Xa, y, rcond=None)\n        w, b = train_linreg(X, y, epochs=400, lr=0.1, batch_size=64)\n        check_true(\"matches-ols\", np.allclose(w, ols[:d], atol=0.05) and abs(b - ols[d]) < 0.05,\n                   detail=f\"gd_w={np.round(w,3).tolist()} ols_w={np.round(ols[:d],3).tolist()}\")\n    except Exception as e:\n        check_true(\"matches-ols\", False, f\"EXC:{e}\")\n\n_run_cases()\n",
+          "tests": [
+            {
+              "name": "recovers-weights"
+            },
+            {
+              "name": "recovers-bias"
+            },
+            {
+              "name": "predict-shape"
+            },
+            {
+              "name": "loss-decreases"
+            },
+            {
+              "name": "grads-not-accumulated"
+            },
+            {
+              "name": "matches-ols"
+            }
+          ],
+          "solution": "```python\nimport numpy as np\n\ndef iter_batches(n, batch_size, shuffle):\n    # For a TIME SERIES use shuffle=False: shuffling treats rows as i.i.d. and mixes\n    # future and past across batches, leaking the future into training. This is the\n    # exact same anti-lookahead discipline as DataLoader(shuffle=False) in PyTorch.\n    idx = np.arange(n)\n    if shuffle:\n        np.random.default_rng(0).shuffle(idx)\n    for start in range(0, n, batch_size):\n        yield idx[start:start + batch_size]\n\ndef train_linreg(X, y, epochs=200, lr=0.1, batch_size=64, shuffle=False):\n    X = np.asarray(X, dtype=np.float64)\n    y = np.asarray(y, dtype=np.float64).reshape(-1)\n    n, d = X.shape\n    w = np.zeros(d)       # learnable weights (PyTorch: nn.Linear weight)\n    b = 0.0               # learnable bias    (PyTorch: nn.Linear bias)\n    for _ in range(epochs):\n        for batch in iter_batches(n, batch_size, shuffle):\n            xb, yb = X[batch], y[batch]\n            m = len(batch)\n            # The canonical 5-step gradient-descent loop (PyTorch parallel in comments):\n            # 1. zero_grad: start each step from fresh gradients. We recompute grads\n            #    from scratch below, so they never accumulate across steps. In PyTorch\n            #    you MUST call optimizer.zero_grad() because .backward() ADDS into .grad;\n            #    forgetting it sums stale gradients and destabilizes training.\n            gw = np.zeros(d)\n            gb = 0.0\n            # 2. forward: model prediction for the batch.\n            pred = xb @ w + b\n            # 3. loss: mean squared error (value not needed for the update, shown for clarity).\n            err = pred - yb\n            # loss = float(np.mean(err ** 2))\n            # 4. backward: gradients of MSE wrt w and b (this is what .backward() fills in).\n            gw = (2.0 / m) * (xb.T @ err)\n            gb = (2.0 / m) * err.sum()\n            # 5. step: gradient-descent parameter update (this is what optimizer.step() does).\n            w -= lr * gw\n            b -= lr * gb\n    return w, b\n\ndef predict(params, X):\n    # Pure forward pass, no parameter update -- the analogue of wrapping inference in\n    # model.eval() + torch.no_grad() (no Dropout/BatchNorm-train behaviour, no autograd\n    # graph). Here there is no state to switch and no graph to build, so it is just w@x+b.\n    w, b = params\n    return np.asarray(X, dtype=np.float64) @ w + b\n```",
+          "discussion": "Every gradient-descent training loop -- whether hand-written NumPy or PyTorch -- runs the same five steps per batch: zero/fresh grads -> forward -> loss -> backward -> step. Here we compute the MSE gradients explicitly: dL/dw = (2/m) X'(pred - y), dL/db = (2/m) sum(pred - y), then update parameters by `w -= lr*gw`. The PyTorch parallels: step 1 is `optimizer.zero_grad()` (mandatory because `.backward()` ACCUMULATES into `.grad`; skipping it sums stale gradients across iterations and destabilizes training -- the single most common PyTorch bug, and the reason we recompute grads from scratch each step here); step 4 is `loss.backward()`; step 5 is `optimizer.step()`. The `predict` function is a pure forward pass -- the analogue of wrapping inference in `model.eval()` (switches Dropout/BatchNorm to inference mode; leaving train mode yields noisy, wrong predictions) plus `torch.no_grad()` (stops autograd graph-building, roughly halving memory). For financial time series use `shuffle=False`: shuffling treats samples as i.i.d. and mixes future and past across batches, leaking the future into training -- the same anti-lookahead discipline as `TimeSeriesSplit` in scikit-learn. (In PyTorch you would also cast inputs to float32 to match its default dtype, since NumPy defaults to float64.) This converges to the same fit as the closed-form least-squares solution, which is the check the tests use."
+        }
+      ]
+    }
+  }
+}
