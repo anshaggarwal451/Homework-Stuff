@@ -135,23 +135,49 @@
 
   function setActiveNav(name) { document.querySelectorAll(".top-nav a").forEach(a => a.classList.toggle("active", a.dataset.nav === name)); }
 
-  /* ===================== Overview ===================== */
+  /* ===================== Overview (track DAG) ===================== */
   function renderOverview() {
     setActiveNav("learn");
     const total = FLAT.length, doneAll = FLAT.filter(f => isDone(f.key)).length;
-    const cards = DATA.roadmaps.map(rm => {
-      const p = rmProgress(rm);
-      return `<a class="rm-card" href="#/r/${rm.id}">
-        <div class="rm-top"><div><h2>${esc(rm.title)}</h2><div class="est">⏱ ${esc(rm.estimate)} · ${rm.modules.length} modules</div></div>
-          <div class="ring" style="--p:${p.pct}"><span>${p.pct}%</span></div></div>
-        <div class="modlist">${esc(rm.modules.map(m => m.title).join(" · "))}</div>
-        <div class="rm-foot"><div class="bar"><i style="width:${p.pct}%"></i></div><div class="count">${p.done}/${p.total} lessons</div></div>
-      </a>`;
-    }).join("");
+    const g = DATA.overviewGraph;
     app.innerHTML = `<div class="page">
       <div class="page-head"><div class="eyebrow">Learning Roadmap</div><h1>${esc(DATA.title)}</h1>
         <p class="sub">${esc(DATA.tagline)} — ${total} lessons across ${DATA.roadmaps.length} tracks. ${doneAll} completed. · <a href="#/dashboard">Open dashboard →</a></p></div>
-      <div class="overview-grid">${cards}</div></div>`;
+      ${g ? `<div class="dag-legend"><span>Follow the arrows — this is the suggested order to work through the tracks.</span><span class="lg"><span class="sw"></span> prerequisite flow</span></div>
+        <div class="dag-wrap"><div class="dag" id="ov-dag"></div></div>`
+      : `<div class="overview-grid">${DATA.roadmaps.map(overviewCard).join("")}</div>`}</div>`;
+    if (g) renderOverviewDag(g);
+  }
+
+  function overviewCard(rm) {
+    const p = rmProgress(rm);
+    return `<a class="rm-card" href="#/r/${rm.id}">
+      <div class="rm-top"><div><h2>${esc(rm.title)}</h2><div class="est">⏱ ${esc(rm.estimate)} · ${rm.modules.length} modules</div></div>
+        <div class="ring" style="--p:${p.pct}"><span>${p.pct}%</span></div></div>
+      <div class="modlist">${esc(rm.modules.map(m => m.title).join(" · "))}</div>
+      <div class="rm-foot"><div class="bar"><i style="width:${p.pct}%"></i></div><div class="count">${p.done}/${p.total} lessons</div></div></a>`;
+  }
+
+  function renderOverviewDag(g) {
+    const dag = document.getElementById("ov-dag");
+    const NW = 246, NH = 118, CW = 340, RW = 150, PAD = 16;
+    const pos = {}; let maxC = 0, maxR = 0;
+    Object.entries(g.nodes).forEach(([id, cr]) => { pos[id] = { x: PAD + cr[0] * CW, y: PAD + cr[1] * RW }; maxC = Math.max(maxC, cr[0]); maxR = Math.max(maxR, cr[1]); });
+    const W = PAD * 2 + maxC * CW + NW, H = PAD * 2 + maxR * RW + NH;
+    const edgeHtml = g.edges.map(([a, b]) => {
+      const sa = pos[a], sb = pos[b]; if (!sa || !sb) return "";
+      const x1 = sa.x + NW, y1 = sa.y + NH / 2, x2 = sb.x, y2 = sb.y + NH / 2, dx = Math.max(40, (x2 - x1) / 2);
+      return `<path d="M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}"/>`;
+    }).join("");
+    const nodeHtml = DATA.roadmaps.filter(rm => pos[rm.id]).map(rm => {
+      const p = rmProgress(rm), complete = p.total && p.done === p.total, P = pos[rm.id];
+      return `<a class="dag-track ${complete ? "complete" : ""}" href="#/r/${rm.id}" style="left:${P.x}px;top:${P.y}px;width:${NW}px">
+        <div class="dt-head"><div><h3>${esc(rm.title)}</h3><div class="dt-est">⏱ ${esc(rm.estimate)} · ${rm.modules.length} modules</div></div>
+          <div class="ring" style="--p:${p.pct}"><span>${p.pct}%</span></div></div>
+        <div class="dt-foot"><div class="bar"><i style="width:${p.pct}%"></i></div><div class="count">${p.done}/${p.total}</div></div></a>`;
+    }).join("");
+    dag.style.width = W + "px"; dag.style.height = H + "px";
+    dag.innerHTML = `<svg class="dag-edges" width="${W}" height="${H}">${edgeHtml}</svg>${nodeHtml}`;
   }
 
   /* ===================== Roadmap (DAG) ===================== */

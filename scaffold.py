@@ -63,6 +63,22 @@ GRAPHS = {
     },
 }
 
+# Top-level Learning Overview DAG: the flow between the four tracks
+# (from the bequant.dev landing page — C++ Basics → CS for Quants → Low Latency / Python).
+OVERVIEW_GRAPH = {
+    "nodes": {
+        "cppbasics": [0, 0.9],
+        "csfundamentals": [1, 0.9],
+        "lowlatency": [2, 0],
+        "python": [2, 1.8],
+    },
+    "edges": [
+        ["cppbasics", "csfundamentals"],
+        ["csfundamentals", "lowlatency"],
+        ["csfundamentals", "python"],
+    ],
+}
+
 
 def slug(s: str) -> str:
     s = s.lower()
@@ -132,6 +148,7 @@ enriched = {
     "title": "BeQuant — local study build",
     "tagline": "Quant developer prep · reconstructed locally",
     "placeholderMarker": PLACEHOLDER,
+    "overviewGraph": OVERVIEW_GRAPH,
     "roadmaps": out_roadmaps,
 }
 (SITE / "curriculum.json").write_text(json.dumps(enriched, indent=2))

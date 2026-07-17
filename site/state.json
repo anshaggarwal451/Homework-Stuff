@@ -1,11 +1,7 @@
 {
   "v": 2,
   "progress": {
-    "cppbasics/syntax-and-fundamentals/the-cpp-compiler": 1781874897800,
-    "cppbasics/syntax-and-fundamentals/types-and-initialization": 1781874898692,
-    "cppbasics/syntax-and-fundamentals/expressions-and-casting": 1781874899356,
-    "cppbasics/templates/introduction-to-templates": 1781874901552,
-    "cppbasics/advanced-features/rtti-std-any-and-std-variant": 1781874904939
+    "csfundamentals/cpu-architecture-basics/bitwise-operations": 1782589272774
   },
   "assessments": [
     {
